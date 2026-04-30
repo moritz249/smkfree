@@ -390,13 +390,19 @@ function downloadUrl(url, filename) {
 }
 
 async function downloadReceiptImage() {
-  const canvas = await html2canvas(elements.receipt, {
-    backgroundColor: "#fffefa",
-    scale: 2,
-    useCORS: true,
-    logging: false,
-  });
-  downloadUrl(canvas.toDataURL("image/png"), "smoke-free-receipt.png");
+  elements.receipt.classList.add("is-capturing");
+  try {
+    const canvas = await html2canvas(elements.receipt, {
+      backgroundColor: "#fffefa",
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      allowTaint: true,
+    });
+    downloadUrl(canvas.toDataURL("image/png"), "smoke-free-receipt.png");
+  } finally {
+    elements.receipt.classList.remove("is-capturing");
+  }
 }
 
 function drawBarcodeOnCanvas(context, code, x, y, maxWidth, height) {
