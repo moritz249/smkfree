@@ -269,6 +269,7 @@ label {
 input,
 select {
   width: 100%;
+  max-width: 100%;
   min-height: 48px;
   border: 1px solid var(--line);
   border-radius: 0;
@@ -278,6 +279,7 @@ select {
   outline: none;
   font-size: max(16px, 1em); /* prevents iOS Safari auto-zoom on focus */
   touch-action: manipulation;
+  box-sizing: border-box;
 }
 
 input:focus,
@@ -418,6 +420,10 @@ select:focus {
   );
   content: "";
   mix-blend-mode: multiply;
+}
+
+.receipt.is-capturing::before {
+  display: none;
 }
 
 .receipt__edge {
