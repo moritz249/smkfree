@@ -556,3 +556,23 @@ elements.downloadButton.addEventListener("click", async () => {
 setFormState(readState());
 showStep(0);
 updateReceipt(false);
+
+const THEME_KEY = "smkfree-theme";
+const themeDots = document.querySelectorAll(".theme-dot");
+
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme === "default" ? "" : theme;
+  themeDots.forEach((dot) => {
+    dot.classList.toggle("is-active", dot.dataset.theme === theme);
+  });
+}
+
+themeDots.forEach((dot) => {
+  dot.addEventListener("click", () => {
+    const theme = dot.dataset.theme;
+    localStorage.setItem(THEME_KEY, theme);
+    applyTheme(theme);
+  });
+});
+
+applyTheme(localStorage.getItem(THEME_KEY) || "default");
