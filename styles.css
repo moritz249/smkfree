@@ -44,6 +44,8 @@ select {
 button {
   cursor: pointer;
   touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .app-shell {
@@ -141,6 +143,11 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.wizard__actions .primary-button,
+.wizard__actions .secondary-button {
+  flex: 1;
 }
 
 .wizard__top {
@@ -499,11 +506,16 @@ select:focus {
   font-size: clamp(1.1rem, 4vw, 1.45rem);
 }
 
-.receipt--market .receipt__total span,
-.receipt--market .receipt__total strong {
+.receipt--market .receipt__total span {
   color: var(--ink);
   font-size: inherit;
   font-weight: 400;
+}
+
+.receipt--market .receipt__total strong {
+  color: var(--ink);
+  font-size: inherit;
+  font-weight: 700;
 }
 
 .receipt--market .receipt__total span::before {
