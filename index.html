@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#111111">
+    <meta
+      name="description"
+      content="A guided smoke-free savings tracker with a receipt-style progress summary."
+    >
+    <title>SMKFREE</title>
+    <meta property="og:title" content="SMKFREE">
+    <meta property="og:description" content="A smoke-free progress tracker printed like a market receipt.">
+    <meta property="og:type" content="website">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="assets/icon.svg">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell scan-frame" id="appShell">
+      <section class="stage" id="stage" aria-label="Smoke free setup and receipt">
+        <form class="wizard" id="quitForm">
+          <div class="wizard__top">
+            <span id="stepCounter">Step 1 of 5</span>
+            <button type="button" id="resetButton" class="text-button">Reset</button>
+          </div>
+
+          <div class="progress-bar" aria-hidden="true">
+            <span id="progressFill"></span>
+          </div>
+
+          <section class="step is-active" data-step="0">
+            <p class="kicker">Start date</p>
+            <h2>When did you stop smoking?</h2>
+            <label>
+              Quit date
+              <input id="quitDate" name="quitDate" type="date" required>
+            </label>
+          </section>
+
+          <section class="step" data-step="1">
+            <p class="kicker">Daily habit</p>
+            <h2>How many cigarettes did you smoke per day?</h2>
+            <label>
+              Cigarettes per day
+              <input id="cigarettesPerDay" name="cigarettesPerDay" type="number" min="0" step="1" placeholder="15" required>
+            </label>
+          </section>
+
+          <section class="step" data-step="2">
+            <p class="kicker">Pack size</p>
+            <h2>How many cigarettes are in one pack?</h2>
+            <label>
+              Cigarettes per pack
+              <input id="cigarettesPerPack" name="cigarettesPerPack" type="number" min="1" step="1" placeholder="20" required>
+            </label>
+          </section>
+
+          <section class="step" data-step="3">
+            <p class="kicker">Pack price</p>
+            <h2>How much does one pack cost?</h2>
+            <div class="two-fields">
+              <label>
+                Price per pack
+                <div class="money-field">
+                  <span id="currencySymbol" aria-hidden="true">EUR</span>
+                  <input id="pricePerPack" name="pricePerPack" type="text" inputmode="decimal" placeholder="10.00" required>
+                </div>
+              </label>
+              <label>
+                Currency
+                <select id="currencyCode" name="currencyCode">
+                  <option value="EUR">EUR</option>
+                  <option value="USD">USD</option>
+                  <option value="GBP">GBP</option>
+                  <option value="CHF">CHF</option>
+                </select>
+              </label>
+            </div>
+          </section>
+
+          <section class="step" data-step="4">
+            <p class="kicker">Summary</p>
+            <h2>Check your details</h2>
+            <dl class="summary-list">
+              <div>
+                <dt>Quit date</dt>
+                <dd id="summaryQuitDate">--</dd>
+              </div>
+              <div>
+                <dt>Cigarettes / day</dt>
+                <dd id="summaryCigarettesPerDay">0</dd>
+              </div>
+              <div>
+                <dt>Cigarettes / pack</dt>
+                <dd id="summaryCigarettesPerPack">0</dd>
+              </div>
+              <div>
+                <dt>Pack price</dt>
+                <dd id="summaryPackPrice">EUR 0.00</dd>
+              </div>
+            </dl>
+          </section>
+
+          <div class="wizard__actions">
+            <button type="button" id="backButton" class="secondary-button">Back</button>
+            <button type="button" id="nextButton" class="primary-button">Next</button>
+            <button type="submit" id="receiptButton" class="primary-button primary-button--large is-hidden">Print receipt</button>
+          </div>
+        </form>
+
+        <section class="receipt-wrap" aria-label="SMKFREE receipt">
+          <div class="receipt-actions" aria-label="Receipt actions">
+            <button type="button" id="editButton" class="secondary-button">Close details</button>
+            <button type="button" id="printButton" class="secondary-button">Print</button>
+            <button type="button" id="downloadButton" class="primary-button">Download</button>
+          </div>
+          <article class="receipt receipt--market" id="receipt">
+            <div class="receipt__edge" aria-hidden="true"></div>
+            <header class="receipt__header">
+              <p>SMKFREE</p>
+              <h2>Quit Receipt</h2>
+              <span id="receiptDate">--</span>
+            </header>
+
+            <div class="receipt__divider"></div>
+
+            <div class="section-label">WHAT YOU KEPT</div>
+
+            <section class="hero-metrics" aria-label="Main smoke free totals">
+              <div class="metric metric--days">
+                <span>Smoke free days</span>
+                <strong id="daysFree">0</strong>
+              </div>
+              <div class="metric">
+                <span>Weeks</span>
+                <strong id="weeksFree">0</strong>
+              </div>
+              <div class="metric">
+                <span>Months</span>
+                <strong id="monthsFree">0</strong>
+              </div>
+              <div class="metric">
+                <span>Years</span>
+                <strong id="yearsFree">0</strong>
+              </div>
+            </section>
+
+            <div class="receipt__total">
+              <span>Money not burned</span>
+              <strong id="moneySaved">EUR 0.00</strong>
+            </div>
+
+            <div class="section-label">PROGRESS ITEMS</div>
+
+            <dl class="receipt__rows">
+              <div>
+                <dt>Quit date</dt>
+                <dd id="receiptQuitDate">--</dd>
+              </div>
+              <div>
+                <dt>Not smoked</dt>
+                <dd id="cigarettesAvoided">0</dd>
+              </div>
+              <div>
+                <dt>Packs not bought</dt>
+                <dd id="packsAvoided">0</dd>
+              </div>
+              <div>
+                <dt>Pack price</dt>
+                <dd id="receiptPackPrice">EUR 0.00</dd>
+              </div>
+              <div>
+                <dt>Cost avoided</dt>
+                <dd id="costAvoided">EUR 0.00</dd>
+              </div>
+              <div>
+                <dt>Estimated life back</dt>
+                <dd id="lifeSaved">0h</dd>
+              </div>
+            </dl>
+
+            <div class="receipt__divider"></div>
+
+            <section class="fine-benefits">
+              <h3>Benefits</h3>
+              <ol id="milestoneList"></ol>
+              <p id="nextMilestone">Fill in your details to see what comes next.</p>
+            </section>
+
+            <footer class="receipt__footer">
+              <small>
+                Health benefits and estimated life back are rough motivational estimates, not
+                medical advice. Actual effects vary from person to person.
+              </small>
+              <div class="receipt-logo" aria-hidden="true">
+                <span></span>
+              </div>
+              <div class="barcode" aria-label="Receipt barcode">
+                <svg id="barcodeSvg" role="img" aria-label="Smoke free receipt code"></svg>
+                <span id="barcodeText">SF-00000000-000</span>
+              </div>
+              <p>Thank you for choosing fresh air.</p>
+              <span>************************</span>
+            </footer>
+          </article>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

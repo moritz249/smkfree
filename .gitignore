@@ -1,0 +1,15 @@
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Local dependency folders, if added later
+node_modules/
+
+# Build outputs, if a build tool is added later
+dist/
+build/
+
