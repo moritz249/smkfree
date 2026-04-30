@@ -138,7 +138,9 @@ function updateCurrencySymbols(currencyCode) {
 function updateModeCards() {
   elements.modeCards.forEach((card) => {
     const radio = card.querySelector("input[type='radio']");
-    card.classList.toggle("is-active", radio?.value === currentMode);
+    const isActive = radio?.value === currentMode;
+    if (radio) radio.checked = isActive;
+    card.classList.toggle("is-active", isActive);
   });
 }
 
@@ -445,7 +447,20 @@ function downloadUrl(url, filename) {
   link.remove();
 }
 
-async function downloadReceiptImage() {
+function canvasToBlob(canvas) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) {
+        resolve(blob);
+        return;
+      }
+
+      reject(new Error("Could not create receipt image."));
+    }, "image/png");
+  });
+}
+
+async function createReceiptImageBlob() {
   elements.receipt.classList.add("is-capturing");
   try {
     const canvas = await html2canvas(elements.receipt, {
@@ -455,10 +470,37 @@ async function downloadReceiptImage() {
       logging: false,
       allowTaint: true,
     });
-    downloadUrl(canvas.toDataURL("image/png"), "smoke-free-receipt.png");
+    return canvasToBlob(canvas);
   } finally {
     elements.receipt.classList.remove("is-capturing");
   }
+}
+
+async function shareReceiptImage() {
+  const filename = "smoke-free-receipt.png";
+  const blob = await createReceiptImageBlob();
+  const file = new File([blob], filename, { type: "image/png" });
+  const shareData = {
+    title: "SMKFREE Quit Receipt",
+    text: "My SMKFREE quit receipt.",
+    files: [file],
+  };
+
+  if (navigator.canShare?.({ files: [file] }) && navigator.share) {
+    try {
+      await navigator.share(shareData);
+      return "shared";
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        throw error;
+      }
+    }
+  }
+
+  const objectUrl = URL.createObjectURL(blob);
+  downloadUrl(objectUrl, filename);
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  return "downloaded";
 }
 
 function drawBarcodeOnCanvas(context, code, x, y, maxWidth, height) {
@@ -485,6 +527,7 @@ function showStep(index) {
   currentStep = Math.min(Math.max(index, 0), activeSteps.length - 1);
   elements.steps.forEach((step) => step.classList.remove("is-active"));
   activeSteps[currentStep].classList.add("is-active");
+  updateModeCards();
 
   const total = activeSteps.length;
   elements.stepCounter.textContent = `Step ${currentStep + 1} of ${total}`;
@@ -497,19 +540,24 @@ function showStep(index) {
 
 function focusCurrentStepField() {
   const activeSteps = getActiveSteps();
-  const field = activeSteps[currentStep]?.querySelector("input:not([type='radio']), select");
+  const field = getStepFields(activeSteps[currentStep])[0];
   if (field) { field.focus(); return; }
   if (currentStep === activeSteps.length - 1) elements.receiptButton.focus();
+}
+
+function getStepFields(stepEl) {
+  return [...stepEl?.querySelectorAll("input:not([type='radio']), select") || []]
+    .filter((field) => !field.disabled);
 }
 
 function validateCurrentStep() {
   const activeSteps = getActiveSteps();
   const stepEl = activeSteps[currentStep];
 
-  if (currentStep === 0) return !!currentMode;
+  if (stepEl.querySelector("input[name='mode']")) return !!currentMode;
 
   applyDefaultsForCurrentStep(stepEl);
-  const inputs = [...stepEl.querySelectorAll("input:not([type='radio']), select")];
+  const inputs = getStepFields(stepEl);
   return inputs.every((input) => {
     if (decimalInputIds.has(input.id)) {
       const isValid = input.value.trim() !== "" && parseDecimal(input.value) >= 0;
@@ -527,6 +575,49 @@ function applyDefaultsForCurrentStep(stepEl) {
   });
 }
 
+function showReceipt() {
+  if (!validateCurrentStep()) return;
+  updateReceipt();
+  elements.appShell.classList.add("is-receipt-view");
+  elements.stage.classList.add("is-receipt-only");
+  elements.editButton.textContent = "Details";
+  elements.receipt.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function advanceWizard() {
+  if (!validateCurrentStep()) return;
+  updateReceipt();
+
+  const activeSteps = getActiveSteps();
+  if (currentStep < activeSteps.length - 1) {
+    showStep(currentStep + 1);
+    return;
+  }
+
+  showReceipt();
+}
+
+function focusNextFieldInStep(target) {
+  const activeSteps = getActiveSteps();
+  const fields = getStepFields(activeSteps[currentStep]);
+  const fieldIndex = fields.indexOf(target);
+
+  if (fieldIndex < 0 || fieldIndex >= fields.length - 1) {
+    return false;
+  }
+
+  applyDefaultsForCurrentStep(activeSteps[currentStep]);
+  const currentField = fields[fieldIndex];
+
+  if (!currentField.reportValidity()) {
+    return true;
+  }
+
+  updateReceipt();
+  fields[fieldIndex + 1].focus();
+  return true;
+}
+
 function resetApp() {
   localStorage.removeItem(STORAGE_KEY);
   currentMode = "cigarettes";
@@ -540,7 +631,7 @@ function resetApp() {
 
 // Mode radio change
 elements.modeRadios.forEach((radio) => {
-  radio.addEventListener("change", () => {
+  radio.addEventListener("input", () => {
     currentMode = radio.value;
     updateModeCards();
     updateReceipt();
@@ -550,29 +641,22 @@ elements.modeRadios.forEach((radio) => {
 
 elements.form.addEventListener("submit", (event) => {
   event.preventDefault();
-  if (!validateCurrentStep()) return;
-  updateReceipt();
-  elements.appShell.classList.add("is-receipt-view");
-  elements.stage.classList.add("is-receipt-only");
-  elements.editButton.textContent = "Details";
-  elements.receipt.scrollIntoView({ behavior: "smooth", block: "start" });
+  showReceipt();
 });
 
 elements.form.addEventListener("keydown", (event) => {
   if (event.key !== "Enter") return;
   event.preventDefault();
-  const activeSteps = getActiveSteps();
-  if (currentStep < activeSteps.length - 1) { elements.nextButton.click(); return; }
-  elements.receiptButton.click();
+  if (focusNextFieldInStep(event.target)) return;
+  advanceWizard();
 });
 
 elements.nextButton.addEventListener("click", () => {
-  if (!validateCurrentStep()) return;
-  updateReceipt();
-  showStep(currentStep + 1);
+  advanceWizard();
 });
 
 elements.backButton.addEventListener("click", () => showStep(currentStep - 1));
+elements.receiptButton.addEventListener("click", showReceipt);
 elements.resetButton.addEventListener("click", resetApp);
 elements.form.addEventListener("input", () => updateReceipt());
 elements.editButton.addEventListener("click", () => {
@@ -583,12 +667,12 @@ elements.editButton.addEventListener("click", () => {
 elements.downloadButton.addEventListener("click", async () => {
   elements.downloadButton.textContent = "Preparing";
   try {
-    await downloadReceiptImage();
-    elements.downloadButton.textContent = "Downloaded";
-  } catch {
-    elements.downloadButton.textContent = "Download failed";
+    const result = await shareReceiptImage();
+    elements.downloadButton.textContent = result === "shared" ? "Shared" : "Downloaded";
+  } catch (error) {
+    elements.downloadButton.textContent = error?.name === "AbortError" ? "Share" : "Share failed";
   }
-  window.setTimeout(() => { elements.downloadButton.textContent = "Download"; }, 1600);
+  window.setTimeout(() => { elements.downloadButton.textContent = "Share"; }, 1600);
 });
 
 setFormState(readState());

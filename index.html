@@ -21,7 +21,7 @@
   <body>
     <main class="app-shell scan-frame" id="appShell">
       <section class="stage" id="stage" aria-label="Smoke free setup and receipt">
-        <form class="wizard" id="quitForm">
+        <form class="wizard" id="quitForm" novalidate>
           <div class="wizard__top">
             <span id="stepCounter">Step 1 of 6</span>
             <div class="wizard__top-right">
@@ -37,8 +37,27 @@
             <span id="progressFill"></span>
           </div>
 
-          <!-- Step 0: Mode selection -->
+          <!-- Step 0: Quit date + currency (shared) -->
           <section class="step is-active" data-mode="all">
+            <p class="kicker">Start date</p>
+            <h2>When did you stop?</h2>
+            <label>
+              Quit date
+              <input id="quitDate" name="quitDate" type="date" required>
+            </label>
+            <label>
+              Currency
+              <select id="currencyCode" name="currencyCode">
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+                <option value="GBP">GBP</option>
+                <option value="CHF">CHF</option>
+              </select>
+            </label>
+          </section>
+
+          <!-- Step 1: Mode selection -->
+          <section class="step" data-mode="all">
             <p class="kicker">Your habit</p>
             <h2>What are you quitting?</h2>
             <div class="mode-picker">
@@ -58,25 +77,6 @@
                 <span>Liquid &amp; accessories</span>
               </label>
             </div>
-          </section>
-
-          <!-- Step 1: Quit date + currency (shared) -->
-          <section class="step" data-mode="all">
-            <p class="kicker">Start date</p>
-            <h2>When did you stop?</h2>
-            <label>
-              Quit date
-              <input id="quitDate" name="quitDate" type="date" required>
-            </label>
-            <label>
-              Currency
-              <select id="currencyCode" name="currencyCode">
-                <option value="EUR">EUR</option>
-                <option value="USD">USD</option>
-                <option value="GBP">GBP</option>
-                <option value="CHF">CHF</option>
-              </select>
-            </label>
           </section>
 
           <!-- Cigarettes: per day -->
@@ -181,14 +181,14 @@
           <div class="wizard__actions">
             <button type="button" id="backButton" class="secondary-button">Back</button>
             <button type="button" id="nextButton" class="primary-button">Next</button>
-            <button type="submit" id="receiptButton" class="primary-button primary-button--large is-hidden">Show receipt</button>
+            <button type="button" id="receiptButton" class="primary-button primary-button--large is-hidden">Show receipt</button>
           </div>
         </form>
 
         <section class="receipt-wrap" aria-label="SMKFREE receipt">
           <div class="receipt-actions" aria-label="Receipt actions">
             <button type="button" id="editButton" class="secondary-button">Details</button>
-            <button type="button" id="downloadButton" class="primary-button">Download</button>
+            <button type="button" id="downloadButton" class="primary-button">Share</button>
           </div>
           <article class="receipt receipt--market" id="receipt">
             <div class="receipt__edge" aria-hidden="true"></div>
@@ -281,6 +281,6 @@
       </section>
     </main>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=20260430-2"></script>
   </body>
 </html>
