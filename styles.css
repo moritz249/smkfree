@@ -43,6 +43,7 @@ select {
 
 button {
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .app-shell {
@@ -347,8 +348,8 @@ select:focus {
 
 .receipt-actions .primary-button,
 .receipt-actions .secondary-button {
-  min-height: 38px;
-  padding: 0 12px;
+  min-height: 44px;
+  padding: 0 14px;
   font-size: 0.82rem;
 }
 
@@ -1030,6 +1031,31 @@ ol {
   .wizard,
   .receipt {
     box-shadow: none;
+  }
+
+  input,
+  select {
+    min-height: 42px;
+    padding: 8px 12px;
+  }
+
+  input[type="date"] {
+    -webkit-appearance: none;
+    appearance: none;
+    text-align: left;
+  }
+
+  .primary-button,
+  .secondary-button {
+    min-height: 52px;
+    padding: 0 20px;
+    font-size: 1rem;
+    touch-action: manipulation;
+  }
+
+  .text-button {
+    min-height: 44px;
+    touch-action: manipulation;
   }
 
   .receipt__rows div {
