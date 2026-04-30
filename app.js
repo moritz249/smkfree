@@ -489,7 +489,8 @@ async function shareReceiptImage() {
   const file = new File([blob], filename, { type: "image/png" });
   const shareData = {
     title: "SMKFREE Quit Receipt",
-    text: "My SMKFREE quit receipt.",
+    text: "Track smoke-free days, money saved, and your receipt-style progress.",
+    url: "https://moritz249.github.io/smkfree/",
     files: [file],
   };
 
