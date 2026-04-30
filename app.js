@@ -20,7 +20,6 @@ const elements = {
   nextButton: document.querySelector("#nextButton"),
   receiptButton: document.querySelector("#receiptButton"),
   editButton: document.querySelector("#editButton"),
-  printButton: document.querySelector("#printButton"),
   downloadButton: document.querySelector("#downloadButton"),
   stepCounter: document.querySelector("#stepCounter"),
   progressFill: document.querySelector("#progressFill"),
@@ -544,7 +543,6 @@ elements.editButton.addEventListener("click", () => {
   elements.appShell.classList.remove("is-receipt-view");
   elements.editButton.textContent = "Details";
 });
-elements.printButton.addEventListener("click", () => window.print());
 elements.downloadButton.addEventListener("click", async () => {
   elements.downloadButton.textContent = "Preparing";
   try {
