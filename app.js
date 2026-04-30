@@ -431,6 +431,28 @@ async function downloadReceiptImage() {
     context.textAlign = "left";
   }
 
+  function drawDivider(y) {
+    context.save();
+    context.setLineDash([5, 5]);
+    context.lineWidth = 1;
+    context.beginPath();
+    context.moveTo(padding, y);
+    context.lineTo(width - padding, y);
+    context.stroke();
+    context.restore();
+  }
+
+  function drawSectionLabel(label, y) {
+    setFont(20, 700);
+    const labelWidth = width - padding * 2;
+    context.save();
+    context.lineWidth = 1;
+    context.strokeRect(padding, y - 22, labelWidth, 30);
+    context.fillText(label, padding + 8, y);
+    context.restore();
+    return y + 38;
+  }
+
   function wrapText(text, x, y, maxWidth, size) {
     setFont(size);
     const words = text.split(" ");
@@ -457,7 +479,7 @@ async function downloadReceiptImage() {
   }
 
   let y = padding;
-  const estimatedHeight = 1800;
+  const estimatedHeight = 1900;
   canvas.width = width * scale;
   canvas.height = estimatedHeight * scale;
   context.scale(scale, scale);
@@ -479,30 +501,31 @@ async function downloadReceiptImage() {
   setFont(22);
   context.fillText(elements.receiptDate.textContent, width / 2, y);
   context.textAlign = "left";
-  y += 48;
-
-  setFont(24);
-  context.fillText("WHAT YOU KEPT", padding, y);
   y += 36;
+
+  drawDivider(y);
+  y += 28;
+
   rows.slice(0, 4).forEach((row) => {
     drawRow(row[0], row[1], y);
     y += lineHeight;
   });
-  y += 30;
-  setFont(24);
-  context.fillText("PROGRESS ITEMS", padding, y);
-  y += 36;
+
+  y += 16;
+  drawDivider(y);
+  y += 28;
+
+  y = drawSectionLabel("PROGRESS ITEMS", y);
   rows.slice(4).forEach((row) => {
     drawRow(row[0], row[1], y);
     y += lineHeight;
   });
 
-  y += 34;
-  setFont(24);
-  context.textAlign = "center";
-  context.fillText("BENEFITS", width / 2, y);
-  context.textAlign = "left";
-  y += 36;
+  y += 16;
+  drawDivider(y);
+  y += 28;
+
+  y = drawSectionLabel("BENEFITS", y);
   benefits.forEach((benefit) => {
     setFont(20);
     context.fillText(benefit.title.toUpperCase(), padding, y);
@@ -514,6 +537,8 @@ async function downloadReceiptImage() {
     y += 6;
   });
 
+  y += 16;
+  drawDivider(y);
   y += 20;
   y = wrapText("Health benefits and estimated life back are rough motivational estimates, not medical advice. Actual effects vary from person to person.", padding, y, width - padding * 2, 17);
   y += 22;
@@ -640,7 +665,7 @@ elements.form.addEventListener("submit", (event) => {
   updateReceipt();
   elements.appShell.classList.add("is-receipt-view");
   elements.stage.classList.add("is-receipt-only");
-  elements.editButton.textContent = "Edit details";
+  elements.editButton.textContent = "Details";
   elements.receipt.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
@@ -674,7 +699,7 @@ elements.form.addEventListener("input", () => updateReceipt());
 elements.editButton.addEventListener("click", () => {
   elements.stage.classList.remove("is-receipt-only");
   elements.appShell.classList.remove("is-receipt-view");
-  elements.editButton.textContent = "Edit details";
+  elements.editButton.textContent = "Details";
 });
 elements.printButton.addEventListener("click", () => window.print());
 elements.downloadButton.addEventListener("click", async () => {
