@@ -173,6 +173,53 @@ button {
   gap: 10px;
 }
 
+.mode-picker {
+  display: grid;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.mode-card {
+  display: grid;
+  gap: 3px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: background 80ms ease, color 80ms ease;
+}
+
+.mode-card input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.mode-card strong {
+  font-size: 0.95rem;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mode-card span {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.mode-card.is-active {
+  background: var(--ink);
+  color: white;
+}
+
+.mode-card.is-active span {
+  color: rgba(255, 255, 255, 0.6);
+}
+
 .theme-picker {
   display: flex;
   gap: 6px;

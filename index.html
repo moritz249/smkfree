@@ -23,7 +23,7 @@
       <section class="stage" id="stage" aria-label="Smoke free setup and receipt">
         <form class="wizard" id="quitForm">
           <div class="wizard__top">
-            <span id="stepCounter">Step 1 of 5</span>
+            <span id="stepCounter">Step 1 of 6</span>
             <div class="wizard__top-right">
               <div class="theme-picker" aria-label="Color theme">
                 <button type="button" class="theme-dot" data-theme="default" aria-label="Black"></button>
@@ -37,90 +37,158 @@
             <span id="progressFill"></span>
           </div>
 
-          <section class="step is-active" data-step="0">
+          <!-- Step 0: Mode selection -->
+          <section class="step is-active" data-mode="all">
+            <p class="kicker">Your habit</p>
+            <h2>What are you quitting?</h2>
+            <div class="mode-picker">
+              <label class="mode-card">
+                <input type="radio" name="mode" value="cigarettes" checked>
+                <strong>Cigarettes</strong>
+                <span>Packs of cigarettes</span>
+              </label>
+              <label class="mode-card">
+                <input type="radio" name="mode" value="ryo">
+                <strong>Roll-your-own</strong>
+                <span>Tobacco, papers &amp; filter</span>
+              </label>
+              <label class="mode-card">
+                <input type="radio" name="mode" value="vaping">
+                <strong>Vaping</strong>
+                <span>Liquid &amp; accessories</span>
+              </label>
+            </div>
+          </section>
+
+          <!-- Step 1: Quit date + currency (shared) -->
+          <section class="step" data-mode="all">
             <p class="kicker">Start date</p>
-            <h2>When did you stop smoking?</h2>
+            <h2>When did you stop?</h2>
             <label>
               Quit date
               <input id="quitDate" name="quitDate" type="date" required>
             </label>
+            <label>
+              Currency
+              <select id="currencyCode" name="currencyCode">
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+                <option value="GBP">GBP</option>
+                <option value="CHF">CHF</option>
+              </select>
+            </label>
           </section>
 
-          <section class="step" data-step="1">
+          <!-- Cigarettes: per day -->
+          <section class="step" data-mode="cigarettes">
             <p class="kicker">Daily habit</p>
-            <h2>How many cigarettes did you smoke per day?</h2>
+            <h2>How many cigarettes per day?</h2>
             <label>
               Cigarettes per day
               <input id="cigarettesPerDay" name="cigarettesPerDay" type="number" min="0" step="1" placeholder="15" required>
             </label>
           </section>
 
-          <section class="step" data-step="2">
+          <!-- Cigarettes: per pack -->
+          <section class="step" data-mode="cigarettes">
             <p class="kicker">Pack size</p>
-            <h2>How many cigarettes are in one pack?</h2>
+            <h2>How many cigarettes per pack?</h2>
             <label>
               Cigarettes per pack
               <input id="cigarettesPerPack" name="cigarettesPerPack" type="number" min="1" step="1" placeholder="20" required>
             </label>
           </section>
 
-          <section class="step" data-step="3">
+          <!-- Cigarettes: pack price -->
+          <section class="step" data-mode="cigarettes">
             <p class="kicker">Pack price</p>
             <h2>How much does one pack cost?</h2>
-            <div class="two-fields">
-              <label>
-                Price per pack
-                <div class="money-field">
-                  <span id="currencySymbol" aria-hidden="true">EUR</span>
-                  <input id="pricePerPack" name="pricePerPack" type="text" inputmode="decimal" placeholder="10.00" required>
-                </div>
-              </label>
-              <label>
-                Currency
-                <select id="currencyCode" name="currencyCode">
-                  <option value="EUR">EUR</option>
-                  <option value="USD">USD</option>
-                  <option value="GBP">GBP</option>
-                  <option value="CHF">CHF</option>
-                </select>
-              </label>
-            </div>
+            <label>
+              Price per pack
+              <div class="money-field">
+                <span class="currency-symbol" aria-hidden="true">EUR</span>
+                <input id="pricePerPack" name="pricePerPack" type="text" inputmode="decimal" placeholder="10.00" required>
+              </div>
+            </label>
           </section>
 
-          <section class="step" data-step="4">
+          <!-- RYO: rolls per day -->
+          <section class="step" data-mode="ryo">
+            <p class="kicker">Daily habit</p>
+            <h2>How many roll-ups per day?</h2>
+            <label>
+              Roll-ups per day
+              <input id="rollsPerDay" name="rollsPerDay" type="number" min="0" step="1" placeholder="10" required>
+            </label>
+          </section>
+
+          <!-- RYO: weekly cost -->
+          <section class="step" data-mode="ryo">
+            <p class="kicker">Weekly spend</p>
+            <h2>Weekly cost for tobacco, papers &amp; filter?</h2>
+            <label>
+              Total per week
+              <div class="money-field">
+                <span class="currency-symbol" aria-hidden="true">EUR</span>
+                <input id="weeklyRyoCost" name="weeklyRyoCost" type="text" inputmode="decimal" placeholder="25.00" required>
+              </div>
+            </label>
+          </section>
+
+          <!-- Vaping: ml per week -->
+          <section class="step" data-mode="vaping">
+            <p class="kicker">Usage</p>
+            <h2>How much did you vape per week?</h2>
+            <label>
+              ml per week
+              <input id="mlPerWeek" name="mlPerWeek" type="number" min="0" step="1" placeholder="30" required>
+            </label>
+          </section>
+
+          <!-- Vaping: cost per 10ml -->
+          <section class="step" data-mode="vaping">
+            <p class="kicker">Liquid cost</p>
+            <h2>How much does 10ml cost?</h2>
+            <label>
+              Cost per 10ml
+              <div class="money-field">
+                <span class="currency-symbol" aria-hidden="true">EUR</span>
+                <input id="costPer10ml" name="costPer10ml" type="text" inputmode="decimal" placeholder="8.00" required>
+              </div>
+            </label>
+          </section>
+
+          <!-- Vaping: accessories per month -->
+          <section class="step" data-mode="vaping">
+            <p class="kicker">Accessories</p>
+            <h2>Monthly spend on coils, pods &amp; gear?</h2>
+            <label>
+              Accessories per month
+              <div class="money-field">
+                <span class="currency-symbol" aria-hidden="true">EUR</span>
+                <input id="accessoriesPerMonth" name="accessoriesPerMonth" type="text" inputmode="decimal" placeholder="15.00" required>
+              </div>
+            </label>
+          </section>
+
+          <!-- Summary (shared) -->
+          <section class="step" data-mode="all">
             <p class="kicker">Summary</p>
             <h2>Check your details</h2>
-            <dl class="summary-list">
-              <div>
-                <dt>Quit date</dt>
-                <dd id="summaryQuitDate">--</dd>
-              </div>
-              <div>
-                <dt>Cigarettes / day</dt>
-                <dd id="summaryCigarettesPerDay">0</dd>
-              </div>
-              <div>
-                <dt>Cigarettes / pack</dt>
-                <dd id="summaryCigarettesPerPack">0</dd>
-              </div>
-              <div>
-                <dt>Pack price</dt>
-                <dd id="summaryPackPrice">EUR 0.00</dd>
-              </div>
-            </dl>
+            <dl class="summary-list" id="summaryList"></dl>
           </section>
 
           <div class="wizard__actions">
             <button type="button" id="backButton" class="secondary-button">Back</button>
             <button type="button" id="nextButton" class="primary-button">Next</button>
-            <button type="submit" id="receiptButton" class="primary-button primary-button--large is-hidden">Print receipt</button>
+            <button type="submit" id="receiptButton" class="primary-button primary-button--large is-hidden">Show receipt</button>
           </div>
         </form>
 
         <section class="receipt-wrap" aria-label="SMKFREE receipt">
           <div class="receipt-actions" aria-label="Receipt actions">
-            <button type="button" id="editButton" class="secondary-button">Close details</button>
-<button type="button" id="downloadButton" class="primary-button">Download</button>
+            <button type="button" id="editButton" class="secondary-button">Details</button>
+            <button type="button" id="downloadButton" class="primary-button">Download</button>
           </div>
           <article class="receipt receipt--market" id="receipt">
             <div class="receipt__edge" aria-hidden="true"></div>
@@ -163,23 +231,23 @@
                 <dt>Quit date</dt>
                 <dd id="receiptQuitDate">--</dd>
               </div>
-              <div>
-                <dt>Not smoked</dt>
-                <dd id="cigarettesAvoided">0</dd>
+              <div id="receiptRow2">
+                <dt id="receiptLabel2">Not smoked</dt>
+                <dd id="receiptValue2">0</dd>
               </div>
-              <div>
-                <dt>Packs not bought</dt>
-                <dd id="packsAvoided">0</dd>
+              <div id="receiptRow3">
+                <dt id="receiptLabel3">Packs not bought</dt>
+                <dd id="receiptValue3">0</dd>
               </div>
-              <div>
-                <dt>Pack price</dt>
-                <dd id="receiptPackPrice">EUR 0.00</dd>
+              <div id="receiptRow4">
+                <dt id="receiptLabel4">Pack price</dt>
+                <dd id="receiptValue4">EUR 0.00</dd>
               </div>
               <div>
                 <dt>Cost avoided</dt>
                 <dd id="costAvoided">EUR 0.00</dd>
               </div>
-              <div>
+              <div id="receiptRow6">
                 <dt>Estimated life back</dt>
                 <dd id="lifeSaved">0h</dd>
               </div>
