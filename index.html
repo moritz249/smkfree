@@ -37,22 +37,13 @@
             <span id="progressFill"></span>
           </div>
 
-          <!-- Step 0: Quit date + currency (shared) -->
+          <!-- Step 0: Quit date -->
           <section class="step is-active" data-mode="all">
             <p class="kicker">Start date</p>
             <h2>When did you stop?</h2>
             <label>
               Quit date
               <input id="quitDate" name="quitDate" type="date" required>
-            </label>
-            <label>
-              Currency
-              <select id="currencyCode" name="currencyCode">
-                <option value="EUR">EUR</option>
-                <option value="USD">USD</option>
-                <option value="GBP">GBP</option>
-                <option value="CHF">CHF</option>
-              </select>
             </label>
           </section>
 
@@ -110,6 +101,15 @@
                 <input id="pricePerPack" name="pricePerPack" type="text" inputmode="decimal" placeholder="10.00" required>
               </div>
             </label>
+            <label>
+              Currency
+              <select class="currency-code" name="currencyCode">
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+                <option value="GBP">GBP</option>
+                <option value="CHF">CHF</option>
+              </select>
+            </label>
           </section>
 
           <!-- RYO: rolls per day -->
@@ -133,6 +133,15 @@
                 <input id="weeklyRyoCost" name="weeklyRyoCost" type="text" inputmode="decimal" placeholder="25.00" required>
               </div>
             </label>
+            <label>
+              Currency
+              <select class="currency-code" name="currencyCode">
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+                <option value="GBP">GBP</option>
+                <option value="CHF">CHF</option>
+              </select>
+            </label>
           </section>
 
           <!-- Vaping: ml per week -->
@@ -155,6 +164,15 @@
                 <span class="currency-symbol" aria-hidden="true">EUR</span>
                 <input id="costPer10ml" name="costPer10ml" type="text" inputmode="decimal" placeholder="8.00" required>
               </div>
+            </label>
+            <label>
+              Currency
+              <select class="currency-code" name="currencyCode">
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+                <option value="GBP">GBP</option>
+                <option value="CHF">CHF</option>
+              </select>
             </label>
           </section>
 
@@ -281,6 +299,6 @@
       </section>
     </main>
 
-    <script src="app.js?v=20260430-3"></script>
+    <script src="app.js?v=20260430-4"></script>
   </body>
 </html>

@@ -27,7 +27,7 @@ const elements = {
   modeRadios: [...document.querySelectorAll("input[name='mode']")],
   modeCards: [...document.querySelectorAll(".mode-card")],
   quitDate: document.querySelector("#quitDate"),
-  currencyCode: document.querySelector("#currencyCode"),
+  currencyCodes: [...document.querySelectorAll(".currency-code")],
   currencySymbols: document.querySelectorAll(".currency-symbol"),
   cigarettesPerDay: document.querySelector("#cigarettesPerDay"),
   cigarettesPerPack: document.querySelector("#cigarettesPerPack"),
@@ -65,6 +65,7 @@ const elements = {
 
 let currentStep = 0;
 let currentMode = "cigarettes";
+let currentCurrency = "EUR";
 
 const numberFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 const decimalFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
@@ -131,7 +132,9 @@ function formatLifeSaved(minutes) {
 }
 
 function updateCurrencySymbols(currencyCode) {
-  const symbol = getCurrencySymbol(currencyCode);
+  currentCurrency = currencyCode || "EUR";
+  const symbol = getCurrencySymbol(currentCurrency);
+  elements.currencyCodes.forEach((el) => { el.value = currentCurrency; });
   elements.currencySymbols.forEach((el) => { el.textContent = symbol; });
 }
 
@@ -184,10 +187,14 @@ function writeState(state) {
 }
 
 function getFormState() {
+  const activeSteps = getActiveSteps();
+  const activeCurrencyCode = activeSteps[currentStep]?.querySelector(".currency-code")?.value;
+  const currencyCode = activeCurrencyCode || currentCurrency || "EUR";
+
   return {
     mode: currentMode,
     quitDate: elements.quitDate.value,
-    currencyCode: elements.currencyCode.value,
+    currencyCode,
     cigarettesPerDay: Number(elements.cigarettesPerDay.value) || 0,
     cigarettesPerPack: Number(elements.cigarettesPerPack.value) || 0,
     pricePerPack: parseDecimal(elements.pricePerPack.value),
@@ -201,13 +208,13 @@ function getFormState() {
 
 function setFormState(state) {
   currentMode = state.mode || "cigarettes";
+  currentCurrency = state.currencyCode || "EUR";
   const radio = elements.modeRadios.find((r) => r.value === currentMode);
   if (radio) radio.checked = true;
   updateModeCards();
 
   elements.quitDate.value = state.quitDate || "";
   elements.quitDate.max = todayAsInputValue();
-  elements.currencyCode.value = state.currencyCode || "EUR";
   elements.cigarettesPerDay.value = state.cigarettesPerDay || "";
   elements.cigarettesPerPack.value = state.cigarettesPerPack || "";
   elements.pricePerPack.value = state.pricePerPack || "";
@@ -637,6 +644,17 @@ elements.modeRadios.forEach((radio) => {
     updateModeCards();
     updateReceipt();
     showStep(currentStep);
+  });
+});
+
+elements.currencyCodes.forEach((select) => {
+  select.addEventListener("input", () => {
+    updateCurrencySymbols(select.value);
+    updateReceipt();
+  });
+  select.addEventListener("change", () => {
+    updateCurrencySymbols(select.value);
+    updateReceipt();
   });
 });
 
