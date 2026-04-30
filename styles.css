@@ -1133,6 +1133,14 @@ ol {
     width: min(100% - 18px, 980px);
   }
 
+  .app-shell.is-receipt-view {
+    padding-top: calc(34px + env(safe-area-inset-top, 0px));
+  }
+
+  .receipt--market .receipt__header {
+    padding-top: 42px;
+  }
+
   .wizard,
   .receipt {
     box-shadow: none;
