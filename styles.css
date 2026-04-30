@@ -381,7 +381,7 @@ select:focus {
 .primary-button,
 .secondary-button,
 .text-button {
-  min-height: 40px;
+  min-height: 48px;
   border: 1px solid var(--line);
   border-radius: 0;
   background:
@@ -402,7 +402,7 @@ select:focus {
 
 .primary-button--large {
   flex: 1 1 100%;
-  min-height: 50px;
+  min-height: 48px;
   font-size: 1rem;
 }
 
@@ -441,9 +441,9 @@ select:focus {
 
 .receipt-actions .primary-button,
 .receipt-actions .secondary-button {
-  min-height: 44px;
-  padding: 0 14px;
-  font-size: 0.82rem;
+  min-height: 48px;
+  padding: 0 16px;
+  font-size: 1rem;
 }
 
 .receipt {
@@ -516,6 +516,11 @@ select:focus {
 
 .receipt--market .receipt__header {
   padding: 30px 18px 18px;
+}
+
+.receipt--market .receipt__top-gap {
+  display: block;
+  height: 22px;
 }
 
 .receipt--market .receipt__header p {
@@ -1138,7 +1143,11 @@ ol {
   }
 
   .receipt--market .receipt__header {
-    padding-top: 42px;
+    padding-top: 48px;
+  }
+
+  .receipt--market .receipt__top-gap {
+    height: 28px;
   }
 
   .wizard,
