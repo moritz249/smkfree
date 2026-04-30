@@ -575,8 +575,9 @@ function applyDefaultsForCurrentStep(stepEl) {
   });
 }
 
-function showReceipt() {
-  if (!validateCurrentStep()) return;
+function showReceipt(event) {
+  event?.preventDefault();
+  event?.stopPropagation();
   updateReceipt();
   elements.appShell.classList.add("is-receipt-view");
   elements.stage.classList.add("is-receipt-only");
@@ -641,7 +642,7 @@ elements.modeRadios.forEach((radio) => {
 
 elements.form.addEventListener("submit", (event) => {
   event.preventDefault();
-  showReceipt();
+  advanceWizard();
 });
 
 elements.form.addEventListener("keydown", (event) => {
@@ -656,6 +657,11 @@ elements.nextButton.addEventListener("click", () => {
 });
 
 elements.backButton.addEventListener("click", () => showStep(currentStep - 1));
+document.addEventListener("click", (event) => {
+  if (!event.target.closest("#receiptButton")) return;
+  showReceipt(event);
+}, true);
+elements.receiptButton.addEventListener("pointerup", showReceipt);
 elements.receiptButton.addEventListener("click", showReceipt);
 elements.resetButton.addEventListener("click", resetApp);
 elements.form.addEventListener("input", () => updateReceipt());
