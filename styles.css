@@ -1139,11 +1139,11 @@ ol {
   }
 
   .app-shell.is-receipt-view {
-    padding-top: calc(34px + env(safe-area-inset-top, 0px));
+    padding-top: calc(34px + 0.3cm + env(safe-area-inset-top, 0px));
   }
 
   .receipt--market .receipt__header {
-    padding-top: 48px;
+    padding-top: calc(48px + 0.3cm);
   }
 
   .receipt--market .receipt__top-gap {
