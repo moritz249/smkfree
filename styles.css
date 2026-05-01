@@ -90,9 +90,9 @@ button {
 .site-footer {
   display: flex;
   justify-content: center;
-  padding: 4cm 18px 28px;
+  padding: 34px 18px 22px;
   font-family: var(--mono);
-  font-size: 0.78rem;
+  font-size: 0.62rem;
   text-transform: uppercase;
 }
 
@@ -1294,7 +1294,7 @@ ol {
   }
 
   .site-footer {
-    padding-top: 56px;
+    padding-top: 28px;
   }
 
   .app-shell.is-receipt-view {
