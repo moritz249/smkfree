@@ -23,6 +23,7 @@ const vapingMilestones = [
 
 const elements = {
   form: document.querySelector("#quitForm"),
+  siteFooter: document.querySelector(".site-footer"),
   appShell: document.querySelector("#appShell"),
   stage: document.querySelector("#stage"),
   resetButton: document.querySelector("#resetButton"),
@@ -819,6 +820,7 @@ function showStep(index) {
   elements.nextButton.textContent = currentStep === 0 ? "Start" : "Next";
   elements.nextButton.classList.toggle("is-hidden", currentStep === total - 1);
   elements.receiptButton.classList.toggle("is-hidden", currentStep !== total - 1);
+  elements.siteFooter.classList.toggle("is-hidden", currentStep !== 0);
   window.setTimeout(focusCurrentStepField, 0);
 }
 
@@ -873,6 +875,7 @@ function showReceipt(event) {
   elements.appShell.classList.add("is-receipt-view");
   elements.stage.classList.add("is-receipt-only");
   elements.editButton.textContent = "Details";
+  elements.siteFooter.classList.add("is-hidden");
   elements.receipt.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -1020,8 +1023,9 @@ const THEME_KEY = "smkfree-theme";
 const themeDots = document.querySelectorAll(".theme-dot");
 
 function applyTheme(theme) {
-  document.documentElement.dataset.theme = theme === "default" ? "" : theme;
+  elements.receipt.dataset.theme = theme === "default" ? "" : theme;
   themeDots.forEach((dot) => dot.classList.toggle("is-active", dot.dataset.theme === theme));
+  customColorBtn?.classList.toggle("is-active", theme === "custom");
 }
 
 themeDots.forEach((dot) => {
@@ -1035,7 +1039,7 @@ themeDots.forEach((dot) => {
 // Custom color theme
 const CUSTOM_COLOR_KEY = "smkfree-custom-color";
 const customColorInput = document.querySelector("#customColor");
-const customColorDot = document.querySelector(".theme-dot[data-theme='custom']");
+const customColorBtn = document.querySelector("#customColorBtn");
 
 function hexToHsl(hex) {
   const r = parseInt(hex.slice(1, 3), 16) / 255;
@@ -1077,18 +1081,23 @@ function applyCustomThemeVars(hex) {
   const gi = parseInt(inkHex.slice(3, 5), 16);
   const bi = parseInt(inkHex.slice(5, 7), 16);
 
-  const root = document.documentElement;
-  root.style.setProperty("--custom-ink", inkHex);
-  root.style.setProperty("--custom-muted", mutedHex);
-  root.style.setProperty("--custom-paper", paperHex);
-  root.style.setProperty("--custom-receipt", receiptHex);
-  root.style.setProperty("--custom-shadow", `8px 10px 0 rgba(${ri}, ${gi}, ${bi}, 0.35)`);
+  const el = elements.receipt;
+  el.style.setProperty("--custom-ink", inkHex);
+  el.style.setProperty("--custom-muted", mutedHex);
+  el.style.setProperty("--custom-paper", paperHex);
+  el.style.setProperty("--custom-receipt", receiptHex);
+  el.style.setProperty("--custom-shadow", `8px 10px 0 rgba(${ri}, ${gi}, ${bi}, 0.35)`);
 
-  customColorDot.style.background = dotBgHex;
-  customColorDot.style.borderColor = inkHex;
+  customColorBtn.style.borderColor = inkHex;
+  customColorBtn.style.color = inkHex;
+  customColorBtn.style.background = dotBgHex;
 }
 
-customColorInput.addEventListener("click", (e) => e.stopPropagation());
+customColorBtn.addEventListener("click", () => {
+  customColorInput.click();
+  localStorage.setItem(THEME_KEY, "custom");
+  applyTheme("custom");
+});
 
 customColorInput.addEventListener("input", () => {
   const hex = customColorInput.value;
