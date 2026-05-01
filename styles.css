@@ -67,6 +67,79 @@ button {
   padding-top: clamp(18px, 4vw, 36px);
 }
 
+.site-footer {
+  display: flex;
+  justify-content: center;
+  padding: 0 18px 28px;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.site-footer a,
+.legal-card a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.legal-shell {
+  display: grid;
+  justify-items: center;
+  width: min(760px, calc(100% - 24px));
+  margin: 0 auto;
+  padding: clamp(18px, 4vw, 44px) 0 60px;
+}
+
+.legal-card {
+  width: min(100%, 620px);
+  border: 1px solid var(--line);
+  padding: clamp(22px, 5vw, 38px);
+  background:
+    linear-gradient(90deg, rgba(5, 5, 5, 0.025) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(5, 5, 5, 0.022) 1px, transparent 1px),
+    #fffef5;
+  background-size: 3px 3px, 3px 3px, auto;
+  box-shadow: var(--shadow);
+}
+
+.legal-back {
+  display: inline-block;
+  margin-bottom: 30px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.legal-card .intro-logo {
+  margin-bottom: 22px;
+}
+
+.legal-card h1 {
+  margin: 12px 0 28px;
+  font-size: clamp(1.7rem, 7vw, 2.4rem);
+  line-height: 1.02;
+  text-transform: uppercase;
+}
+
+.legal-card h2 {
+  margin: 28px 0 8px;
+  font-size: 1rem;
+  text-transform: uppercase;
+}
+
+.legal-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.94rem;
+  line-height: 1.48;
+}
+
+.legal-note {
+  margin-top: 30px !important;
+  border-top: 1px dotted var(--line);
+  padding-top: 16px;
+}
+
 .scan-frame {
   position: relative;
 }
@@ -274,6 +347,33 @@ button {
   display: block;
 }
 
+.intro-step {
+  display: grid;
+  align-content: center;
+  min-height: 260px;
+}
+
+.intro-logo {
+  display: inline-block;
+  width: max-content;
+  margin-bottom: 24px;
+  border-bottom: 7px solid var(--line);
+  padding-bottom: 2px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(3.1rem, 15vw, 5.4rem);
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: -0.13em;
+  line-height: 0.76;
+  text-transform: lowercase;
+}
+
+.intro-step > p:not(.intro-logo):not(.kicker) {
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
 .kicker {
   display: inline-block;
   border: 1px solid var(--line);
@@ -311,6 +411,34 @@ label {
   font-size: 0.88rem;
   font-weight: 600;
   text-transform: uppercase;
+}
+
+.toggle-field {
+  grid-template-columns: 26px minmax(0, 1fr);
+  align-items: start;
+  border: 1px dotted var(--line);
+  padding: 12px;
+  color: var(--ink);
+  text-transform: none;
+}
+
+.toggle-field input {
+  width: 20px;
+  min-height: 20px;
+  margin: 2px 0 0;
+  padding: 0;
+}
+
+.toggle-field small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.25;
+}
+
+.advanced-panel {
+  margin-top: 18px;
 }
 
 input,
