@@ -27,7 +27,7 @@
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="assets/icon.svg">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=20260501-1">
     <script src="assets/html2canvas.min.js" defer></script>
   </head>
   <body>
@@ -49,8 +49,18 @@
             <span id="progressFill"></span>
           </div>
 
-          <!-- Step 0: Quit date -->
+          <!-- Step 0: Intro -->
           <section class="step is-active" data-mode="all">
+            <div class="intro-step">
+              <p class="intro-logo">smkfree</p>
+              <p class="kicker">Quit receipt</p>
+              <h2>Your progress printed.</h2>
+              <p>Enter a few details and get your smoke-free receipt. Takes about 30 seconds. No signup needed.</p>
+            </div>
+          </section>
+
+          <!-- Step 1: Quit date -->
+          <section class="step" data-mode="all">
             <p class="kicker">Start date</p>
             <h2>When did you stop?</h2>
             <label>
@@ -59,7 +69,7 @@
             </label>
           </section>
 
-          <!-- Step 1: Mode selection -->
+          <!-- Step 2: Mode selection -->
           <section class="step" data-mode="all">
             <p class="kicker">Your habit</p>
             <h2>What are you quitting?</h2>
@@ -206,6 +216,19 @@
             <p class="kicker">Summary</p>
             <h2>Check your details</h2>
             <dl class="summary-list" id="summaryList"></dl>
+            <div class="advanced-panel" id="advancedPanel">
+              <label class="toggle-field">
+                <input id="advancedMode" name="advancedMode" type="checkbox">
+                <span>
+                  Advanced receipt
+                  <small>Estimate what you paid before quitting. Germany only for now.</small>
+                </span>
+              </label>
+              <label id="smokingStartField" class="is-hidden">
+                Smoking start date
+                <input id="smokingStartDate" name="smokingStartDate" type="date">
+              </label>
+            </div>
           </section>
 
           <div class="wizard__actions">
@@ -258,8 +281,12 @@
             <div class="section-label">PROGRESS ITEMS</div>
 
             <dl class="receipt__rows">
+              <div id="receiptStartRow" class="is-hidden">
+                <dt>Start date</dt>
+                <dd id="receiptStartDate">--</dd>
+              </div>
               <div>
-                <dt>Quit date</dt>
+                <dt id="receiptQuitLabel">Quit date</dt>
                 <dd id="receiptQuitDate">--</dd>
               </div>
               <div id="receiptRow2">
@@ -275,8 +302,12 @@
                 <dd id="receiptValue4">EUR 0.00</dd>
               </div>
               <div>
-                <dt>Cost avoided</dt>
+                <dt id="costAvoidedLabel">Cost avoided</dt>
                 <dd id="costAvoided">EUR 0.00</dd>
+              </div>
+              <div id="receiptSpentRow" class="is-hidden">
+                <dt>- Paid before quit</dt>
+                <dd id="moneySpent">EUR 0.00</dd>
               </div>
               <div id="receiptRow6">
                 <dt>Estimated life back</dt>
@@ -295,7 +326,9 @@
             <footer class="receipt__footer">
               <small>
                 Health benefits and estimated life back are rough motivational estimates, not
-                medical advice. Actual effects vary from person to person.
+                medical advice. Actual effects vary from person to person. Cost totals use your
+                entries; advanced cigarette spend estimates German yearly pack prices and assumes
+                steady daily use.
               </small>
               <div class="receipt-logo" aria-hidden="true">
                 <span></span>
@@ -311,7 +344,10 @@
         </section>
       </section>
     </main>
+    <footer class="site-footer">
+      <a href="legal.html">Privacy / Legal</a>
+    </footer>
 
-    <script src="app.js?v=20260430-4"></script>
+    <script src="app.js?v=20260501-1"></script>
   </body>
 </html>

@@ -1,7 +1,7 @@
 const STORAGE_KEY = "smoke-free-progress";
-const STORAGE_VERSION = 3;
+const STORAGE_VERSION = 4;
 
-const milestones = [
+const tobaccoMilestones = [
   { hours: 8, title: "Oxygen improves", detail: "Carbon monoxide starts dropping." },
   { hours: 24, title: "Pulse steadies", detail: "Your body starts recalibrating." },
   { hours: 48, title: "Taste returns", detail: "Taste and smell can sharpen." },
@@ -9,6 +9,16 @@ const milestones = [
   { hours: 336, title: "Circulation improves", detail: "Two weeks smoke free." },
   { hours: 2160, title: "Lungs recover", detail: "Coughing may reduce." },
   { hours: 8760, title: "Risk keeps falling", detail: "One year smoke free." },
+];
+
+const vapingMilestones = [
+  { hours: 24, title: "Cravings shift", detail: "Nicotine routines begin to loosen." },
+  { hours: 72, title: "Breathing settles", detail: "Irritation from vapor may start easing." },
+  { hours: 168, title: "Triggers get clearer", detail: "One week without the vape habit." },
+  { hours: 336, title: "Energy steadies", detail: "Sleep and daily rhythm may feel more even." },
+  { hours: 720, title: "Habit loop fades", detail: "A month of choosing not to vape." },
+  { hours: 2160, title: "Lungs get space", detail: "Airways have had months away from vapor." },
+  { hours: 8760, title: "New baseline", detail: "One year without vaping." },
 ];
 
 const elements = {
@@ -27,6 +37,10 @@ const elements = {
   modeRadios: [...document.querySelectorAll("input[name='mode']")],
   modeCards: [...document.querySelectorAll(".mode-card")],
   quitDate: document.querySelector("#quitDate"),
+  advancedMode: document.querySelector("#advancedMode"),
+  advancedPanel: document.querySelector("#advancedPanel"),
+  smokingStartDate: document.querySelector("#smokingStartDate"),
+  smokingStartField: document.querySelector("#smokingStartField"),
   currencyCodes: [...document.querySelectorAll(".currency-code")],
   currencySymbols: document.querySelectorAll(".currency-symbol"),
   cigarettesPerDay: document.querySelector("#cigarettesPerDay"),
@@ -39,6 +53,9 @@ const elements = {
   accessoriesPerMonth: document.querySelector("#accessoriesPerMonth"),
   summaryList: document.querySelector("#summaryList"),
   receiptDate: document.querySelector("#receiptDate"),
+  receiptStartRow: document.querySelector("#receiptStartRow"),
+  receiptStartDate: document.querySelector("#receiptStartDate"),
+  receiptQuitLabel: document.querySelector("#receiptQuitLabel"),
   receiptQuitDate: document.querySelector("#receiptQuitDate"),
   moneySaved: document.querySelector("#moneySaved"),
   daysFree: document.querySelector("#daysFree"),
@@ -53,7 +70,10 @@ const elements = {
   receiptValue3: document.querySelector("#receiptValue3"),
   receiptLabel4: document.querySelector("#receiptLabel4"),
   receiptValue4: document.querySelector("#receiptValue4"),
+  costAvoidedLabel: document.querySelector("#costAvoidedLabel"),
   costAvoided: document.querySelector("#costAvoided"),
+  receiptSpentRow: document.querySelector("#receiptSpentRow"),
+  moneySpent: document.querySelector("#moneySpent"),
   receiptRow6: document.querySelector("#receiptRow6"),
   lifeSaved: document.querySelector("#lifeSaved"),
   milestoneList: document.querySelector("#milestoneList"),
@@ -66,6 +86,7 @@ const elements = {
 let currentStep = 0;
 let currentMode = "cigarettes";
 let currentCurrency = "EUR";
+let currentAdvanced = false;
 
 const numberFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 const decimalFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
@@ -84,6 +105,21 @@ const code39 = {
 };
 
 const decimalInputIds = new Set(["pricePerPack", "weeklyRyoCost", "costPer10ml", "accessoriesPerMonth"]);
+const advancedCurrencyCode = "EUR";
+
+const germanPackPriceAnchors = [
+  { year: 1990, price: 2.15 },
+  { year: 1995, price: 2.55 },
+  { year: 2000, price: 2.95 },
+  { year: 2002, price: 3.16 },
+  { year: 2005, price: 4.21 },
+  { year: 2010, price: 5.00 },
+  { year: 2015, price: 6.00 },
+  { year: 2020, price: 7.00 },
+  { year: 2022, price: 7.60 },
+  { year: 2024, price: 8.70 },
+  { year: 2025, price: 9.40 },
+];
 
 function todayAsInputValue() {
   const now = new Date();
@@ -121,6 +157,69 @@ function parseDecimal(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function decimalYear(date) {
+  const start = new Date(date.getFullYear(), 0, 1);
+  const next = new Date(date.getFullYear() + 1, 0, 1);
+  return date.getFullYear() + ((date - start) / (next - start));
+}
+
+function estimateGermanPackPrice20At(date) {
+  const year = decimalYear(date);
+  const first = germanPackPriceAnchors[0];
+  const last = germanPackPriceAnchors[germanPackPriceAnchors.length - 1];
+
+  if (year <= first.year) return first.price;
+  if (year >= last.year) return last.price;
+
+  for (let index = 1; index < germanPackPriceAnchors.length; index += 1) {
+    const previous = germanPackPriceAnchors[index - 1];
+    const next = germanPackPriceAnchors[index];
+
+    if (year <= next.year) {
+      const ratio = (year - previous.year) / (next.year - previous.year);
+      return previous.price + ((next.price - previous.price) * ratio);
+    }
+  }
+
+  return last.price;
+}
+
+function estimateGermanSmokingSpend(state, quitStart) {
+  if (!state.isAdvanced || state.currencyCode !== "EUR" || !state.smokingStartDate || state.mode !== "cigarettes") {
+    return { moneySpent: 0, averagePackPrice: 0, smokingDays: 0 };
+  }
+
+  const start = new Date(`${state.smokingStartDate}T00:00:00`);
+  const end = quitStart;
+
+  if (start >= end || state.cigarettesPerDay <= 0 || state.cigarettesPerPack <= 0) {
+    return { moneySpent: 0, averagePackPrice: 0, smokingDays: 0 };
+  }
+
+  let cursor = new Date(start);
+  let moneySpent = 0;
+  let weightedPackPrice = 0;
+  let smokingDays = 0;
+
+  while (cursor < end) {
+    const nextYear = new Date(cursor.getFullYear() + 1, 0, 1);
+    const segmentEnd = nextYear < end ? nextYear : end;
+    const days = (segmentEnd - cursor) / 86_400_000;
+    const pricePer20 = estimateGermanPackPrice20At(cursor);
+    const packPrice = pricePer20 * (state.cigarettesPerPack / 20);
+    moneySpent += (days * state.cigarettesPerDay / state.cigarettesPerPack) * packPrice;
+    weightedPackPrice += packPrice * days;
+    smokingDays += days;
+    cursor = segmentEnd;
+  }
+
+  return {
+    moneySpent,
+    averagePackPrice: smokingDays > 0 ? weightedPackPrice / smokingDays : 0,
+    smokingDays,
+  };
+}
+
 function formatLifeSaved(minutes) {
   const wholeMinutes = Math.floor(minutes);
   const days = Math.floor(wholeMinutes / 1440);
@@ -149,14 +248,46 @@ function updateModeCards() {
 
 function getActiveSteps() {
   return elements.steps.filter(
-    (step) => step.dataset.mode === "all" || step.dataset.mode === currentMode
+    (step) => {
+      const matchesMode = step.dataset.mode === "all" || step.dataset.mode === currentMode;
+      return matchesMode;
+    }
   );
+}
+
+function supportsAdvancedMode(mode) {
+  return mode === "cigarettes";
+}
+
+function getEffectiveCurrencyCode(mode, isAdvanced, currencyCode) {
+  return supportsAdvancedMode(mode) && isAdvanced ? advancedCurrencyCode : currencyCode || "EUR";
+}
+
+function syncAdvancedFields() {
+  const canUseAdvanced = supportsAdvancedMode(currentMode);
+  if (!canUseAdvanced) currentAdvanced = false;
+
+  const showStartDate = canUseAdvanced && currentAdvanced;
+  elements.advancedPanel.classList.toggle("is-hidden", !canUseAdvanced);
+  elements.advancedMode.disabled = !canUseAdvanced;
+  elements.advancedMode.checked = currentAdvanced;
+  elements.smokingStartField.classList.toggle("is-hidden", !showStartDate);
+  elements.smokingStartDate.disabled = !showStartDate;
+  elements.smokingStartDate.max = elements.quitDate.value || todayAsInputValue();
+
+  if (!showStartDate) {
+    elements.smokingStartDate.setCustomValidity("");
+  } else {
+    updateCurrencySymbols(advancedCurrencyCode);
+  }
 }
 
 function readState() {
   const fallback = {
     mode: "cigarettes",
+    isAdvanced: false,
     quitDate: "",
+    smokingStartDate: "",
     currencyCode: "EUR",
     cigarettesPerDay: "",
     cigarettesPerPack: "",
@@ -175,7 +306,7 @@ function readState() {
       localStorage.removeItem(STORAGE_KEY);
       return fallback;
     }
-    return { ...fallback, ...parsed };
+    return { ...fallback, ...parsed, isAdvanced: Boolean(parsed.isAdvanced) };
   } catch {
     localStorage.removeItem(STORAGE_KEY);
     return fallback;
@@ -189,11 +320,14 @@ function writeState(state) {
 function getFormState() {
   const activeSteps = getActiveSteps();
   const activeCurrencyCode = activeSteps[currentStep]?.querySelector(".currency-code")?.value;
-  const currencyCode = activeCurrencyCode || currentCurrency || "EUR";
+  const isAdvanced = currentAdvanced && supportsAdvancedMode(currentMode);
+  const currencyCode = getEffectiveCurrencyCode(currentMode, isAdvanced, activeCurrencyCode || currentCurrency);
 
   return {
     mode: currentMode,
+    isAdvanced,
     quitDate: elements.quitDate.value,
+    smokingStartDate: elements.smokingStartDate.value,
     currencyCode,
     cigarettesPerDay: Number(elements.cigarettesPerDay.value) || 0,
     cigarettesPerPack: Number(elements.cigarettesPerPack.value) || 0,
@@ -208,13 +342,17 @@ function getFormState() {
 
 function setFormState(state) {
   currentMode = state.mode || "cigarettes";
-  currentCurrency = state.currencyCode || "EUR";
+  currentAdvanced = supportsAdvancedMode(currentMode) && Boolean(state.isAdvanced);
+  currentCurrency = getEffectiveCurrencyCode(currentMode, currentAdvanced, state.currencyCode);
   const radio = elements.modeRadios.find((r) => r.value === currentMode);
   if (radio) radio.checked = true;
   updateModeCards();
 
   elements.quitDate.value = state.quitDate || "";
   elements.quitDate.max = todayAsInputValue();
+  elements.advancedMode.checked = currentAdvanced;
+  elements.smokingStartDate.value = state.smokingStartDate || "";
+  elements.smokingStartDate.max = state.quitDate || todayAsInputValue();
   elements.cigarettesPerDay.value = state.cigarettesPerDay || "";
   elements.cigarettesPerPack.value = state.cigarettesPerPack || "";
   elements.pricePerPack.value = state.pricePerPack || "";
@@ -223,7 +361,8 @@ function setFormState(state) {
   elements.mlPerWeek.value = state.mlPerWeek || "";
   elements.costPer10ml.value = state.costPer10ml || "";
   elements.accessoriesPerMonth.value = state.accessoriesPerMonth || "";
-  updateCurrencySymbols(state.currencyCode || "EUR");
+  updateCurrencySymbols(currentCurrency);
+  syncAdvancedFields();
 }
 
 function calculateProgress(state) {
@@ -231,6 +370,7 @@ function calculateProgress(state) {
     elapsedHours: 0, wholeDays: 0, weeks: 0, months: 0, years: 0,
     moneySaved: 0, estimatedLifeMinutes: 0,
     cigarettesAvoided: 0, packsAvoided: 0,
+    moneySpent: 0, averageHistoricPackPrice: 0, smokingDays: 0,
     rollsAvoided: 0, weeklyRyoCost: 0,
     mlNotVaped: 0, liquidSaved: 0, accessoriesSaved: 0,
   };
@@ -279,11 +419,15 @@ function calculateProgress(state) {
   const packsAvoided = state.cigarettesPerPack > 0
     ? cigarettesAvoided / state.cigarettesPerPack : 0;
   const moneySaved = packsAvoided * state.pricePerPack;
+  const smokingSpend = estimateGermanSmokingSpend(state, quitStart);
   return {
     ...empty, ...base,
     cigarettesAvoided,
     packsAvoided,
     moneySaved,
+    moneySpent: smokingSpend.moneySpent,
+    averageHistoricPackPrice: smokingSpend.averagePackPrice,
+    smokingDays: smokingSpend.smokingDays,
     estimatedLifeMinutes: cigarettesAvoided * 11,
   };
 }
@@ -293,13 +437,22 @@ function renderReceipt(progress, state) {
   elements.receiptDate.textContent = new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium", timeStyle: "short",
   }).format(new Date());
+  const showAdvancedSpend = state.isAdvanced && state.mode === "cigarettes" && state.currencyCode === advancedCurrencyCode;
+  elements.receiptStartRow.classList.toggle("is-hidden", !showAdvancedSpend);
+  elements.receiptStartDate.textContent = formatDate(state.smokingStartDate);
+  elements.receiptQuitLabel.textContent = showAdvancedSpend ? "Stop date" : "Quit date";
   elements.receiptQuitDate.textContent = formatDate(state.quitDate);
   elements.daysFree.textContent = numberFormatter.format(progress.wholeDays);
   elements.weeksFree.textContent = numberFormatter.format(progress.weeks);
   elements.monthsFree.textContent = numberFormatter.format(progress.months);
   elements.yearsFree.textContent = numberFormatter.format(progress.years);
   elements.moneySaved.textContent = formatCurrency(progress.moneySaved, state.currencyCode);
-  elements.costAvoided.textContent = formatCurrency(progress.moneySaved, state.currencyCode);
+  elements.costAvoidedLabel.textContent = showAdvancedSpend ? "+ Saved after quit" : "Cost avoided";
+  elements.costAvoided.textContent = showAdvancedSpend
+    ? `+ ${formatCurrency(progress.moneySaved, state.currencyCode)}`
+    : formatCurrency(progress.moneySaved, state.currencyCode);
+  elements.receiptSpentRow.classList.toggle("is-hidden", !showAdvancedSpend);
+  elements.moneySpent.textContent = `- ${formatCurrency(progress.moneySpent, state.currencyCode)}`;
 
   if (state.mode === "ryo") {
     elements.receiptLabel2.textContent = "Roll-ups avoided";
@@ -324,10 +477,10 @@ function renderReceipt(progress, state) {
     elements.receiptRow3.classList.remove("is-hidden");
     elements.receiptLabel3.textContent = "Packs not bought";
     elements.receiptValue3.textContent = decimalFormatter.format(progress.packsAvoided);
-    elements.receiptLabel4.textContent = "Pack price";
-    elements.receiptValue4.textContent = formatCurrency(
-      state.pricePerPack || 0, state.currencyCode
-    );
+    elements.receiptLabel4.textContent = showAdvancedSpend ? "Avg pack price" : "Pack price";
+    elements.receiptValue4.textContent = showAdvancedSpend
+      ? `~ ${formatCurrency(progress.averageHistoricPackPrice, state.currencyCode)} avg DE`
+      : formatCurrency(state.pricePerPack || 0, state.currencyCode);
     elements.receiptRow6.classList.remove("is-hidden");
     elements.lifeSaved.textContent = formatLifeSaved(progress.estimatedLifeMinutes);
   }
@@ -389,12 +542,28 @@ function renderSummary(state) {
       ["Accessories / mo.", formatCurrency(state.accessoriesPerMonth, cur)],
     ];
   } else {
-    rows = [
-      ["Quit date", formatDate(state.quitDate)],
+    const advancedProgress = state.isAdvanced ? calculateProgress(state) : null;
+    rows = state.isAdvanced
+      ? [
+        ["Start date", formatDate(state.smokingStartDate)],
+        ["Stop date", formatDate(state.quitDate)],
+      ]
+      : [
+        ["Quit date", formatDate(state.quitDate)],
+      ];
+
+    rows.push(
       ["Cigarettes / day", numberFormatter.format(state.cigarettesPerDay)],
       ["Cigarettes / pack", numberFormatter.format(state.cigarettesPerPack)],
-      ["Pack price", formatCurrency(state.pricePerPack, cur)],
-    ];
+      state.isAdvanced
+        ? ["Avg pack price", `~ ${formatCurrency(advancedProgress.averageHistoricPackPrice, cur)} avg DE`]
+        : ["Pack price", formatCurrency(state.pricePerPack, cur)],
+    );
+
+    if (state.isAdvanced) {
+      rows.push(["+ Saved after quit", `+ ${formatCurrency(advancedProgress.moneySaved, cur)}`]);
+      rows.push(["- Paid before quit", `- ${formatCurrency(advancedProgress.moneySpent, cur)}`]);
+    }
   }
 
   elements.summaryList.innerHTML = rows
@@ -402,11 +571,13 @@ function renderSummary(state) {
     .join("");
 }
 
-function renderMilestones(elapsedHours) {
+function renderMilestones(elapsedHours, mode) {
+  const milestones = mode === "vaping" ? vapingMilestones : tobaccoMilestones;
   const next = milestones.find((m) => m.hours > elapsedHours);
+  elements.nextMilestone.classList.toggle("is-hidden", !next);
   elements.nextMilestone.textContent = next
     ? `Next small-print benefit: ${next.title}`
-    : "All small-print benefits listed here are checked off.";
+    : "";
   elements.milestoneList.innerHTML = "";
 
   milestones.forEach((milestone) => {
@@ -442,7 +613,7 @@ function updateReceipt(shouldSave = true) {
   if (shouldSave) writeState(state);
   renderReceipt(progress, state);
   renderSummary(state);
-  renderMilestones(progress.elapsedHours);
+  renderMilestones(progress.elapsedHours, state.mode);
 }
 
 function downloadUrl(url, filename) {
@@ -541,6 +712,8 @@ function showStep(index) {
   elements.stepCounter.textContent = `Step ${currentStep + 1} of ${total}`;
   elements.progressFill.style.width = `${((currentStep + 1) / total) * 100}%`;
   elements.backButton.disabled = currentStep === 0;
+  elements.backButton.classList.toggle("is-hidden", currentStep === 0);
+  elements.nextButton.textContent = currentStep === 0 ? "Start" : "Next";
   elements.nextButton.classList.toggle("is-hidden", currentStep === total - 1);
   elements.receiptButton.classList.toggle("is-hidden", currentStep !== total - 1);
   window.setTimeout(focusCurrentStepField, 0);
@@ -555,7 +728,7 @@ function focusCurrentStepField() {
 
 function getStepFields(stepEl) {
   return [...stepEl?.querySelectorAll("input:not([type='radio']), select") || []]
-    .filter((field) => !field.disabled);
+    .filter((field) => !field.disabled && !field.closest(".is-hidden"));
 }
 
 function validateCurrentStep() {
@@ -567,6 +740,12 @@ function validateCurrentStep() {
   applyDefaultsForCurrentStep(stepEl);
   const inputs = getStepFields(stepEl);
   return inputs.every((input) => {
+    if (input === elements.smokingStartDate) {
+      const needsStartDate = currentAdvanced && currentMode === "cigarettes";
+      const isValid = !needsStartDate || (input.value && (!elements.quitDate.value || input.value < elements.quitDate.value));
+      input.setCustomValidity(isValid ? "" : "Enter a start date before your quit date.");
+    }
+
     if (decimalInputIds.has(input.id)) {
       const isValid = input.value.trim() !== "" && parseDecimal(input.value) >= 0;
       input.setCustomValidity(isValid ? "" : "Enter a valid amount.");
@@ -630,6 +809,7 @@ function focusNextFieldInStep(target) {
 function resetApp() {
   localStorage.removeItem(STORAGE_KEY);
   currentMode = "cigarettes";
+  currentAdvanced = false;
   setFormState(readState());
   elements.appShell.classList.remove("is-receipt-view");
   elements.stage.classList.remove("is-receipt-only");
@@ -642,10 +822,21 @@ function resetApp() {
 elements.modeRadios.forEach((radio) => {
   radio.addEventListener("input", () => {
     currentMode = radio.value;
+    syncAdvancedFields();
     updateModeCards();
     updateReceipt();
     showStep(currentStep);
   });
+});
+
+elements.advancedMode.addEventListener("input", () => {
+  currentAdvanced = elements.advancedMode.checked && supportsAdvancedMode(currentMode);
+  syncAdvancedFields();
+  updateReceipt();
+});
+
+elements.quitDate.addEventListener("input", () => {
+  syncAdvancedFields();
 });
 
 elements.currencyCodes.forEach((select) => {
