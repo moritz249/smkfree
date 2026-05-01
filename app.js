@@ -1028,4 +1028,73 @@ themeDots.forEach((dot) => {
   });
 });
 
+// Custom color theme
+const CUSTOM_COLOR_KEY = "smkfree-custom-color";
+const customColorInput = document.querySelector("#customColor");
+const customColorDot = document.querySelector(".theme-dot[data-theme='custom']");
+
+function hexToHsl(hex) {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), delta = max - min;
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+  if (delta > 0) {
+    s = delta / (1 - Math.abs(2 * l - 1));
+    if (max === r) h = ((g - b) / delta + 6) % 6;
+    else if (max === g) h = (b - r) / delta + 2;
+    else h = (r - g) / delta + 4;
+    h /= 6;
+  }
+  return { h, s, l };
+}
+
+function hslToHex(h, s, l) {
+  const a = s * Math.min(l, 1 - l);
+  const f = n => {
+    const k = (n + h * 12) % 12;
+    return Math.round(255 * (l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1)))
+      .toString(16).padStart(2, "0");
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+function applyCustomThemeVars(hex) {
+  const { h, s, l } = hexToHsl(hex);
+  const inkL = Math.min(l, 0.37);
+  const inkS = Math.max(s, 0.35);
+  const inkHex    = hslToHex(h, inkS, inkL);
+  const mutedHex  = hslToHex(h, inkS * 0.65, Math.min(inkL + 0.22, 0.65));
+  const paperHex  = hslToHex(h, Math.min(s * 0.8 + 0.1, 0.55), 0.964);
+  const receiptHex = hslToHex(h, Math.min(s * 0.4 + 0.05, 0.25), 0.987);
+  const dotBgHex  = hslToHex(h, Math.max(s, 0.5), Math.min(Math.max(l + 0.1, 0.58), 0.76));
+  const ri = parseInt(inkHex.slice(1, 3), 16);
+  const gi = parseInt(inkHex.slice(3, 5), 16);
+  const bi = parseInt(inkHex.slice(5, 7), 16);
+
+  const root = document.documentElement;
+  root.style.setProperty("--custom-ink", inkHex);
+  root.style.setProperty("--custom-muted", mutedHex);
+  root.style.setProperty("--custom-paper", paperHex);
+  root.style.setProperty("--custom-receipt", receiptHex);
+  root.style.setProperty("--custom-shadow", `8px 10px 0 rgba(${ri}, ${gi}, ${bi}, 0.35)`);
+
+  customColorDot.style.background = dotBgHex;
+  customColorDot.style.borderColor = inkHex;
+}
+
+customColorInput.addEventListener("click", (e) => e.stopPropagation());
+
+customColorInput.addEventListener("input", () => {
+  const hex = customColorInput.value;
+  applyCustomThemeVars(hex);
+  localStorage.setItem(CUSTOM_COLOR_KEY, hex);
+  localStorage.setItem(THEME_KEY, "custom");
+  applyTheme("custom");
+});
+
+const savedCustomColor = localStorage.getItem(CUSTOM_COLOR_KEY) || "#7c3aed";
+customColorInput.value = savedCustomColor;
+applyCustomThemeVars(savedCustomColor);
 applyTheme(localStorage.getItem(THEME_KEY) || "default");
