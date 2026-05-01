@@ -1020,26 +1020,15 @@ updateReceipt(false);
 
 // Theme
 const THEME_KEY = "smkfree-theme";
-const themeDots = document.querySelectorAll(".theme-dot");
 
 function applyTheme(theme) {
   elements.receipt.dataset.theme = theme === "default" ? "" : theme;
-  themeDots.forEach((dot) => dot.classList.toggle("is-active", dot.dataset.theme === theme));
-  customColorBtn?.classList.toggle("is-active", theme === "custom");
 }
-
-themeDots.forEach((dot) => {
-  dot.addEventListener("click", () => {
-    const theme = dot.dataset.theme;
-    localStorage.setItem(THEME_KEY, theme);
-    applyTheme(theme);
-  });
-});
 
 // Custom color theme
 const CUSTOM_COLOR_KEY = "smkfree-custom-color";
 const customColorInput = document.querySelector("#customColor");
-const customColorBtn = document.querySelector("#customColorBtn");
+const customColorLabel = document.querySelector("#customColorLabel");
 
 function hexToHsl(hex) {
   const r = parseInt(hex.slice(1, 3), 16) / 255;
@@ -1088,16 +1077,12 @@ function applyCustomThemeVars(hex) {
   el.style.setProperty("--custom-receipt", receiptHex);
   el.style.setProperty("--custom-shadow", `8px 10px 0 rgba(${ri}, ${gi}, ${bi}, 0.35)`);
 
-  customColorBtn.style.borderColor = inkHex;
-  customColorBtn.style.color = inkHex;
-  customColorBtn.style.background = dotBgHex;
+  if (customColorLabel) {
+    customColorLabel.style.borderColor = inkHex;
+    customColorLabel.style.color = inkHex;
+    customColorLabel.style.background = dotBgHex;
+  }
 }
-
-customColorBtn.addEventListener("click", () => {
-  customColorInput.click();
-  localStorage.setItem(THEME_KEY, "custom");
-  applyTheme("custom");
-});
 
 customColorInput.addEventListener("input", () => {
   const hex = customColorInput.value;
