@@ -37,6 +37,7 @@ const elements = {
   modeRadios: [...document.querySelectorAll("input[name='mode']")],
   modeCards: [...document.querySelectorAll(".mode-card")],
   quitDate: document.querySelector("#quitDate"),
+  notStoppedButton: document.querySelector("#notStoppedButton"),
   advancedMode: document.querySelector("#advancedMode"),
   advancedPanel: document.querySelector("#advancedPanel"),
   smokingStartDate: document.querySelector("#smokingStartDate"),
@@ -849,6 +850,13 @@ function advanceWizard() {
   showReceipt();
 }
 
+function startToday() {
+  elements.quitDate.value = todayAsInputValue();
+  elements.quitDate.dispatchEvent(new Event("input", { bubbles: true }));
+  updateReceipt();
+  advanceWizard();
+}
+
 function focusNextFieldInStep(target) {
   const activeSteps = getActiveSteps();
   const fields = getStepFields(activeSteps[currentStep]);
@@ -930,6 +938,7 @@ elements.nextButton.addEventListener("click", () => {
   advanceWizard();
 });
 
+elements.notStoppedButton.addEventListener("click", startToday);
 elements.backButton.addEventListener("click", () => showStep(currentStep - 1));
 document.addEventListener("click", (event) => {
   if (!event.target.closest("#receiptButton")) return;
