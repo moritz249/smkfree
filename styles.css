@@ -539,6 +539,11 @@ select:focus {
   padding: 0 16px;
 }
 
+.field-action {
+  width: 100%;
+  margin-top: 12px;
+}
+
 .text-button {
   min-height: 32px;
   border: 0;
