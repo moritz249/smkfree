@@ -18,23 +18,23 @@
 }
 
 [data-theme="sage"] {
-  --ink: #2f5b38;
-  --line: #2f5b38;
-  --muted: #58735d;
+  --ink: #1a6b2c;
+  --line: #1a6b2c;
+  --muted: #3d7a47;
   --paper: #f3faf2;
   --receipt: #fbfff9;
-  --blue: #2f5b38;
-  --shadow: 8px 10px 0 rgba(47, 91, 56, 0.35);
+  --blue: #1a6b2c;
+  --shadow: 8px 10px 0 rgba(26, 107, 44, 0.35);
 }
 
 [data-theme="pink"] {
-  --ink: #6f2f66;
-  --line: #6f2f66;
-  --muted: #82547b;
+  --ink: #801a75;
+  --line: #801a75;
+  --muted: #983d90;
   --paper: #fff5fd;
   --receipt: #fffaff;
-  --blue: #6f2f66;
-  --shadow: 8px 10px 0 rgba(111, 47, 102, 0.35);
+  --blue: #801a75;
+  --shadow: 8px 10px 0 rgba(128, 26, 117, 0.35);
 }
 
 * {
@@ -334,8 +334,8 @@ button {
 
 .theme-dot[data-theme="default"] { background: #050505; border-color: #050505; }
 .theme-dot[data-theme="blue"]    { background: #263cff; border-color: #263cff; }
-.theme-dot[data-theme="sage"]    { background: #b7d4b4; border-color: #2f5b38; }
-.theme-dot[data-theme="pink"]    { background: #e2b7dc; border-color: #6f2f66; }
+.theme-dot[data-theme="sage"]    { background: #85c98a; border-color: #1a6b2c; }
+.theme-dot[data-theme="pink"]    { background: #e07ed8; border-color: #801a75; }
 
 .theme-dot.is-active { opacity: 1; }
 

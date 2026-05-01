@@ -230,6 +230,13 @@
                   <small>Estimate what you paid before quitting.</small>
                 </span>
               </label>
+              <label class="toggle-field">
+                <input id="showBenefits" name="showBenefits" type="checkbox">
+                <span>
+                  Show benefits
+                  <small>Health milestones and recovered time.</small>
+                </span>
+              </label>
               <label id="smokingStartField" class="is-hidden">
                 Smoking start date
                 <input id="smokingStartDate" name="smokingStartDate" type="date">
@@ -290,7 +297,7 @@
 
             <div class="receipt__divider"></div>
 
-            <section class="fine-benefits">
+            <section class="fine-benefits is-hidden">
               <h3>Benefits</h3>
               <ol id="milestoneList"></ol>
               <p id="nextMilestone">Fill in your details to see what comes next.</p>
@@ -321,6 +328,6 @@
       <a href="legal.html">Privacy / Legal</a>
     </footer>
 
-    <script src="app.js?v=20260501-11"></script>
+    <script src="app.js?v=20260501-13"></script>
   </body>
 </html>
