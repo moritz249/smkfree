@@ -54,29 +54,12 @@ const elements = {
   accessoriesPerMonth: document.querySelector("#accessoriesPerMonth"),
   summaryList: document.querySelector("#summaryList"),
   receiptDate: document.querySelector("#receiptDate"),
-  receiptStartRow: document.querySelector("#receiptStartRow"),
-  receiptStartDate: document.querySelector("#receiptStartDate"),
-  receiptQuitLabel: document.querySelector("#receiptQuitLabel"),
-  receiptQuitDate: document.querySelector("#receiptQuitDate"),
+  receiptRows: document.querySelector("#receiptRows"),
   moneySaved: document.querySelector("#moneySaved"),
   daysFree: document.querySelector("#daysFree"),
   weeksFree: document.querySelector("#weeksFree"),
   monthsFree: document.querySelector("#monthsFree"),
   yearsFree: document.querySelector("#yearsFree"),
-  receiptRow2: document.querySelector("#receiptRow2"),
-  receiptLabel2: document.querySelector("#receiptLabel2"),
-  receiptValue2: document.querySelector("#receiptValue2"),
-  receiptRow3: document.querySelector("#receiptRow3"),
-  receiptLabel3: document.querySelector("#receiptLabel3"),
-  receiptValue3: document.querySelector("#receiptValue3"),
-  receiptLabel4: document.querySelector("#receiptLabel4"),
-  receiptValue4: document.querySelector("#receiptValue4"),
-  costAvoidedLabel: document.querySelector("#costAvoidedLabel"),
-  costAvoided: document.querySelector("#costAvoided"),
-  receiptSpentRow: document.querySelector("#receiptSpentRow"),
-  moneySpent: document.querySelector("#moneySpent"),
-  receiptRow6: document.querySelector("#receiptRow6"),
-  lifeSaved: document.querySelector("#lifeSaved"),
   milestoneList: document.querySelector("#milestoneList"),
   nextMilestone: document.querySelector("#nextMilestone"),
   receipt: document.querySelector("#receipt"),
@@ -476,59 +459,75 @@ function calculateProgress(state) {
   };
 }
 
+function renderReceiptRows(rows) {
+  elements.receiptRows.innerHTML = rows
+    .map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`)
+    .join("");
+}
+
 function renderReceipt(progress, state) {
   updateCurrencySymbols(state.currencyCode);
   elements.receiptDate.textContent = new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium", timeStyle: "short",
   }).format(new Date());
   const showAdvancedSpend = state.isAdvanced && supportsAdvancedMode(state.mode);
-  elements.receiptStartRow.classList.toggle("is-hidden", !showAdvancedSpend);
-  elements.receiptStartDate.textContent = formatDate(state.smokingStartDate);
-  elements.receiptQuitLabel.textContent = showAdvancedSpend ? "Stop date" : "Quit date";
-  elements.receiptQuitDate.textContent = formatDate(state.quitDate);
   elements.daysFree.textContent = numberFormatter.format(progress.wholeDays);
   elements.weeksFree.textContent = numberFormatter.format(progress.weeks);
   elements.monthsFree.textContent = numberFormatter.format(progress.months);
   elements.yearsFree.textContent = numberFormatter.format(progress.years);
   elements.moneySaved.textContent = formatCurrency(progress.moneySaved, state.currencyCode);
-  elements.costAvoidedLabel.textContent = showAdvancedSpend ? "+ Saved after quit" : "Cost avoided";
-  elements.costAvoided.textContent = showAdvancedSpend
-    ? `+ ${formatCurrency(progress.moneySaved, state.currencyCode)}`
-    : formatCurrency(progress.moneySaved, state.currencyCode);
-  elements.receiptSpentRow.classList.toggle("is-hidden", !showAdvancedSpend);
-  elements.moneySpent.textContent = `- ${formatCurrency(progress.moneySpent, state.currencyCode)}`;
+
+  const rows = showAdvancedSpend
+    ? [
+      ["Start date", formatDate(state.smokingStartDate)],
+      ["Stop date", formatDate(state.quitDate)],
+    ]
+    : [
+      ["Quit date", formatDate(state.quitDate)],
+    ];
 
   if (state.mode === "ryo") {
-    elements.receiptLabel2.textContent = "Roll-ups avoided";
-    elements.receiptValue2.textContent = numberFormatter.format(progress.rollsAvoided);
-    elements.receiptRow3.classList.add("is-hidden");
-    elements.receiptLabel4.textContent = "Weekly spend";
-    elements.receiptValue4.textContent = formatCurrency(progress.weeklyRyoCost, state.currencyCode);
-    elements.receiptRow6.classList.remove("is-hidden");
-    elements.lifeSaved.textContent = formatLifeSaved(progress.estimatedLifeMinutes);
+    rows.push(
+      ["Roll-ups avoided", numberFormatter.format(progress.rollsAvoided)],
+      ["Roll-ups / day", numberFormatter.format(state.rollsPerDay)],
+      ["Weekly spend", formatCurrency(progress.weeklyRyoCost, state.currencyCode)],
+    );
   } else if (state.mode === "vaping") {
-    elements.receiptLabel2.textContent = "ml not vaped";
-    elements.receiptValue2.textContent = decimalFormatter.format(progress.mlNotVaped) + " ml";
-    elements.receiptRow3.classList.remove("is-hidden");
-    elements.receiptLabel3.textContent = "Liquid saved";
-    elements.receiptValue3.textContent = formatCurrency(progress.liquidSaved, state.currencyCode);
-    elements.receiptLabel4.textContent = "Accessories";
-    elements.receiptValue4.textContent = formatCurrency(progress.accessoriesSaved, state.currencyCode);
-    elements.receiptRow6.classList.add("is-hidden");
+    rows.push(
+      ["ml not vaped", `${decimalFormatter.format(progress.mlNotVaped)} ml`],
+      ["ml / week", `${decimalFormatter.format(state.mlPerWeek)} ml`],
+      ["Cost / 10ml", formatCurrency(state.costPer10ml, state.currencyCode)],
+      ["Accessories / mo.", formatCurrency(state.accessoriesPerMonth, state.currencyCode)],
+      ["Liquid saved", formatCurrency(progress.liquidSaved, state.currencyCode)],
+      ["Accessories saved", formatCurrency(progress.accessoriesSaved, state.currencyCode)],
+    );
   } else {
-    elements.receiptLabel2.textContent = "Not smoked";
-    elements.receiptValue2.textContent = numberFormatter.format(progress.cigarettesAvoided);
-    elements.receiptRow3.classList.remove("is-hidden");
-    elements.receiptLabel3.textContent = "Packs not bought";
-    elements.receiptValue3.textContent = decimalFormatter.format(progress.packsAvoided);
-    elements.receiptLabel4.textContent = showAdvancedSpend ? "Avg pack price" : "Pack price";
-    elements.receiptValue4.textContent = showAdvancedSpend
-      ? `~ ${formatCurrency(progress.averageHistoricPackPrice, state.currencyCode)} avg DE`
-      : formatCurrency(state.pricePerPack || 0, state.currencyCode);
-    elements.receiptRow6.classList.remove("is-hidden");
-    elements.lifeSaved.textContent = formatLifeSaved(progress.estimatedLifeMinutes);
+    rows.push(
+      ["Not smoked", numberFormatter.format(progress.cigarettesAvoided)],
+      ["Packs not bought", decimalFormatter.format(progress.packsAvoided)],
+      ["Cigarettes / day", numberFormatter.format(state.cigarettesPerDay)],
+      ["Cigarettes / pack", numberFormatter.format(state.cigarettesPerPack)],
+      ["Pack price", formatCurrency(state.pricePerPack || 0, state.currencyCode)],
+    );
+
+    if (showAdvancedSpend) {
+      rows.push(["Avg past pack", `~ ${formatCurrency(progress.averageHistoricPackPrice, state.currencyCode)} avg DE`]);
+    }
   }
 
+  rows.push([showAdvancedSpend ? "+ Saved after quit" : "Cost avoided", showAdvancedSpend
+    ? `+ ${formatCurrency(progress.moneySaved, state.currencyCode)}`
+    : formatCurrency(progress.moneySaved, state.currencyCode)]);
+
+  if (showAdvancedSpend) {
+    rows.push(["- Paid before quit", `- ${formatCurrency(progress.moneySpent, state.currencyCode)}`]);
+  }
+
+  if (state.mode !== "vaping") {
+    rows.push(["Estimated life back", formatLifeSaved(progress.estimatedLifeMinutes)]);
+  }
+
+  renderReceiptRows(rows);
   renderBarcode(state, progress);
 }
 
