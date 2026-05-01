@@ -37,6 +37,16 @@
   --shadow: 8px 10px 0 rgba(128, 26, 117, 0.35);
 }
 
+[data-theme="custom"] {
+  --ink: var(--custom-ink, #1a1a1a);
+  --line: var(--custom-ink, #1a1a1a);
+  --muted: var(--custom-muted, #555555);
+  --paper: var(--custom-paper, #fafafa);
+  --receipt: var(--custom-receipt, #ffffff);
+  --blue: var(--custom-ink, #1a1a1a);
+  --shadow: var(--custom-shadow, 8px 10px 0 rgba(0, 0, 0, 0.35));
+}
+
 * {
   box-sizing: border-box;
 }
@@ -254,17 +264,19 @@ button {
   border-bottom: 1px solid var(--line);
   margin-bottom: 16px;
   padding-bottom: 12px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
   color: var(--muted);
   font-size: 0.82rem;
   font-weight: 600;
   text-transform: uppercase;
 }
 
-.wizard__top-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.wizard__top #resetButton {
+  justify-self: end;
 }
+
 
 .mode-picker {
   display: grid;
@@ -315,6 +327,8 @@ button {
 
 .theme-picker {
   display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 6px;
 }
 
@@ -336,6 +350,24 @@ button {
 .theme-dot[data-theme="blue"]    { background: #263cff; border-color: #263cff; }
 .theme-dot[data-theme="sage"]    { background: #85c98a; border-color: #1a6b2c; }
 .theme-dot[data-theme="pink"]    { background: #e07ed8; border-color: #801a75; }
+
+.theme-dot--custom {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  line-height: 0;
+  vertical-align: middle;
+}
+.theme-dot--custom input[type="color"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+}
 
 .theme-dot.is-active { opacity: 1; }
 

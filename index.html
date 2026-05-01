@@ -36,15 +36,15 @@
         <form class="wizard" id="quitForm" novalidate>
           <div class="wizard__top">
             <span id="stepCounter">Step 1 of 6</span>
-            <div class="wizard__top-right">
-              <div class="theme-picker" aria-label="Color theme">
-                <button type="button" class="theme-dot" data-theme="default" aria-label="Black"></button>
-                <button type="button" class="theme-dot" data-theme="blue" aria-label="Blue"></button>
-                <button type="button" class="theme-dot" data-theme="sage" aria-label="Sage"></button>
-                <button type="button" class="theme-dot" data-theme="pink" aria-label="Pink"></button>
-              </div>
-              <button type="button" id="resetButton" class="text-button">Reset</button>
+            <div class="theme-picker" aria-label="Color theme">
+              <button type="button" class="theme-dot" data-theme="default" aria-label="Black"></button>
+              <button type="button" class="theme-dot" data-theme="blue" aria-label="Blue"></button>
+              <button type="button" class="theme-dot" data-theme="sage" aria-label="Sage"></button>
+              <label class="theme-dot theme-dot--custom" data-theme="custom" aria-label="Custom color" title="Custom color">
+                <input type="color" id="customColor" value="#7c3aed">
+              </label>
             </div>
+            <button type="button" id="resetButton" class="text-button">Reset</button>
           </div>
 
           <div class="progress-bar" aria-hidden="true">
@@ -328,6 +328,6 @@
       <a href="legal.html">Privacy / Legal</a>
     </footer>
 
-    <script src="app.js?v=20260501-13"></script>
+    <script src="app.js?v=20260501-15"></script>
   </body>
 </html>
