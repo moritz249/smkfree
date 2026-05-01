@@ -27,7 +27,7 @@
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="assets/icon.svg">
-    <link rel="stylesheet" href="styles.css?v=20260501-11">
+    <link rel="stylesheet" href="styles.css?v=20260501-13">
     <script src="assets/html2canvas.min.js" defer></script>
   </head>
   <body>
@@ -241,16 +241,13 @@
             <button type="button" id="editButton" class="secondary-button">Details</button>
             <button type="button" id="downloadButton" class="primary-button">Share</button>
             <div class="receipt-settings">
-              <div class="theme-picker" aria-label="Color theme">
-                <button type="button" class="theme-dot" data-theme="default" aria-label="Black"></button>
-                <button type="button" class="theme-dot" data-theme="blue" aria-label="Blue"></button>
-                <button type="button" class="theme-dot" data-theme="sage" aria-label="Sage"></button>
-                <button type="button" id="customColorBtn" class="theme-custom-btn" aria-label="Custom color" title="Custom color">+</button>
-                <input type="color" id="customColor" value="#7c3aed" class="theme-color-input">
-              </div>
-              <label class="toggle-field--inline" for="showBenefits">
+              <label id="customColorLabel" class="secondary-button">
+                <input type="color" id="customColor" value="#7c3aed">
+                Color
+              </label>
+              <label id="benefitsLabel" class="secondary-button">
                 <input id="showBenefits" name="showBenefits" type="checkbox">
-                <span>Benefits</span>
+                Benefits
               </label>
             </div>
           </div>
@@ -326,6 +323,6 @@
       <a href="legal.html">Privacy / Legal</a>
     </footer>
 
-    <script src="app.js?v=20260501-19"></script>
+    <script src="app.js?v=20260501-20"></script>
   </body>
 </html>
