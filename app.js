@@ -220,6 +220,43 @@ function estimateGermanSmokingSpend(state, quitStart) {
   };
 }
 
+function estimateAdvancedSpend(state, quitStart) {
+  if (!state.isAdvanced || !state.smokingStartDate) {
+    return { moneySpent: 0, averagePackPrice: 0, smokingDays: 0 };
+  }
+
+  const start = new Date(`${state.smokingStartDate}T00:00:00`);
+  if (start >= quitStart) {
+    return { moneySpent: 0, averagePackPrice: 0, smokingDays: 0 };
+  }
+
+  const smokingDays = (quitStart - start) / 86_400_000;
+
+  if (state.mode === "cigarettes") {
+    return estimateGermanSmokingSpend(state, quitStart);
+  }
+
+  if (state.mode === "ryo") {
+    return {
+      moneySpent: (smokingDays / 7) * state.weeklyRyoCost,
+      averagePackPrice: 0,
+      smokingDays,
+    };
+  }
+
+  if (state.mode === "vaping") {
+    const liquidSpent = (smokingDays / 7) * state.mlPerWeek * (state.costPer10ml / 10);
+    const accessoriesSpent = (smokingDays / 30.4375) * state.accessoriesPerMonth;
+    return {
+      moneySpent: liquidSpent + accessoriesSpent,
+      averagePackPrice: 0,
+      smokingDays,
+    };
+  }
+
+  return { moneySpent: 0, averagePackPrice: 0, smokingDays };
+}
+
 function formatLifeSaved(minutes) {
   const wholeMinutes = Math.floor(minutes);
   const days = Math.floor(wholeMinutes / 1440);
@@ -256,11 +293,11 @@ function getActiveSteps() {
 }
 
 function supportsAdvancedMode(mode) {
-  return mode === "cigarettes";
+  return ["cigarettes", "ryo", "vaping"].includes(mode);
 }
 
 function getEffectiveCurrencyCode(mode, isAdvanced, currencyCode) {
-  return supportsAdvancedMode(mode) && isAdvanced ? advancedCurrencyCode : currencyCode || "EUR";
+  return mode === "cigarettes" && isAdvanced ? advancedCurrencyCode : currencyCode || "EUR";
 }
 
 function syncAdvancedFields() {
@@ -277,7 +314,7 @@ function syncAdvancedFields() {
 
   if (!showStartDate) {
     elements.smokingStartDate.setCustomValidity("");
-  } else {
+  } else if (currentMode === "cigarettes") {
     updateCurrencySymbols(advancedCurrencyCode);
   }
 }
@@ -392,11 +429,14 @@ function calculateProgress(state) {
   if (state.mode === "ryo") {
     const rollsAvoided = elapsedDays * state.rollsPerDay;
     const moneySaved = (elapsedDays / 7) * state.weeklyRyoCost;
+    const advancedSpend = estimateAdvancedSpend(state, quitStart);
     return {
       ...empty, ...base,
       rollsAvoided,
       weeklyRyoCost: state.weeklyRyoCost,
       moneySaved,
+      moneySpent: advancedSpend.moneySpent,
+      smokingDays: advancedSpend.smokingDays,
       estimatedLifeMinutes: rollsAvoided * 11,
     };
   }
@@ -405,12 +445,15 @@ function calculateProgress(state) {
     const mlNotVaped = (elapsedDays / 7) * state.mlPerWeek;
     const liquidSaved = mlNotVaped * (state.costPer10ml / 10);
     const accessoriesSaved = (elapsedDays / 30.4375) * state.accessoriesPerMonth;
+    const advancedSpend = estimateAdvancedSpend(state, quitStart);
     return {
       ...empty, ...base,
       mlNotVaped,
       liquidSaved,
       accessoriesSaved,
       moneySaved: liquidSaved + accessoriesSaved,
+      moneySpent: advancedSpend.moneySpent,
+      smokingDays: advancedSpend.smokingDays,
     };
   }
 
@@ -419,7 +462,7 @@ function calculateProgress(state) {
   const packsAvoided = state.cigarettesPerPack > 0
     ? cigarettesAvoided / state.cigarettesPerPack : 0;
   const moneySaved = packsAvoided * state.pricePerPack;
-  const smokingSpend = estimateGermanSmokingSpend(state, quitStart);
+  const smokingSpend = estimateAdvancedSpend(state, quitStart);
   return {
     ...empty, ...base,
     cigarettesAvoided,
@@ -437,7 +480,7 @@ function renderReceipt(progress, state) {
   elements.receiptDate.textContent = new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium", timeStyle: "short",
   }).format(new Date());
-  const showAdvancedSpend = state.isAdvanced && state.mode === "cigarettes" && state.currencyCode === advancedCurrencyCode;
+  const showAdvancedSpend = state.isAdvanced && supportsAdvancedMode(state.mode);
   elements.receiptStartRow.classList.toggle("is-hidden", !showAdvancedSpend);
   elements.receiptStartDate.textContent = formatDate(state.smokingStartDate);
   elements.receiptQuitLabel.textContent = showAdvancedSpend ? "Stop date" : "Quit date";
@@ -527,22 +570,38 @@ function renderBarcode(state, progress) {
 function renderSummary(state) {
   const cur = state.currencyCode || "EUR";
   let rows;
+  const advancedProgress = state.isAdvanced ? calculateProgress(state) : null;
 
   if (state.mode === "ryo") {
-    rows = [
-      ["Quit date", formatDate(state.quitDate)],
+    rows = state.isAdvanced
+      ? [
+        ["Start date", formatDate(state.smokingStartDate)],
+        ["Stop date", formatDate(state.quitDate)],
+      ]
+      : [
+        ["Quit date", formatDate(state.quitDate)],
+      ];
+
+    rows.push(
       ["Roll-ups / day", numberFormatter.format(state.rollsPerDay)],
       ["Weekly spend", formatCurrency(state.weeklyRyoCost, cur)],
-    ];
+    );
   } else if (state.mode === "vaping") {
-    rows = [
-      ["Quit date", formatDate(state.quitDate)],
+    rows = state.isAdvanced
+      ? [
+        ["Start date", formatDate(state.smokingStartDate)],
+        ["Stop date", formatDate(state.quitDate)],
+      ]
+      : [
+        ["Quit date", formatDate(state.quitDate)],
+      ];
+
+    rows.push(
       ["ml / week", decimalFormatter.format(state.mlPerWeek) + " ml"],
       ["Cost / 10ml", formatCurrency(state.costPer10ml, cur)],
       ["Accessories / mo.", formatCurrency(state.accessoriesPerMonth, cur)],
-    ];
+    );
   } else {
-    const advancedProgress = state.isAdvanced ? calculateProgress(state) : null;
     rows = state.isAdvanced
       ? [
         ["Start date", formatDate(state.smokingStartDate)],
@@ -564,6 +623,11 @@ function renderSummary(state) {
       rows.push(["+ Saved after quit", `+ ${formatCurrency(advancedProgress.moneySaved, cur)}`]);
       rows.push(["- Paid before quit", `- ${formatCurrency(advancedProgress.moneySpent, cur)}`]);
     }
+  }
+
+  if (state.isAdvanced && state.mode !== "cigarettes") {
+    rows.push(["+ Saved after quit", `+ ${formatCurrency(advancedProgress.moneySaved, cur)}`]);
+    rows.push(["- Paid before quit", `- ${formatCurrency(advancedProgress.moneySpent, cur)}`]);
   }
 
   elements.summaryList.innerHTML = rows
@@ -741,7 +805,7 @@ function validateCurrentStep() {
   const inputs = getStepFields(stepEl);
   return inputs.every((input) => {
     if (input === elements.smokingStartDate) {
-      const needsStartDate = currentAdvanced && currentMode === "cigarettes";
+      const needsStartDate = currentAdvanced && supportsAdvancedMode(currentMode);
       const isValid = !needsStartDate || (input.value && (!elements.quitDate.value || input.value < elements.quitDate.value));
       input.setCustomValidity(isValid ? "" : "Enter a start date before your quit date.");
     }
