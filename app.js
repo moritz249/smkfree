@@ -916,6 +916,8 @@ function focusNextFieldInStep(target) {
 }
 
 function resetApp() {
+  const savedTheme = localStorage.getItem(THEME_KEY) || "default";
+  const savedCustomColor = localStorage.getItem(CUSTOM_COLOR_KEY);
   localStorage.removeItem(STORAGE_KEY);
   currentMode = "cigarettes";
   currentAdvanced = false;
@@ -925,6 +927,8 @@ function resetApp() {
   elements.editButton.textContent = "Details";
   showStep(0);
   updateReceipt(false);
+  if (savedCustomColor) applyCustomThemeVars(savedCustomColor);
+  applyTheme(savedTheme);
 }
 
 // Mode radio change

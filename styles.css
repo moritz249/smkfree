@@ -352,11 +352,12 @@ button {
 .theme-dot[data-theme="pink"]    { background: #e07ed8; border-color: #801a75; }
 
 .theme-dot--custom {
-  display: inline-block;
+  display: flex;
   position: relative;
   overflow: hidden;
-  line-height: 0;
-  vertical-align: middle;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 .theme-dot--custom input[type="color"] {
   position: absolute;
