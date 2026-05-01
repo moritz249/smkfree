@@ -288,9 +288,10 @@ function syncAdvancedFields() {
   const canUseAdvanced = supportsAdvancedMode(currentMode);
   if (!canUseAdvanced) currentAdvanced = false;
 
-  const showStartDate = canUseAdvanced && currentAdvanced;
+  const isStillUsing = elements.notStoppedYet?.checked;
+  const showStartDate = canUseAdvanced && currentAdvanced && !isStillUsing;
   elements.advancedPanel.classList.toggle("is-hidden", !canUseAdvanced);
-  elements.advancedMode.disabled = !canUseAdvanced;
+  elements.advancedMode.disabled = !canUseAdvanced || isStillUsing;
   elements.advancedMode.checked = currentAdvanced;
   elements.smokingStartField.classList.toggle("is-hidden", !showStartDate);
   elements.smokingStartDate.disabled = !showStartDate;
@@ -303,10 +304,22 @@ function syncAdvancedFields() {
   }
 }
 
+function syncNotStoppedFields() {
+  const isStillUsing = elements.notStoppedYet.checked;
+  elements.quitDate.disabled = isStillUsing;
+  elements.quitDate.required = !isStillUsing;
+  if (isStillUsing) {
+    elements.quitDate.value = "";
+    elements.quitDate.setCustomValidity("");
+  }
+  syncAdvancedFields();
+}
+
 function readState() {
   const fallback = {
     mode: "cigarettes",
     isAdvanced: false,
+    notStoppedYet: false,
     quitDate: "",
     smokingStartDate: "",
     currencyCode: "EUR",
@@ -327,7 +340,12 @@ function readState() {
       localStorage.removeItem(STORAGE_KEY);
       return fallback;
     }
-    return { ...fallback, ...parsed, isAdvanced: Boolean(parsed.isAdvanced) };
+    return {
+      ...fallback,
+      ...parsed,
+      isAdvanced: Boolean(parsed.isAdvanced),
+      notStoppedYet: Boolean(parsed.notStoppedYet),
+    };
   } catch {
     localStorage.removeItem(STORAGE_KEY);
     return fallback;
@@ -341,13 +359,15 @@ function writeState(state) {
 function getFormState() {
   const activeSteps = getActiveSteps();
   const activeCurrencyCode = activeSteps[currentStep]?.querySelector(".currency-code")?.value;
-  const isAdvanced = currentAdvanced && supportsAdvancedMode(currentMode);
+  const isStillUsing = elements.notStoppedYet.checked;
+  const isAdvanced = currentAdvanced && supportsAdvancedMode(currentMode) && !isStillUsing;
   const currencyCode = getEffectiveCurrencyCode(currentMode, isAdvanced, activeCurrencyCode || currentCurrency);
 
   return {
     mode: currentMode,
     isAdvanced,
-    quitDate: elements.quitDate.value,
+    notStoppedYet: isStillUsing,
+    quitDate: isStillUsing ? "" : elements.quitDate.value,
     smokingStartDate: elements.smokingStartDate.value,
     currencyCode,
     cigarettesPerDay: Number(elements.cigarettesPerDay.value) || 0,
@@ -371,6 +391,7 @@ function setFormState(state) {
 
   elements.quitDate.value = state.quitDate || "";
   elements.quitDate.max = todayAsInputValue();
+  elements.notStoppedYet.checked = Boolean(state.notStoppedYet);
   elements.advancedMode.checked = currentAdvanced;
   elements.smokingStartDate.value = state.smokingStartDate || "";
   elements.smokingStartDate.max = state.quitDate || todayAsInputValue();
@@ -383,6 +404,7 @@ function setFormState(state) {
   elements.costPer10ml.value = state.costPer10ml || "";
   elements.accessoriesPerMonth.value = state.accessoriesPerMonth || "";
   updateCurrencySymbols(currentCurrency);
+  syncNotStoppedFields();
   syncAdvancedFields();
 }
 
@@ -396,7 +418,7 @@ function calculateProgress(state) {
     mlNotVaped: 0, liquidSaved: 0, accessoriesSaved: 0,
   };
 
-  if (!state.quitDate) return empty;
+  if (state.notStoppedYet || !state.quitDate) return empty;
 
   const quitStart = new Date(`${state.quitDate}T00:00:00`);
   const elapsedMs = Math.max(0, Date.now() - quitStart);
@@ -481,6 +503,10 @@ function renderReceipt(progress, state) {
     ? [
       ["Start date", formatDate(state.smokingStartDate)],
       ["Stop date", formatDate(state.quitDate)],
+    ]
+    : state.notStoppedYet
+    ? [
+      ["Status", "Still using"],
     ]
     : [
       ["Quit date", formatDate(state.quitDate)],
@@ -570,31 +596,30 @@ function renderBarcode(state, progress) {
 function renderSummary(state) {
   const cur = state.currencyCode || "EUR";
   let rows;
-  const advancedProgress = state.isAdvanced ? calculateProgress(state) : null;
+  const showAdvancedSpend = state.isAdvanced && !state.notStoppedYet;
+  const advancedProgress = showAdvancedSpend ? calculateProgress(state) : null;
+  const dateRows = showAdvancedSpend
+    ? [
+      ["Start date", formatDate(state.smokingStartDate)],
+      ["Stop date", formatDate(state.quitDate)],
+    ]
+    : state.notStoppedYet
+    ? [
+      ["Status", "Still using"],
+    ]
+    : [
+      ["Quit date", formatDate(state.quitDate)],
+    ];
 
   if (state.mode === "ryo") {
-    rows = state.isAdvanced
-      ? [
-        ["Start date", formatDate(state.smokingStartDate)],
-        ["Stop date", formatDate(state.quitDate)],
-      ]
-      : [
-        ["Quit date", formatDate(state.quitDate)],
-      ];
+    rows = [...dateRows];
 
     rows.push(
       ["Roll-ups / day", numberFormatter.format(state.rollsPerDay)],
       ["Weekly spend", formatCurrency(state.weeklyRyoCost, cur)],
     );
   } else if (state.mode === "vaping") {
-    rows = state.isAdvanced
-      ? [
-        ["Start date", formatDate(state.smokingStartDate)],
-        ["Stop date", formatDate(state.quitDate)],
-      ]
-      : [
-        ["Quit date", formatDate(state.quitDate)],
-      ];
+    rows = [...dateRows];
 
     rows.push(
       ["ml / week", decimalFormatter.format(state.mlPerWeek) + " ml"],
@@ -602,30 +627,23 @@ function renderSummary(state) {
       ["Accessories / mo.", formatCurrency(state.accessoriesPerMonth, cur)],
     );
   } else {
-    rows = state.isAdvanced
-      ? [
-        ["Start date", formatDate(state.smokingStartDate)],
-        ["Stop date", formatDate(state.quitDate)],
-      ]
-      : [
-        ["Quit date", formatDate(state.quitDate)],
-      ];
+    rows = [...dateRows];
 
     rows.push(
       ["Cigarettes / day", numberFormatter.format(state.cigarettesPerDay)],
       ["Cigarettes / pack", numberFormatter.format(state.cigarettesPerPack)],
-      state.isAdvanced
+      showAdvancedSpend
         ? ["Avg pack price", `~ ${formatCurrency(advancedProgress.averageHistoricPackPrice, cur)} avg DE`]
         : ["Pack price", formatCurrency(state.pricePerPack, cur)],
     );
 
-    if (state.isAdvanced) {
+    if (showAdvancedSpend) {
       rows.push(["+ Saved after quit", `+ ${formatCurrency(advancedProgress.moneySaved, cur)}`]);
       rows.push(["- Paid before quit", `- ${formatCurrency(advancedProgress.moneySpent, cur)}`]);
     }
   }
 
-  if (state.isAdvanced && state.mode !== "cigarettes") {
+  if (showAdvancedSpend && state.mode !== "cigarettes") {
     rows.push(["+ Saved after quit", `+ ${formatCurrency(advancedProgress.moneySaved, cur)}`]);
     rows.push(["- Paid before quit", `- ${formatCurrency(advancedProgress.moneySpent, cur)}`]);
   }
@@ -800,6 +818,7 @@ function validateCurrentStep() {
   const stepEl = activeSteps[currentStep];
 
   if (stepEl.querySelector("input[name='mode']")) return !!currentMode;
+  if (stepEl.contains(elements.quitDate) && elements.notStoppedYet.checked) return true;
 
   applyDefaultsForCurrentStep(stepEl);
   const inputs = getStepFields(stepEl);
@@ -849,15 +868,9 @@ function advanceWizard() {
   showReceipt();
 }
 
-function startToday() {
-  elements.quitDate.value = todayAsInputValue();
-  elements.quitDate.dispatchEvent(new Event("input", { bubbles: true }));
-  updateReceipt();
-}
-
 function handleNotStoppedYet() {
-  if (!elements.notStoppedYet.checked) return;
-  startToday();
+  syncNotStoppedFields();
+  updateReceipt();
 }
 
 function focusNextFieldInStep(target) {
