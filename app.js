@@ -853,7 +853,6 @@ function startToday() {
   elements.quitDate.value = todayAsInputValue();
   elements.quitDate.dispatchEvent(new Event("input", { bubbles: true }));
   updateReceipt();
-  advanceWizard();
 }
 
 function handleNotStoppedYet() {
