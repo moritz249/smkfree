@@ -340,6 +340,9 @@ button {
 
 .toggle-field--inline input {
   margin: 0;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
 .theme-picker {
@@ -367,8 +370,23 @@ button {
 .theme-dot[data-theme="sage"]    { background: #85c98a; border-color: #1a6b2c; }
 .theme-dot[data-theme="pink"]    { background: #e07ed8; border-color: #801a75; }
 
-.theme-dot--custom {
+.theme-custom-btn {
+  height: 14px;
+  padding: 0 5px;
+  border-radius: 3px;
+  border: 1.5px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  font-size: 11px;
+  font-family: var(--mono);
+  line-height: 1;
   cursor: pointer;
+  opacity: 0.35;
+  transition: opacity 120ms ease;
+}
+
+.theme-custom-btn.is-active {
+  opacity: 1;
 }
 
 .theme-color-input {
