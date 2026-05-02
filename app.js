@@ -1139,10 +1139,12 @@ const installBanner = document.getElementById("installBanner");
 const installBtn = document.getElementById("installBtn");
 const installDismiss = document.getElementById("installDismiss");
 
+const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
-  if (installBanner) installBanner.classList.remove("is-hidden");
+  if (installBanner && isMobile) installBanner.classList.remove("is-hidden");
 });
 
 if (installBtn) {
