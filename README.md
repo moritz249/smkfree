@@ -1,12 +1,6 @@
+# smkfree
 
-<p align="center">
-  <br>
-  <a href="https://moritz249.github.io/smkfree/">
-    <h1>*** SMKFREE ***************************** CLICK ME ***************</h2>
-  </a>
-  <br>
-</p>
-
+[********************************* SMKFREE ***************************** CLICK ME ***************](https://moritz249.github.io/smkfree/)
 
 ![SMKFREE Screenshot](./assets/screenshot.png)
 
