@@ -1091,12 +1091,6 @@ ol {
   text-transform: uppercase;
 }
 
-.receipt-qr a {
-  color: var(--ink);
-  font-size: 0.66rem;
-  text-decoration: none;
-}
-
 .receipt-credit {
   margin: 0 0 10px !important;
   color: var(--muted);
