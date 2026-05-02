@@ -814,7 +814,7 @@ function validateCurrentStep() {
 function applyDefaultsForCurrentStep(stepEl) {
   [...stepEl.querySelectorAll("input:not([type='radio'])")].forEach((input) => {
     if (input.value.trim() !== "") return;
-    if (input.type === "date") { input.value = todayAsInputValue(); return; }
+    if (input.type === "date") return;
     if (input.placeholder) input.value = input.placeholder;
   });
 }
