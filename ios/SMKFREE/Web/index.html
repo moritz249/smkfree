@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="theme-color" content="#111111">
+    <meta
+      name="description"
+      content="A guided smoke-free savings tracker with a receipt-style progress summary."
+    >
+    <title>SMKFREE</title>
+    <meta property="og:title" content="SMKFREE">
+    <meta property="og:description" content="Your smoke-free progress, printed like a receipt. Takes 30 seconds.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://moritz249.github.io/smkfree/">
+    <meta property="og:site_name" content="SMKFREE">
+    <meta property="og:image" content="https://moritz249.github.io/smkfree/assets/share-card.png?v=20260501-3">
+    <meta property="og:image:secure_url" content="https://moritz249.github.io/smkfree/assets/share-card.png?v=20260501-3">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="1200">
+    <meta property="og:image:alt" content="SMKFREE smoke-free progress tracker with a receipt preview.">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="SMKFREE">
+    <meta name="twitter:description" content="Your smoke-free progress, printed like a receipt. Takes 30 seconds.">
+    <meta name="twitter:image" content="https://moritz249.github.io/smkfree/assets/share-card.png?v=20260501-3">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+    <link rel="icon" href="assets/favicon-32x32.png" sizes="32x32" type="image/png">
+    <link rel="apple-touch-icon" href="assets/icon-180.png">
+    <link rel="stylesheet" href="styles.css?v=20260502-23">
+    <script src="assets/html2canvas.min.js" defer></script>
+  </head>
+  <body>
+    <main class="app-shell scan-frame" id="appShell">
+      <section class="stage" id="stage" aria-label="Smoke free setup and receipt">
+        <form class="wizard" id="quitForm" novalidate>
+          <div class="wizard__top">
+            <span id="stepCounter">Step 1 of 6</span>
+            <button type="button" id="resetButton" class="text-button">Reset</button>
+          </div>
+
+          <div class="progress-bar" aria-hidden="true">
+            <span id="progressFill"></span>
+            <strong id="progressPercent">17%</strong>
+          </div>
+
+          <!-- Step 0: Intro -->
+          <section class="step is-active" data-mode="all">
+            <div class="intro-step">
+              <p class="intro-logo">smkfree</p>
+              <p class="kicker">Quit receipt</p>
+              <h2>Your progress printed.</h2>
+            </div>
+          </section>
+
+          <!-- Step 1: Quit date -->
+          <section class="step" data-mode="all">
+            <p class="kicker">Start date</p>
+            <h2>When did you stop?</h2>
+            <p class="step-hint">Pick your quit date, or check the box if you still smoke.</p>
+            <label>
+              Quit date
+              <input id="quitDate" name="quitDate" type="date" aria-describedby="quitDateError" required>
+            </label>
+            <p class="field-error is-hidden" id="quitDateError" role="alert">Please enter a quit date.</p>
+            <label class="toggle-field field-action">
+              <input id="notStoppedYet" name="notStoppedYet" type="checkbox">
+              <span>I did not stop yet</span>
+            </label>
+          </section>
+
+          <!-- Step 2: Mode selection -->
+          <section class="step" data-mode="all">
+            <p class="kicker">Your habit</p>
+            <h2>What are you quitting?</h2>
+            <div class="mode-picker">
+              <label class="mode-card">
+                <input type="radio" name="mode" value="cigarettes" checked>
+                <strong>Cigarettes</strong>
+                <span>Packs of cigarettes</span>
+              </label>
+              <label class="mode-card">
+                <input type="radio" name="mode" value="ryo">
+                <strong>Roll-your-own</strong>
+                <span>Tobacco, papers &amp; filter</span>
+              </label>
+              <label class="mode-card">
+                <input type="radio" name="mode" value="vaping">
+                <strong>Vaping</strong>
+                <span>Liquid &amp; accessories</span>
+              </label>
+            </div>
+          </section>
+
+          <!-- Cigarettes: per day -->
+          <section class="step" data-mode="cigarettes">
+            <p class="kicker">Daily habit</p>
+            <h2>How many cigarettes per day?</h2>
+            <label>
+              Cigarettes per day
+              <input id="cigarettesPerDay" name="cigarettesPerDay" type="number" min="0" step="1" placeholder="15" required>
+            </label>
+          </section>
+
+          <!-- Cigarettes: per pack -->
+          <section class="step" data-mode="cigarettes">
+            <p class="kicker">Pack size</p>
+            <h2>How many cigarettes per pack?</h2>
+            <label>
+              Cigarettes per pack
+              <input id="cigarettesPerPack" name="cigarettesPerPack" type="number" min="1" step="1" placeholder="20" required>
+            </label>
+          </section>
+
+          <!-- Cigarettes: pack price -->
+          <section class="step" data-mode="cigarettes">
+            <p class="kicker">Pack price</p>
+            <h2>How much does one pack cost?</h2>
+            <label>
+              Price per pack
+              <div class="money-field">
+                <span class="currency-symbol" aria-hidden="true">EUR</span>
+                <input id="pricePerPack" name="pricePerPack" type="text" inputmode="decimal" placeholder="10.00" required>
+              </div>
+            </label>
+            <label>
+              Currency
+              <select class="currency-code" name="currencyCode">
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+                <option value="GBP">GBP</option>
+                <option value="CHF">CHF</option>
+              </select>
+            </label>
+          </section>
+
+          <!-- RYO: rolls per day -->
+          <section class="step" data-mode="ryo">
+            <p class="kicker">Daily habit</p>
+            <h2>How many roll-ups per day?</h2>
+            <label>
+              Roll-ups per day
+              <input id="rollsPerDay" name="rollsPerDay" type="number" min="0" step="1" placeholder="10" required>
+            </label>
+          </section>
+
+          <!-- RYO: weekly cost -->
+          <section class="step" data-mode="ryo">
+            <p class="kicker">Weekly spend</p>
+            <h2>Weekly cost for tobacco, papers &amp; filter?</h2>
+            <label>
+              Total per week
+              <div class="money-field">
+                <span class="currency-symbol" aria-hidden="true">EUR</span>
+                <input id="weeklyRyoCost" name="weeklyRyoCost" type="text" inputmode="decimal" placeholder="25.00" required>
+              </div>
+            </label>
+            <label>
+              Currency
+              <select class="currency-code" name="currencyCode">
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+                <option value="GBP">GBP</option>
+                <option value="CHF">CHF</option>
+              </select>
+            </label>
+          </section>
+
+          <!-- Vaping: ml per week -->
+          <section class="step" data-mode="vaping">
+            <p class="kicker">Usage</p>
+            <h2>How much did you vape per week?</h2>
+            <label>
+              ml per week
+              <input id="mlPerWeek" name="mlPerWeek" type="number" min="0" step="1" placeholder="30" required>
+            </label>
+          </section>
+
+          <!-- Vaping: cost per 10ml -->
+          <section class="step" data-mode="vaping">
+            <p class="kicker">Liquid cost</p>
+            <h2>How much does 10ml cost?</h2>
+            <label>
+              Cost per 10ml
+              <div class="money-field">
+                <span class="currency-symbol" aria-hidden="true">EUR</span>
+                <input id="costPer10ml" name="costPer10ml" type="text" inputmode="decimal" placeholder="8.00" required>
+              </div>
+            </label>
+            <label>
+              Currency
+              <select class="currency-code" name="currencyCode">
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+                <option value="GBP">GBP</option>
+                <option value="CHF">CHF</option>
+              </select>
+            </label>
+          </section>
+
+          <!-- Vaping: accessories per month -->
+          <section class="step" data-mode="vaping">
+            <p class="kicker">Accessories</p>
+            <h2>Monthly spend on coils, pods &amp; gear?</h2>
+            <label>
+              Accessories per month
+              <div class="money-field">
+                <span class="currency-symbol" aria-hidden="true">EUR</span>
+                <input id="accessoriesPerMonth" name="accessoriesPerMonth" type="text" inputmode="decimal" placeholder="15.00" required>
+              </div>
+            </label>
+          </section>
+
+          <!-- Summary (shared) -->
+          <section class="step" data-mode="all">
+            <p class="kicker">Summary</p>
+            <h2>Check your details</h2>
+            <dl class="summary-list" id="summaryList"></dl>
+            <div class="advanced-panel" id="advancedPanel">
+              <label class="toggle-field">
+                <input id="advancedMode" name="advancedMode" type="checkbox">
+                <span>
+                  Advanced receipt
+                  <small>Estimate what you paid before quitting.</small>
+                </span>
+              </label>
+              <label id="smokingStartField" class="is-hidden">
+                Smoking start date
+                <input id="smokingStartDate" name="smokingStartDate" type="date">
+              </label>
+            </div>
+          </section>
+
+          <div class="wizard__actions">
+            <button type="button" id="backButton" class="secondary-button">Back</button>
+            <button type="button" id="nextButton" class="primary-button">Next</button>
+            <button type="button" id="receiptButton" class="primary-button primary-button--large is-hidden">Show receipt</button>
+          </div>
+        </form>
+
+        <section class="receipt-wrap" aria-label="SMKFREE receipt">
+          <div class="receipt-actions" aria-label="Receipt actions">
+            <button type="button" id="editButton" class="secondary-button">Edit</button>
+            <button type="button" id="downloadButton" class="primary-button">Share</button>
+            <div class="receipt-settings">
+              <label id="customColorLabel" class="secondary-button">
+                <input type="color" id="customColor" value="#7c3aed">
+                Color
+              </label>
+              <label id="benefitsLabel" class="secondary-button">
+                <input id="showBenefits" name="showBenefits" type="checkbox">
+                Benefits
+              </label>
+            </div>
+          </div>
+          <article class="dashboard receipt--market" id="dashboard" aria-label="SMKFREE dashboard">
+            <header class="dashboard__header">
+              <p>SMKFREE</p>
+              <h2>Dashboard</h2>
+              <span id="dashboardStatus">Your important numbers</span>
+            </header>
+
+            <div class="receipt__divider"></div>
+
+            <section class="dashboard-grid" aria-label="Important smoke free values">
+              <div class="dashboard-card dashboard-card--hero">
+                <span>Smoke-free streak</span>
+                <strong id="dashboardStreak">0d 0h</strong>
+              </div>
+              <div class="dashboard-card">
+                <span>Money saved</span>
+                <strong id="dashboardMoney">EUR 0.00</strong>
+              </div>
+              <div class="dashboard-card">
+                <span id="dashboardAvoidedLabel">Cigs avoided</span>
+                <strong id="dashboardAvoided">0</strong>
+              </div>
+              <div class="dashboard-card">
+                <span id="dashboardHealthLabel">Life back</span>
+                <strong id="dashboardHealth">0m</strong>
+              </div>
+            </section>
+
+            <div class="section-label">KEY NUMBERS</div>
+            <dl class="dashboard-list" id="dashboardList"></dl>
+          </article>
+          <article class="receipt receipt--market" id="receipt">
+            <div class="receipt__edge" aria-hidden="true"></div>
+            <header class="receipt__header">
+              <span class="receipt__top-gap" aria-hidden="true"></span>
+              <p>SMKFREE</p>
+              <h2>Quit Receipt</h2>
+              <span id="receiptDate">--</span>
+            </header>
+
+            <div class="receipt__divider"></div>
+
+            <section class="hero-metrics" aria-label="Main smoke free totals">
+              <div class="metric">
+                <span>Minutes</span>
+                <strong id="minutesFree">0</strong>
+              </div>
+              <div class="metric">
+                <span>Hours</span>
+                <strong id="hoursFree">0</strong>
+              </div>
+              <div class="metric metric--days">
+                <span>Days</span>
+                <strong id="daysFree">0</strong>
+              </div>
+              <div class="metric">
+                <span>Months</span>
+                <strong id="monthsFree">0</strong>
+              </div>
+              <div class="metric">
+                <span>Years</span>
+                <strong id="yearsFree">0</strong>
+              </div>
+            </section>
+
+            <div class="receipt__total">
+              <span>Money not burned</span>
+              <strong id="moneySaved">EUR 0.00</strong>
+            </div>
+
+            <div class="section-label">PROGRESS ITEMS</div>
+
+            <dl class="receipt__rows" id="receiptRows"></dl>
+
+            <div class="receipt__divider"></div>
+
+            <section class="fine-benefits is-hidden">
+              <h3>Benefits</h3>
+              <ol id="milestoneList"></ol>
+              <p id="nextMilestone">Fill in your details to see what comes next.</p>
+            </section>
+
+            <footer class="receipt__footer">
+              <small>
+                Health benefits and estimated life back are rough motivational estimates, not
+                medical advice. Actual effects vary from person to person. Cost totals use your
+                entries; advanced past-spend totals assume steady use and use historical pack price
+                estimates for cigarettes.
+              </small>
+              <div class="receipt-qr" aria-label="SMKFREE link QR code">
+                <img src="assets/qr-code.svg" alt="QR code for SMKFREE">
+              </div>
+              <a class="receipt-link" href="https://moritz249.github.io/smkfree/">moritz249.github.io/smkfree</a>
+              <p>Thank you for not destroying yourself.</p>
+              <span>************************</span>
+            </footer>
+          </article>
+          <div class="receipt-actions receipt-actions--install is-hidden" id="receiptInstallRow" aria-label="Install app">
+            <a href="install.html" class="secondary-button" style="text-align:center;">Install</a>
+          </div>
+        </section>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <a href="legal.html">Privacy / Legal</a>
+    </footer>
+
+
+
+
+<script src="app.js?v=20260502-21"></script>
+  </body>
+</html>
