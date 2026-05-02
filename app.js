@@ -62,6 +62,7 @@ const elements = {
   receiptRows: document.querySelector("#receiptRows"),
   moneySaved: document.querySelector("#moneySaved"),
   daysFree: document.querySelector("#daysFree"),
+  elapsedTime: document.querySelector("#elapsedTime"),
   weeksFree: document.querySelector("#weeksFree"),
   monthsFree: document.querySelector("#monthsFree"),
   yearsFree: document.querySelector("#yearsFree"),
@@ -239,6 +240,18 @@ function formatLifeSaved(minutes) {
   if (days > 0) return `${days}d ${hours}h`;
   if (hours > 0) return `${hours}h ${mins}m`;
   return `${mins}m`;
+}
+
+function formatElapsedTime(milliseconds) {
+  const totalSeconds = Math.floor(Math.max(0, milliseconds) / 1000);
+  const days = Math.floor(totalSeconds / 86_400);
+  const hours = Math.floor((totalSeconds % 86_400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (days > 0) return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+  if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+  return `${minutes}m ${seconds}s`;
 }
 
 function updateCurrencySymbols(currencyCode) {
@@ -440,7 +453,7 @@ function setFormState(state) {
 
 function calculateProgress(state) {
   const empty = {
-    elapsedHours: 0, wholeDays: 0, weeks: 0, months: 0, years: 0,
+    elapsedMs: 0, elapsedHours: 0, wholeDays: 0, weeks: 0, months: 0, years: 0,
     moneySaved: 0, estimatedLifeMinutes: 0,
     cigarettesAvoided: 0, packsAvoided: 0,
     moneySpent: 0, averageHistoricPackPrice: 0, smokingDays: 0,
@@ -455,6 +468,7 @@ function calculateProgress(state) {
   const elapsedDays = elapsedMs / 86_400_000;
   const wholeDays = Math.floor(elapsedDays);
   const base = {
+    elapsedMs,
     elapsedHours: elapsedMs / 3_600_000,
     wholeDays,
     weeks: Math.floor(wholeDays / 7),
@@ -529,6 +543,7 @@ function renderReceipt(progress, state) {
   const effectiveAvgPackPrice = stillUsingSpend?.averagePackPrice ?? progress.averageHistoricPackPrice;
 
   elements.daysFree.textContent = numberFormatter.format(progress.wholeDays);
+  elements.elapsedTime.textContent = formatElapsedTime(progress.elapsedMs);
   elements.weeksFree.textContent = numberFormatter.format(progress.weeks);
   elements.monthsFree.textContent = numberFormatter.format(progress.months);
   elements.yearsFree.textContent = numberFormatter.format(progress.years);
@@ -861,7 +876,7 @@ function startReceiptRefresh() {
   if (receiptRefreshTimer) return;
   receiptRefreshTimer = window.setInterval(() => {
     if (elements.stage.classList.contains("is-receipt-only")) updateReceipt(false);
-  }, 30_000);
+  }, 1000);
 }
 
 function stopReceiptRefresh() {
