@@ -134,10 +134,23 @@ button {
 }
 
 .legal-back {
-  display: inline-block;
-  margin-bottom: 30px;
-  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 36px;
+  width: 100%;
+  text-decoration: none;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  font-weight: bold;
   text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border: 2px solid var(--ink);
+  color: var(--ink);
+  padding: 14px 20px;
+  background: transparent;
+  cursor: pointer;
+  min-height: 48px;
 }
 
 .legal-card .intro-logo {
