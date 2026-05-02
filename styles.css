@@ -602,10 +602,18 @@ select:focus {
 
 .receipt-actions .primary-button,
 .receipt-actions .secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
   width: 100%;
-  min-height: 48px;
+  min-width: 0;
+  height: 48px;
+  min-height: 0;
   padding: 0 10px;
   font-size: 0.92rem;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .receipt {
@@ -1298,7 +1306,8 @@ ol {
 
   .receipt-actions .primary-button,
   .receipt-actions .secondary-button {
-    min-height: 48px;
+    height: 48px;
+    min-height: 0;
     padding: 0 6px;
     font-size: 0.72rem;
   }
