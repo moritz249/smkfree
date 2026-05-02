@@ -1130,17 +1130,32 @@ if ("serviceWorker" in navigator) {
 
 let deferredInstallPrompt = null;
 
-const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
 const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
 const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+
+// iOS modal
+const iosModal = document.getElementById("iosModal");
+const iosModalClose = document.getElementById("iosModalClose");
+const iosModalBackdrop = document.getElementById("iosModalBackdrop");
+
+function openIosModal() {
+  if (iosModal) iosModal.classList.remove("is-hidden");
+}
+function closeIosModal() {
+  if (iosModal) iosModal.classList.add("is-hidden");
+}
+if (iosModalClose) iosModalClose.addEventListener("click", closeIosModal);
+if (iosModalBackdrop) iosModalBackdrop.addEventListener("click", closeIosModal);
 
 // Receipt install button
 const receiptInstallRow = document.getElementById("receiptInstallRow");
 const receiptInstallBtn = document.getElementById("receiptInstallBtn");
 
 function showReceiptInstallRow() {
-  if (!isMobile || isStandalone) return;
-  if (receiptInstallRow) receiptInstallRow.classList.remove("is-hidden");
+  if (isStandalone) return;
+  if (isIos || deferredInstallPrompt) {
+    if (receiptInstallRow) receiptInstallRow.classList.remove("is-hidden");
+  }
 }
 
 if (receiptInstallBtn) {
@@ -1151,16 +1166,15 @@ if (receiptInstallBtn) {
       deferredInstallPrompt = null;
       if (outcome === "accepted" && receiptInstallRow) receiptInstallRow.classList.add("is-hidden");
     } else if (isIos) {
-      const hint = document.getElementById("iosInstallHint");
-      if (hint) hint.classList.remove("is-hidden");
+      openIosModal();
     }
   });
 }
 
-
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
+  if (!isStandalone && receiptInstallRow) receiptInstallRow.classList.remove("is-hidden");
 });
 
 window.addEventListener("appinstalled", () => {
