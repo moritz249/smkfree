@@ -929,20 +929,24 @@ function focusNextFieldInStep(target) {
 
 function resetApp() {
   if (!window.confirm("Reset your saved receipt?")) return;
-  const savedTheme = localStorage.getItem(THEME_KEY) || "default";
-  const savedCustomColor = localStorage.getItem(CUSTOM_COLOR_KEY);
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(THEME_KEY);
+  localStorage.removeItem(CUSTOM_COLOR_KEY);
   stopReceiptRefresh();
   currentMode = "cigarettes";
   currentAdvanced = false;
+  currentShowBenefits = false;
   setFormState(readState());
   elements.appShell.classList.remove("is-receipt-view");
   elements.stage.classList.remove("is-receipt-only");
   elements.editButton.textContent = "Edit";
+  if (receiptInstallRow) receiptInstallRow.classList.add("is-hidden");
+  const defaultColor = "#7c3aed";
+  customColorInput.value = defaultColor;
+  applyCustomThemeVars(defaultColor);
+  applyTheme("default");
   showStep(0);
   updateReceipt(false);
-  if (savedCustomColor) applyCustomThemeVars(savedCustomColor);
-  applyTheme(savedTheme);
 }
 
 // Mode radio change
@@ -1110,13 +1114,15 @@ function applyCustomThemeVars(hex) {
   }
 }
 
-customColorInput.addEventListener("input", () => {
+function onColorChange() {
   const hex = customColorInput.value;
   applyCustomThemeVars(hex);
   localStorage.setItem(CUSTOM_COLOR_KEY, hex);
   localStorage.setItem(THEME_KEY, "custom");
   applyTheme("custom");
-});
+}
+customColorInput.addEventListener("input", onColorChange);
+customColorInput.addEventListener("change", onColorChange);
 
 const savedCustomColor = localStorage.getItem(CUSTOM_COLOR_KEY) || "#7c3aed";
 customColorInput.value = savedCustomColor;
