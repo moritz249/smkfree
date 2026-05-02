@@ -1126,7 +1126,10 @@ customColorInput.addEventListener("change", onColorChange);
 
 if (customColorLabel) {
   customColorLabel.addEventListener("click", (e) => {
-    if (e.target !== customColorInput) customColorInput.click();
+    if (e.target !== customColorInput) {
+      e.preventDefault();
+      customColorInput.click();
+    }
   });
 }
 
