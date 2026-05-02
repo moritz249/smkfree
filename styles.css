@@ -611,7 +611,7 @@ select:focus {
   height: 48px;
   min-height: 0;
   padding: 0 10px;
-  box-shadow: var(--shadow);
+  box-shadow: 4px 5px 0 rgba(5, 5, 5, 0.58);
   font-size: 0.92rem;
   line-height: 1;
   white-space: nowrap;
