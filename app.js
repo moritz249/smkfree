@@ -1141,6 +1141,22 @@ const installDismiss = document.getElementById("installDismiss");
 
 const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
 
+// iOS one-time hint
+const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+const iosBanner = document.getElementById("iosBanner");
+const iosClose = document.getElementById("iosClose");
+
+if (iosBanner && isIos && !isStandalone && !localStorage.getItem("iosHintDismissed")) {
+  iosBanner.classList.remove("is-hidden");
+}
+if (iosClose) {
+  iosClose.addEventListener("click", () => {
+    iosBanner.classList.add("is-hidden");
+    localStorage.setItem("iosHintDismissed", "1");
+  });
+}
+
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
