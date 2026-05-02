@@ -247,11 +247,10 @@ function formatElapsedTime(milliseconds) {
   const days = Math.floor(totalSeconds / 86_400);
   const hours = Math.floor((totalSeconds % 86_400) / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
 
-  if (days > 0) return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-  if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
-  return `${minutes}m ${seconds}s`;
+  if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
 }
 
 function updateCurrencySymbols(currencyCode) {
@@ -876,7 +875,7 @@ function startReceiptRefresh() {
   if (receiptRefreshTimer) return;
   receiptRefreshTimer = window.setInterval(() => {
     if (elements.stage.classList.contains("is-receipt-only")) updateReceipt(false);
-  }, 1000);
+  }, 60_000);
 }
 
 function stopReceiptRefresh() {
