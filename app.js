@@ -591,6 +591,7 @@ function buildReceiptCode(state, progress) {
 }
 
 function renderBarcode(state, progress) {
+  if (!elements.barcodeSvg || !elements.barcodeText) return;
   const code = buildReceiptCode(state, progress);
   const encoded = `*${code.toUpperCase()}*`;
   const narrow = 2;

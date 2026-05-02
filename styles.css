@@ -1055,10 +1055,18 @@ ol {
   justify-items: center;
 }
 
+.barcode img,
 .barcode svg {
   display: block;
   width: min(100%, 250px);
   height: 54px;
+}
+
+.barcode img {
+  object-fit: contain;
+}
+
+.barcode svg {
   fill: var(--line);
 }
 
@@ -1294,6 +1302,7 @@ ol {
     margin-bottom: 6px;
   }
 
+  .barcode img,
   .barcode svg {
     width: 42mm;
     height: 8mm;
