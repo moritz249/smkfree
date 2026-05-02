@@ -1152,22 +1152,17 @@ const receiptInstallRow = document.getElementById("receiptInstallRow");
 const receiptInstallBtn = document.getElementById("receiptInstallBtn");
 
 function showReceiptInstallRow() {
-  if (isStandalone) return;
-  if (isIos || deferredInstallPrompt) {
-    if (receiptInstallRow) receiptInstallRow.classList.remove("is-hidden");
-  }
+  if (isStandalone || !deferredInstallPrompt) return;
+  if (receiptInstallRow) receiptInstallRow.classList.remove("is-hidden");
 }
 
 if (receiptInstallBtn) {
   receiptInstallBtn.addEventListener("click", async () => {
-    if (deferredInstallPrompt) {
-      deferredInstallPrompt.prompt();
-      const { outcome } = await deferredInstallPrompt.userChoice;
-      deferredInstallPrompt = null;
-      if (outcome === "accepted" && receiptInstallRow) receiptInstallRow.classList.add("is-hidden");
-    } else if (isIos) {
-      openIosModal();
-    }
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    if (outcome === "accepted" && receiptInstallRow) receiptInstallRow.classList.add("is-hidden");
   });
 }
 
