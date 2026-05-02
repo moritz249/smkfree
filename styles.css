@@ -596,7 +596,7 @@ select:focus {
 .receipt-actions {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  gap: 14px;
   width: min(100%, 430px);
 }
 
@@ -611,6 +611,7 @@ select:focus {
   height: 48px;
   min-height: 0;
   padding: 0 10px;
+  box-shadow: var(--shadow);
   font-size: 0.92rem;
   line-height: 1;
   white-space: nowrap;
@@ -1301,7 +1302,7 @@ ol {
   }
 
   .receipt-actions {
-    gap: 6px;
+    gap: 8px;
   }
 
   .receipt-actions .primary-button,
