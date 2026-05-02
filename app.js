@@ -875,6 +875,7 @@ function showReceipt(event) {
   showSavedNoticeOnOpen = false;
   elements.siteFooter.classList.add("is-hidden");
   elements.receipt.scrollIntoView({ behavior: "smooth", block: "start" });
+  showReceiptInstallRow();
   startReceiptRefresh();
 }
 
@@ -1140,10 +1141,32 @@ const installBtn = document.getElementById("installBtn");
 const installDismiss = document.getElementById("installDismiss");
 
 const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
-
-// iOS one-time hint
 const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
 const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+
+// Receipt install button
+const receiptInstallRow = document.getElementById("receiptInstallRow");
+const receiptInstallBtn = document.getElementById("receiptInstallBtn");
+
+function showReceiptInstallRow() {
+  if (!isMobile || isStandalone) return;
+  if (receiptInstallRow) receiptInstallRow.classList.remove("is-hidden");
+}
+
+if (receiptInstallBtn) {
+  receiptInstallBtn.addEventListener("click", async () => {
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      if (outcome === "accepted" && receiptInstallRow) receiptInstallRow.classList.add("is-hidden");
+    } else if (isIos) {
+      if (iosBanner) iosBanner.classList.remove("is-hidden");
+    }
+  });
+}
+
+// iOS one-time hint
 const iosBanner = document.getElementById("iosBanner");
 const iosClose = document.getElementById("iosClose");
 
