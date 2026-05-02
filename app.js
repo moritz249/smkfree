@@ -66,8 +66,6 @@ const elements = {
   milestoneList: document.querySelector("#milestoneList"),
   nextMilestone: document.querySelector("#nextMilestone"),
   receipt: document.querySelector("#receipt"),
-  barcodeSvg: document.querySelector("#barcodeSvg"),
-  barcodeText: document.querySelector("#barcodeText"),
 };
 
 let currentStep = 0;
@@ -78,19 +76,6 @@ let currentShowBenefits = false;
 
 const numberFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 const decimalFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
-
-const code39 = {
-  "0": "nnnwwnwnn", "1": "wnnwnnnnw", "2": "nnwwnnnnw", "3": "wnwwnnnnn",
-  "4": "nnnwwnnnw", "5": "wnnwwnnnn", "6": "nnwwwnnnn", "7": "nnnwnnwnw",
-  "8": "wnnwnnwnn", "9": "nnwwnnwnn", A: "wnnnnwnnw", B: "nnwnnwnnw",
-  C: "wnwnnwnnn", D: "nnnnwwnnw", E: "wnnnwwnnn", F: "nnwnwwnnn",
-  G: "nnnnnwwnw", H: "wnnnnwwnn", I: "nnwnnwwnn", J: "nnnnwwwnn",
-  K: "wnnnnnnww", L: "nnwnnnnww", M: "wnwnnnnwn", N: "nnnnwnnww",
-  O: "wnnnwnnwn", P: "nnwnwnnwn", Q: "nnnnnnwww", R: "wnnnnnwwn",
-  S: "nnwnnnwwn", T: "nnnnwnwwn", U: "wwnnnnnnw", V: "nwwnnnnnw",
-  W: "wwwnnnnnn", X: "nwnnwnnnw", Y: "wwnnwnnnn", Z: "nwwnwnnnn",
-  "-": "nwnnnnwnw", ".": "wwnnnnwnn", " ": "nwwnnnwnn", "*": "nwnnwnwnn",
-};
 
 const decimalInputIds = new Set(["pricePerPack", "weeklyRyoCost", "costPer10ml", "accessoriesPerMonth"]);
 const advancedCurrencyCode = "EUR";
@@ -133,10 +118,6 @@ function formatDate(value) {
   return new Intl.DateTimeFormat("en-US", {
     year: "numeric", month: "short", day: "2-digit",
   }).format(new Date(`${value}T00:00:00`));
-}
-
-function compactDate(value) {
-  return value ? value.replaceAll("-", "") : "00000000";
 }
 
 function parseDecimal(value) {
@@ -577,44 +558,6 @@ function renderReceipt(progress, state) {
   }
 
   renderReceiptRows(rows);
-  renderBarcode(state, progress);
-}
-
-function buildReceiptCode(state, progress) {
-  const prefix = state.mode === "ryo" ? "RYO" : state.mode === "vaping" ? "VAP" : "SMK";
-  const count = state.mode === "vaping"
-    ? Math.floor(progress.mlNotVaped)
-    : state.mode === "ryo"
-    ? Math.floor(progress.rollsAvoided)
-    : Math.floor(progress.cigarettesAvoided);
-  return `${prefix}-${compactDate(state.quitDate)}-${String(count).padStart(3, "0").slice(-3)}`;
-}
-
-function renderBarcode(state, progress) {
-  if (!elements.barcodeSvg || !elements.barcodeText) return;
-  const code = buildReceiptCode(state, progress);
-  const encoded = `*${code.toUpperCase()}*`;
-  const narrow = 2;
-  const wide = 5;
-  const height = 54;
-  let x = 0;
-  let markup = "";
-
-  [...encoded].forEach((char) => {
-    const pattern = code39[char] || code39["-"];
-    [...pattern].forEach((part, index) => {
-      const width = part === "w" ? wide : narrow;
-      if (index % 2 === 0) {
-        markup += `<rect x="${x}" y="0" width="${width}" height="${height}"></rect>`;
-      }
-      x += width;
-    });
-    x += narrow;
-  });
-
-  elements.barcodeSvg.setAttribute("viewBox", `0 0 ${x} ${height}`);
-  elements.barcodeSvg.innerHTML = markup;
-  elements.barcodeText.textContent = code;
 }
 
 function renderSummary(state) {
@@ -785,25 +728,6 @@ async function shareReceiptImage() {
   downloadUrl(objectUrl, filename);
   window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
   return "downloaded";
-}
-
-function drawBarcodeOnCanvas(context, code, x, y, maxWidth, height) {
-  const encoded = `*${code.toUpperCase()}*`;
-  const units = [...encoded].reduce((sum, char) => {
-    const pattern = code39[char] || code39["-"];
-    return sum + [...pattern].reduce((inner, part) => inner + (part === "w" ? 3 : 1), 0) + 1;
-  }, 0);
-  const unit = maxWidth / units;
-  let currentX = x;
-  [...encoded].forEach((char) => {
-    const pattern = code39[char] || code39["-"];
-    [...pattern].forEach((part, index) => {
-      const width = unit * (part === "w" ? 3 : 1);
-      if (index % 2 === 0) context.fillRect(currentX, y, width, height);
-      currentX += width;
-    });
-    currentX += unit;
-  });
 }
 
 function showStep(index) {

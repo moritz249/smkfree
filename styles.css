@@ -1048,34 +1048,6 @@ ol {
   background: var(--line);
 }
 
-.barcode {
-  display: grid;
-  gap: 6px;
-  margin: 0 auto 14px;
-  justify-items: center;
-}
-
-.barcode img,
-.barcode svg {
-  display: block;
-  width: min(100%, 250px);
-  height: 54px;
-}
-
-.barcode img {
-  object-fit: contain;
-}
-
-.barcode svg {
-  fill: var(--line);
-}
-
-.barcode span {
-  color: var(--ink);
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-}
-
 .receipt-qr {
   display: grid;
   gap: 5px;
@@ -1089,6 +1061,18 @@ ol {
   height: 76px;
   background: transparent;
   object-fit: contain;
+}
+
+.receipt-link {
+  display: inline-block;
+  max-width: 100%;
+  margin: 0 auto 14px;
+  color: var(--ink);
+  font-size: 0.72rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 @media (max-width: 900px) {
@@ -1276,19 +1260,9 @@ ol {
     height: 22px;
   }
 
-  .barcode {
-    gap: 3px;
-    margin-bottom: 6px;
-  }
-
-  .barcode img,
-  .barcode svg {
-    width: 42mm;
-    height: 8mm;
-  }
-
-  .barcode span {
-    font-size: 5px;
+  .receipt-link {
+    margin-bottom: 8px;
+    font-size: 6px;
   }
 
   .receipt--market {
