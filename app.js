@@ -58,6 +58,15 @@ const elements = {
   costPer10ml: document.querySelector("#costPer10ml"),
   accessoriesPerMonth: document.querySelector("#accessoriesPerMonth"),
   summaryList: document.querySelector("#summaryList"),
+  dashboard: document.querySelector("#dashboard"),
+  dashboardStatus: document.querySelector("#dashboardStatus"),
+  dashboardStreak: document.querySelector("#dashboardStreak"),
+  dashboardMoney: document.querySelector("#dashboardMoney"),
+  dashboardAvoidedLabel: document.querySelector("#dashboardAvoidedLabel"),
+  dashboardAvoided: document.querySelector("#dashboardAvoided"),
+  dashboardHealthLabel: document.querySelector("#dashboardHealthLabel"),
+  dashboardHealth: document.querySelector("#dashboardHealth"),
+  dashboardList: document.querySelector("#dashboardList"),
   receiptDate: document.querySelector("#receiptDate"),
   receiptRows: document.querySelector("#receiptRows"),
   moneySaved: document.querySelector("#moneySaved"),
@@ -536,6 +545,75 @@ function renderReceiptRows(rows) {
     .join("");
 }
 
+function renderDashboard(progress, state) {
+  const moneySaved = state.notStoppedYet ? 0 : progress.moneySaved;
+  const hasProgress = !state.notStoppedYet && Boolean(state.quitDate);
+  const streak = hasProgress
+    ? `${numberFormatter.format(progress.wholeDays)}d ${numberFormatter.format(progress.compHours)}h`
+    : "0d 0h";
+
+  let avoidedLabel = "Cigs avoided";
+  let avoidedValue = numberFormatter.format(progress.cigarettesAvoided);
+  let healthLabel = "Life back";
+  let healthValue = formatLifeSaved(progress.estimatedLifeMinutes);
+  const rows = [];
+
+  if (state.notStoppedYet) {
+    elements.dashboardStatus.textContent = "Set a quit date to start the dashboard";
+  } else {
+    elements.dashboardStatus.textContent = state.quitDate
+      ? `Since ${formatDate(state.quitDate)}`
+      : "Your important numbers";
+  }
+
+  if (state.mode === "ryo") {
+    avoidedLabel = "Roll-ups avoided";
+    avoidedValue = numberFormatter.format(progress.rollsAvoided);
+    rows.push(
+      ["Daily habit", `${numberFormatter.format(state.rollsPerDay)} roll-ups`],
+      ["Weekly spend", formatCurrency(state.weeklyRyoCost, state.currencyCode)],
+    );
+  } else if (state.mode === "vaping") {
+    avoidedLabel = "Liquid avoided";
+    avoidedValue = `${decimalFormatter.format(progress.mlNotVaped)} ml`;
+    healthLabel = "Money / day";
+    healthValue = hasProgress && progress.wholeDays > 0
+      ? formatCurrency(moneySaved / Math.max(progress.wholeDays, 1), state.currencyCode)
+      : formatCurrency(0, state.currencyCode);
+    rows.push(
+      ["Liquid saved", formatCurrency(progress.liquidSaved, state.currencyCode)],
+      ["Accessories saved", formatCurrency(progress.accessoriesSaved, state.currencyCode)],
+      ["Weekly liquid", `${decimalFormatter.format(state.mlPerWeek)} ml`],
+    );
+  } else {
+    rows.push(
+      ["Packs not bought", decimalFormatter.format(progress.packsAvoided)],
+      ["Daily habit", `${numberFormatter.format(state.cigarettesPerDay)} cigarettes`],
+      ["Pack price", formatCurrency(state.pricePerPack || 0, state.currencyCode)],
+    );
+  }
+
+  rows.unshift(
+    ["Smoke-free time", streak],
+    ["Money not burned", formatCurrency(moneySaved, state.currencyCode)],
+  );
+
+  if (state.isAdvanced && supportsAdvancedMode(state.mode) && state.smokingStartDate) {
+    const spend = state.notStoppedYet ? estimateAdvancedSpend(state, new Date()) : progress;
+    rows.push([state.notStoppedYet ? "Paid so far" : "Paid before quit", formatCurrency(spend.moneySpent, state.currencyCode)]);
+  }
+
+  elements.dashboardStreak.textContent = streak;
+  elements.dashboardMoney.textContent = formatCurrency(moneySaved, state.currencyCode);
+  elements.dashboardAvoidedLabel.textContent = avoidedLabel;
+  elements.dashboardAvoided.textContent = avoidedValue;
+  elements.dashboardHealthLabel.textContent = healthLabel;
+  elements.dashboardHealth.textContent = healthValue;
+  elements.dashboardList.innerHTML = rows
+    .map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`)
+    .join("");
+}
+
 function renderReceipt(progress, state) {
   updateCurrencySymbols(state.currencyCode);
   elements.receiptDate.textContent = new Intl.DateTimeFormat("en-US", {
@@ -715,6 +793,7 @@ function updateReceipt(shouldSave = true) {
   const progress = calculateProgress(state);
   if (shouldSave) writeState(state);
   renderReceipt(progress, state);
+  renderDashboard(progress, state);
   renderSummary(state);
   renderMilestones(progress.elapsedHours, state.mode);
 }
@@ -757,18 +836,6 @@ async function createReceiptImageBlob() {
   }
 }
 
-let isSharing = false;
-
-function restoreColorAfterShare() {
-  const savedColor = localStorage.getItem(CUSTOM_COLOR_KEY);
-  const savedTheme = localStorage.getItem(THEME_KEY);
-  if (savedColor) {
-    customColorInput.value = savedColor;
-    applyCustomThemeVars(savedColor);
-  }
-  if (savedTheme) applyTheme(savedTheme);
-}
-
 async function shareReceiptImage() {
   const filename = "smoke-free-receipt.png";
   const blob = await createReceiptImageBlob();
@@ -780,30 +847,21 @@ async function shareReceiptImage() {
     files: [file],
   };
 
-  isSharing = true;
-  try {
-    if (navigator.canShare?.({ files: [file] }) && navigator.share) {
-      try {
-        await navigator.share(shareData);
-        return "shared";
-      } catch (error) {
-        if (error?.name === "AbortError") {
-          throw error;
-        }
+  if (navigator.canShare?.({ files: [file] }) && navigator.share) {
+    try {
+      await navigator.share(shareData);
+      return "shared";
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        throw error;
       }
     }
-
-    const objectUrl = URL.createObjectURL(blob);
-    downloadUrl(objectUrl, filename);
-    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-    return "downloaded";
-  } finally {
-    restoreColorAfterShare();
-    window.setTimeout(() => {
-      isSharing = false;
-      restoreColorAfterShare();
-    }, 1500);
   }
+
+  const objectUrl = URL.createObjectURL(blob);
+  downloadUrl(objectUrl, filename);
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  return "downloaded";
 }
 
 function showStep(index) {
@@ -1057,7 +1115,9 @@ if (hasCompleteSavedState(initialState)) {
 const THEME_KEY = "smkfree-theme";
 
 function applyTheme(theme) {
-  elements.receipt.dataset.theme = theme === "default" ? "" : theme;
+  const dataTheme = theme === "default" ? "" : theme;
+  elements.receipt.dataset.theme = dataTheme;
+  if (elements.dashboard) elements.dashboard.dataset.theme = dataTheme;
 }
 
 // Custom color theme
@@ -1105,12 +1165,13 @@ function applyCustomThemeVars(hex) {
   const gi = parseInt(inkHex.slice(3, 5), 16);
   const bi = parseInt(inkHex.slice(5, 7), 16);
 
-  const el = elements.receipt;
-  el.style.setProperty("--custom-ink", inkHex);
-  el.style.setProperty("--custom-muted", mutedHex);
-  el.style.setProperty("--custom-paper", paperHex);
-  el.style.setProperty("--custom-receipt", receiptHex);
-  el.style.setProperty("--custom-shadow", `8px 10px 0 rgba(${ri}, ${gi}, ${bi}, 0.35)`);
+  [elements.receipt, elements.dashboard].filter(Boolean).forEach((el) => {
+    el.style.setProperty("--custom-ink", inkHex);
+    el.style.setProperty("--custom-muted", mutedHex);
+    el.style.setProperty("--custom-paper", paperHex);
+    el.style.setProperty("--custom-receipt", receiptHex);
+    el.style.setProperty("--custom-shadow", `8px 10px 0 rgba(${ri}, ${gi}, ${bi}, 0.35)`);
+  });
 
   if (customColorLabel) {
     customColorLabel.style.borderColor = inkHex;
@@ -1120,7 +1181,6 @@ function applyCustomThemeVars(hex) {
 }
 
 function onColorChange() {
-  if (isSharing) return;
   const hex = customColorInput.value;
   applyCustomThemeVars(hex);
   localStorage.setItem(CUSTOM_COLOR_KEY, hex);

@@ -254,6 +254,37 @@
               </label>
             </div>
           </div>
+          <article class="dashboard receipt--market" id="dashboard" aria-label="SMKFREE dashboard">
+            <header class="dashboard__header">
+              <p>SMKFREE</p>
+              <h2>Dashboard</h2>
+              <span id="dashboardStatus">Your important numbers</span>
+            </header>
+
+            <div class="receipt__divider"></div>
+
+            <section class="dashboard-grid" aria-label="Important smoke free values">
+              <div class="dashboard-card dashboard-card--hero">
+                <span>Smoke-free streak</span>
+                <strong id="dashboardStreak">0d 0h</strong>
+              </div>
+              <div class="dashboard-card">
+                <span>Money saved</span>
+                <strong id="dashboardMoney">EUR 0.00</strong>
+              </div>
+              <div class="dashboard-card">
+                <span id="dashboardAvoidedLabel">Cigs avoided</span>
+                <strong id="dashboardAvoided">0</strong>
+              </div>
+              <div class="dashboard-card">
+                <span id="dashboardHealthLabel">Life back</span>
+                <strong id="dashboardHealth">0m</strong>
+              </div>
+            </section>
+
+            <div class="section-label">KEY NUMBERS</div>
+            <dl class="dashboard-list" id="dashboardList"></dl>
+          </article>
           <article class="receipt receipt--market" id="receipt">
             <div class="receipt__edge" aria-hidden="true"></div>
             <header class="receipt__header">
