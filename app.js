@@ -1133,20 +1133,6 @@ let deferredInstallPrompt = null;
 const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
 const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
 
-// iOS modal
-const iosModal = document.getElementById("iosModal");
-const iosModalClose = document.getElementById("iosModalClose");
-const iosModalBackdrop = document.getElementById("iosModalBackdrop");
-
-function openIosModal() {
-  if (iosModal) iosModal.classList.remove("is-hidden");
-}
-function closeIosModal() {
-  if (iosModal) iosModal.classList.add("is-hidden");
-}
-if (iosModalClose) iosModalClose.addEventListener("click", closeIosModal);
-if (iosModalBackdrop) iosModalBackdrop.addEventListener("click", closeIosModal);
-
 // Receipt install button
 const receiptInstallRow = document.getElementById("receiptInstallRow");
 const receiptInstallBtn = document.getElementById("receiptInstallBtn");
