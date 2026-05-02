@@ -1133,44 +1133,6 @@ let deferredInstallPrompt = null;
 const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
 const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
 
-// Install modal
-const installModal = document.getElementById("installModal");
-const installModalClose = document.getElementById("installModalClose");
-const installModalBackdrop = document.getElementById("installModalBackdrop");
-const androidInstallBtn = document.getElementById("androidInstallBtn");
-const desktopInstallBtn = document.getElementById("desktopInstallBtn");
-const isMobileDevice = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
-
-function openInstallModal() {
-  if (!installModal) return;
-  // Show relevant "Install now" button if prompt available
-  if (deferredInstallPrompt) {
-    const btn = isMobileDevice ? androidInstallBtn : desktopInstallBtn;
-    if (btn) btn.classList.remove("is-hidden");
-  }
-  installModal.classList.remove("is-hidden");
-}
-
-function closeInstallModal() {
-  if (installModal) installModal.classList.add("is-hidden");
-}
-
-async function triggerInstallPrompt() {
-  if (!deferredInstallPrompt) return;
-  deferredInstallPrompt.prompt();
-  const { outcome } = await deferredInstallPrompt.userChoice;
-  deferredInstallPrompt = null;
-  closeInstallModal();
-  if (outcome === "accepted") {
-    if (receiptInstallRow) receiptInstallRow.classList.add("is-hidden");
-  }
-}
-
-if (installModalClose) installModalClose.addEventListener("click", closeInstallModal);
-if (installModalBackdrop) installModalBackdrop.addEventListener("click", closeInstallModal);
-if (androidInstallBtn) androidInstallBtn.addEventListener("click", triggerInstallPrompt);
-if (desktopInstallBtn) desktopInstallBtn.addEventListener("click", triggerInstallPrompt);
-
 // Receipt install button
 const receiptInstallRow = document.getElementById("receiptInstallRow");
 const receiptInstallBtn = document.getElementById("receiptInstallBtn");
@@ -1180,9 +1142,6 @@ function showReceiptInstallRow() {
   if (receiptInstallRow) receiptInstallRow.classList.remove("is-hidden");
 }
 
-if (receiptInstallBtn) {
-  receiptInstallBtn.addEventListener("click", openInstallModal);
-}
 
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
