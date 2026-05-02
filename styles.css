@@ -1083,13 +1083,12 @@ ol {
   margin: -2px auto 14px;
 }
 
-.receipt-qr__mark {
+.receipt-qr img {
   display: block;
   width: 76px;
   height: 76px;
-  background: var(--line);
-  mask: url("assets/qr-code.svg") center / contain no-repeat;
-  -webkit-mask: url("assets/qr-code.svg") center / contain no-repeat;
+  background: transparent;
+  object-fit: contain;
 }
 
 .receipt-qr span {
