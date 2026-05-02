@@ -320,7 +320,7 @@
             </footer>
           </article>
           <div class="receipt-actions receipt-actions--install is-hidden" id="receiptInstallRow" aria-label="Install app">
-            <button type="button" id="receiptInstallBtn" class="secondary-button">Install</button>
+            <a href="install.html" class="secondary-button" style="text-align:center;">Install</a>
           </div>
         </section>
       </section>
@@ -331,47 +331,7 @@
 
 
 
-    <!-- Install instructions modal -->
-    <div id="installModal" class="inst-modal is-hidden" role="dialog" aria-modal="true" aria-label="How to install">
-      <div class="inst-modal__backdrop" id="installModalBackdrop"></div>
-      <div class="inst-modal__box">
-        <button type="button" id="installModalClose" class="inst-modal__close" aria-label="Close">&#x2715;</button>
-        <p class="inst-modal__title">Install SMKFREE</p>
 
-        <div class="inst-modal__device">
-          <p class="inst-modal__device-label">iPhone / iPad</p>
-          <ol class="inst-modal__steps">
-            <li>Open in <strong>Safari</strong></li>
-            <li>Tap the <strong>Share</strong> icon <span aria-hidden="true">⬆</span> at the bottom</li>
-            <li>Tap <strong>Add to Home Screen</strong></li>
-            <li>Tap <strong>Add</strong></li>
-          </ol>
-        </div>
-
-        <div class="inst-modal__divider"></div>
-
-        <div class="inst-modal__device">
-          <p class="inst-modal__device-label">Android</p>
-          <ol class="inst-modal__steps" id="androidSteps">
-            <li>Open in <strong>Chrome</strong></li>
-            <li>Tap <strong>⋮</strong> in the top right</li>
-            <li>Tap <strong>Add to Home screen</strong></li>
-          </ol>
-          <button type="button" id="androidInstallBtn" class="primary-button inst-modal__install-btn is-hidden">Install now</button>
-        </div>
-
-        <div class="inst-modal__divider"></div>
-
-        <div class="inst-modal__device">
-          <p class="inst-modal__device-label">Desktop (Chrome / Edge)</p>
-          <ol class="inst-modal__steps" id="desktopSteps">
-            <li>Click the <strong>install icon</strong> <span aria-hidden="true">⊕</span> in the address bar</li>
-          </ol>
-          <button type="button" id="desktopInstallBtn" class="primary-button inst-modal__install-btn is-hidden">Install now</button>
-        </div>
-      </div>
-    </div>
-
-    <script src="app.js?v=20260502-19"></script>
+<script src="app.js?v=20260502-19"></script>
   </body>
 </html>
