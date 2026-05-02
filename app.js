@@ -1137,26 +1137,26 @@ if ("serviceWorker" in navigator) {
 let deferredInstallPrompt = null;
 
 const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
 const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
 
 // Receipt install button
 const receiptInstallRow = document.getElementById("receiptInstallRow");
-const receiptInstallBtn = document.getElementById("receiptInstallBtn");
 
 function showReceiptInstallRow() {
   if (isStandalone) return;
+  if (!isMobile && !deferredInstallPrompt) return;
   if (receiptInstallRow) receiptInstallRow.classList.remove("is-hidden");
 }
-
 
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
+  if (!isStandalone && receiptInstallRow) receiptInstallRow.classList.remove("is-hidden");
 });
 
 window.addEventListener("appinstalled", () => {
   deferredInstallPrompt = null;
   if (receiptInstallRow) receiptInstallRow.classList.add("is-hidden");
-  closeInstallModal();
 });
 
