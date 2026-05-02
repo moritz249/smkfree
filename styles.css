@@ -1091,13 +1091,6 @@ ol {
   object-fit: contain;
 }
 
-.receipt-qr span {
-  color: var(--muted);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 @media (max-width: 900px) {
   .scan-frame::before,
   .scan-frame::after {
