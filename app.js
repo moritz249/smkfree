@@ -1167,18 +1167,3 @@ window.addEventListener("appinstalled", () => {
   deferredInstallPrompt = null;
 });
 
-// iOS hint — shown once per session if not already installed
-const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
-const iosBanner = document.getElementById("iosBanner");
-const iosClose = document.getElementById("iosClose");
-
-if (iosBanner && isIos && !isStandalone && !sessionStorage.getItem("iosHintDismissed")) {
-  iosBanner.classList.remove("is-hidden");
-}
-if (iosClose) {
-  iosClose.addEventListener("click", () => {
-    if (iosBanner) iosBanner.classList.add("is-hidden");
-    sessionStorage.setItem("iosHintDismissed", "1");
-  });
-}
