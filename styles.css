@@ -1388,13 +1388,14 @@ ol {
 
 /* Receipt install button row */
 .receipt-actions--install {
+  display: flex !important;
   justify-content: center;
   padding: 24px 20px 8px;
+  grid-template-columns: none;
 }
 
 .receipt-actions--install .secondary-button {
-  width: 100%;
-  max-width: 320px;
+  width: min(100%, 320px);
   text-align: center;
 }
 

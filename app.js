@@ -1129,9 +1129,6 @@ if ("serviceWorker" in navigator) {
 }
 
 let deferredInstallPrompt = null;
-const installBanner = document.getElementById("installBanner");
-const installBtn = document.getElementById("installBtn");
-const installDismiss = document.getElementById("installDismiss");
 
 const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
 const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -1176,28 +1173,10 @@ if (iosClose) {
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
-  if (installBanner && isMobile) installBanner.classList.remove("is-hidden");
 });
 
-if (installBtn) {
-  installBtn.addEventListener("click", async () => {
-    if (!deferredInstallPrompt) return;
-    deferredInstallPrompt.prompt();
-    const { outcome } = await deferredInstallPrompt.userChoice;
-    deferredInstallPrompt = null;
-    if (installBanner) installBanner.classList.add("is-hidden");
-  });
-}
-
-if (installDismiss) {
-  installDismiss.addEventListener("click", () => {
-    if (installBanner) installBanner.classList.add("is-hidden");
-    sessionStorage.setItem("installDismissed", "1");
-  });
-}
-
 window.addEventListener("appinstalled", () => {
-  if (installBanner) installBanner.classList.add("is-hidden");
   deferredInstallPrompt = null;
+  if (receiptInstallRow) receiptInstallRow.classList.add("is-hidden");
 });
 
