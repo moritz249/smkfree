@@ -1150,25 +1150,10 @@ if (receiptInstallBtn) {
       const { outcome } = await deferredInstallPrompt.userChoice;
       deferredInstallPrompt = null;
       if (outcome === "accepted" && receiptInstallRow) receiptInstallRow.classList.add("is-hidden");
-    } else if (isIos) {
-      if (iosBanner) iosBanner.classList.remove("is-hidden");
     }
   });
 }
 
-// iOS one-time hint
-const iosBanner = document.getElementById("iosBanner");
-const iosClose = document.getElementById("iosClose");
-
-if (iosBanner && isIos && !isStandalone && !localStorage.getItem("iosHintDismissed")) {
-  iosBanner.classList.remove("is-hidden");
-}
-if (iosClose) {
-  iosClose.addEventListener("click", () => {
-    iosBanner.classList.add("is-hidden");
-    localStorage.setItem("iosHintDismissed", "1");
-  });
-}
 
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
