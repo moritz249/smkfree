@@ -38,6 +38,7 @@ const elements = {
   modeRadios: [...document.querySelectorAll("input[name='mode']")],
   modeCards: [...document.querySelectorAll(".mode-card")],
   quitDate: document.querySelector("#quitDate"),
+  quitDateError: document.querySelector("#quitDateError"),
   notStoppedYet: document.querySelector("#notStoppedYet"),
   advancedMode: document.querySelector("#advancedMode"),
   advancedPanel: document.querySelector("#advancedPanel"),
@@ -66,6 +67,7 @@ const elements = {
   milestoneList: document.querySelector("#milestoneList"),
   nextMilestone: document.querySelector("#nextMilestone"),
   receipt: document.querySelector("#receipt"),
+  savedNotice: document.querySelector("#savedNotice"),
 };
 
 let currentStep = 0;
@@ -74,6 +76,7 @@ let currentCurrency = "EUR";
 let currentAdvanced = false;
 let currentShowBenefits = false;
 let receiptRefreshTimer = null;
+let showSavedNoticeOnOpen = false;
 
 const numberFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 const decimalFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
@@ -299,9 +302,15 @@ function syncNotStoppedFields() {
   elements.quitDate.required = !isStillUsing;
   if (isStillUsing) {
     elements.quitDate.value = "";
-    elements.quitDate.setCustomValidity("");
+    setQuitDateError("");
   }
   syncAdvancedFields();
+}
+
+function setQuitDateError(message) {
+  elements.quitDate.setCustomValidity(message);
+  elements.quitDateError.textContent = message || "Please enter a quit date.";
+  elements.quitDateError.classList.toggle("is-hidden", !message);
 }
 
 function readState() {
@@ -734,7 +743,7 @@ async function shareReceiptImage() {
   const file = new File([blob], filename, { type: "image/png" });
   const shareData = {
     title: "SMKFREE Quit Receipt",
-    text: "Look at my SMKFREE receipt: that's what I didn't spend. Do yours in 30s. No hooks attached.",
+    text: "Look at my SMKFREE receipt. This is what I didn't spend. Do yours in 30s, no hooks attached.",
     url: "https://moritz249.github.io/smkfree/",
     files: [file],
   };
@@ -792,7 +801,19 @@ function validateCurrentStep() {
   const stepEl = activeSteps[currentStep];
 
   if (stepEl.querySelector("input[name='mode']")) return !!currentMode;
-  if (stepEl.contains(elements.quitDate) && elements.notStoppedYet.checked) return true;
+  if (stepEl.contains(elements.quitDate)) {
+    if (elements.notStoppedYet.checked) {
+      setQuitDateError("");
+      return true;
+    }
+
+    const message = elements.quitDate.value ? "" : "Please enter a quit date.";
+    setQuitDateError(message);
+    if (message) {
+      elements.quitDate.reportValidity();
+      return false;
+    }
+  }
 
   applyDefaultsForCurrentStep(stepEl);
   const inputs = getStepFields(stepEl);
@@ -825,7 +846,9 @@ function showReceipt(event) {
   updateReceipt();
   elements.appShell.classList.add("is-receipt-view");
   elements.stage.classList.add("is-receipt-only");
-  elements.editButton.textContent = "Details";
+  elements.editButton.textContent = "Edit";
+  elements.savedNotice.classList.toggle("is-hidden", !showSavedNoticeOnOpen);
+  showSavedNoticeOnOpen = false;
   elements.siteFooter.classList.add("is-hidden");
   elements.receipt.scrollIntoView({ behavior: "smooth", block: "start" });
   startReceiptRefresh();
@@ -884,6 +907,7 @@ function focusNextFieldInStep(target) {
 }
 
 function resetApp() {
+  if (!window.confirm("Reset your saved receipt?")) return;
   const savedTheme = localStorage.getItem(THEME_KEY) || "default";
   const savedCustomColor = localStorage.getItem(CUSTOM_COLOR_KEY);
   localStorage.removeItem(STORAGE_KEY);
@@ -893,7 +917,8 @@ function resetApp() {
   setFormState(readState());
   elements.appShell.classList.remove("is-receipt-view");
   elements.stage.classList.remove("is-receipt-only");
-  elements.editButton.textContent = "Details";
+  elements.editButton.textContent = "Edit";
+  elements.savedNotice.classList.add("is-hidden");
   showStep(0);
   updateReceipt(false);
   if (savedCustomColor) applyCustomThemeVars(savedCustomColor);
@@ -924,6 +949,7 @@ elements.showBenefitsToggle.addEventListener("input", () => {
 });
 
 elements.quitDate.addEventListener("input", () => {
+  if (elements.quitDate.value) setQuitDateError("");
   syncAdvancedFields();
 });
 
@@ -967,7 +993,8 @@ elements.form.addEventListener("input", () => updateReceipt());
 elements.editButton.addEventListener("click", () => {
   elements.stage.classList.remove("is-receipt-only");
   elements.appShell.classList.remove("is-receipt-view");
-  elements.editButton.textContent = "Details";
+  elements.editButton.textContent = "Edit";
+  elements.savedNotice.classList.add("is-hidden");
   stopReceiptRefresh();
 });
 elements.downloadButton.addEventListener("click", async () => {
@@ -993,6 +1020,7 @@ updateReceipt(false);
 
 if (hasCompleteSavedState(initialState)) {
   showStep(getActiveSteps().length - 1);
+  showSavedNoticeOnOpen = true;
   showReceipt();
 } else {
   showStep(0);
