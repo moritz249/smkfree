@@ -1429,6 +1429,14 @@ ol {
   flex-shrink: 0;
 }
 
+.ios-install-hint {
+  margin: 8px 0 0;
+  font-size: 13px;
+  text-align: center;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+
 .ios-banner {
   align-items: flex-start;
   gap: 16px;
