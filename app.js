@@ -31,6 +31,8 @@ const elements = {
   nextButton: document.querySelector("#nextButton"),
   receiptButton: document.querySelector("#receiptButton"),
   editButton: document.querySelector("#editButton"),
+  dashboardTab: document.querySelector("#dashboardTab"),
+  receiptTab: document.querySelector("#receiptTab"),
   downloadButton: document.querySelector("#downloadButton"),
   stepCounter: document.querySelector("#stepCounter"),
   progressFill: document.querySelector("#progressFill"),
@@ -86,6 +88,7 @@ let currentCurrency = "EUR";
 let currentAdvanced = false;
 let currentShowBenefits = false;
 let receiptRefreshTimer = null;
+let currentReceiptView = "dashboard";
 
 const numberFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 const decimalFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
@@ -671,7 +674,7 @@ function renderReceipt(progress, state) {
     );
     if (!state.notStoppedYet) {
       rows.push(
-        ["Packs not bought", `${decimalFormatter.format(progress.packsAvoided)} × ${formatCurrency(state.pricePerPack || 0, state.currencyCode)}`],
+        ["Packs not bought", `≈ ${decimalFormatter.format(progress.packsAvoided)} packs`],
       );
     }
   }
@@ -941,6 +944,24 @@ function applyDefaultsForCurrentStep(stepEl) {
   });
 }
 
+function setReceiptView(view, shouldScroll = true) {
+  currentReceiptView = view === "receipt" ? "receipt" : "dashboard";
+  const showDashboard = currentReceiptView === "dashboard";
+  elements.dashboard.classList.toggle("is-hidden", !showDashboard);
+  elements.receipt.classList.toggle("is-hidden", showDashboard);
+  elements.dashboardTab.classList.toggle("is-active", showDashboard);
+  elements.receiptTab.classList.toggle("is-active", !showDashboard);
+  elements.dashboardTab.classList.toggle("secondary-button", !showDashboard);
+  elements.dashboardTab.classList.toggle("primary-button", showDashboard);
+  elements.receiptTab.classList.toggle("secondary-button", showDashboard);
+  elements.receiptTab.classList.toggle("primary-button", !showDashboard);
+
+  if (shouldScroll) {
+    const target = showDashboard ? elements.dashboard : elements.receipt;
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
 function showReceipt(event) {
   event?.preventDefault();
   event?.stopPropagation();
@@ -949,7 +970,7 @@ function showReceipt(event) {
   elements.stage.classList.add("is-receipt-only");
   elements.editButton.textContent = "Edit";
   elements.siteFooter.classList.add("is-hidden");
-  elements.receipt.scrollIntoView({ behavior: "smooth", block: "start" });
+  setReceiptView("dashboard");
   showReceiptInstallRow();
   startReceiptRefresh();
 }
@@ -1083,13 +1104,15 @@ elements.editButton.addEventListener("click", () => {
   elements.editButton.textContent = "Edit";
   stopReceiptRefresh();
 });
+elements.dashboardTab.addEventListener("click", () => setReceiptView("dashboard"));
+elements.receiptTab.addEventListener("click", () => setReceiptView("receipt"));
 elements.downloadButton.addEventListener("click", async () => {
   elements.downloadButton.textContent = "Preparing";
   try {
     const result = await shareReceiptImage();
     elements.downloadButton.textContent = result === "shared" ? "Shared" : "Downloaded";
   } catch (error) {
-    elements.downloadButton.textContent = error?.name === "AbortError" ? "Share" : "Share failed";
+    elements.downloadButton.textContent = error?.name === "AbortError" ? "Share" : "Failed";
   }
   window.setTimeout(() => { elements.downloadButton.textContent = "Share"; }, 1600);
 });

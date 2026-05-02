@@ -28,7 +28,7 @@
     <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
     <link rel="icon" href="assets/favicon-32x32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="assets/icon-180.png">
-    <link rel="stylesheet" href="styles.css?v=20260502-23">
+    <link rel="stylesheet" href="styles.css?v=20260502-24">
     <script src="assets/html2canvas.min.js" defer></script>
   </head>
   <body>
@@ -242,6 +242,8 @@
         <section class="receipt-wrap" aria-label="SMKFREE receipt">
           <div class="receipt-actions" aria-label="Receipt actions">
             <button type="button" id="editButton" class="secondary-button">Edit</button>
+            <button type="button" id="dashboardTab" class="primary-button">Home</button>
+            <button type="button" id="receiptTab" class="secondary-button">Receipt</button>
             <button type="button" id="downloadButton" class="primary-button">Share</button>
             <div class="receipt-settings">
               <label id="customColorLabel" class="secondary-button">
@@ -254,7 +256,7 @@
               </label>
             </div>
           </div>
-          <article class="dashboard receipt--market" id="dashboard" aria-label="SMKFREE dashboard">
+          <article class="dashboard receipt--market receipt-view" id="dashboard" aria-label="SMKFREE dashboard">
             <header class="dashboard__header">
               <p>SMKFREE</p>
               <h2>Dashboard</h2>
@@ -285,7 +287,7 @@
             <div class="section-label">KEY NUMBERS</div>
             <dl class="dashboard-list" id="dashboardList"></dl>
           </article>
-          <article class="receipt receipt--market" id="receipt">
+          <article class="receipt receipt--market receipt-view" id="receipt">
             <div class="receipt__edge" aria-hidden="true"></div>
             <header class="receipt__header">
               <span class="receipt__top-gap" aria-hidden="true"></span>
@@ -364,6 +366,6 @@
 
 
 
-<script src="app.js?v=20260502-23"></script>
+<script src="app.js?v=20260502-24"></script>
   </body>
 </html>
