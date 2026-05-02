@@ -1098,19 +1098,6 @@ ol {
   text-transform: uppercase;
 }
 
-.receipt-credit {
-  margin: 0 0 10px !important;
-  color: var(--muted);
-  font-size: 0.72rem;
-  text-transform: uppercase;
-}
-
-.receipt-credit a {
-  color: var(--ink);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
 @media (max-width: 900px) {
   .scan-frame::before,
   .scan-frame::after {
