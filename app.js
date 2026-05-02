@@ -69,7 +69,6 @@ const elements = {
   milestoneList: document.querySelector("#milestoneList"),
   nextMilestone: document.querySelector("#nextMilestone"),
   receipt: document.querySelector("#receipt"),
-  savedNotice: document.querySelector("#savedNotice"),
 };
 
 let currentStep = 0;
@@ -78,7 +77,6 @@ let currentCurrency = "EUR";
 let currentAdvanced = false;
 let currentShowBenefits = false;
 let receiptRefreshTimer = null;
-let showSavedNoticeOnOpen = false;
 
 const numberFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 const decimalFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
@@ -871,8 +869,6 @@ function showReceipt(event) {
   elements.appShell.classList.add("is-receipt-view");
   elements.stage.classList.add("is-receipt-only");
   elements.editButton.textContent = "Edit";
-  elements.savedNotice.classList.toggle("is-hidden", !showSavedNoticeOnOpen);
-  showSavedNoticeOnOpen = false;
   elements.siteFooter.classList.add("is-hidden");
   elements.receipt.scrollIntoView({ behavior: "smooth", block: "start" });
   showReceiptInstallRow();
@@ -943,7 +939,6 @@ function resetApp() {
   elements.appShell.classList.remove("is-receipt-view");
   elements.stage.classList.remove("is-receipt-only");
   elements.editButton.textContent = "Edit";
-  elements.savedNotice.classList.add("is-hidden");
   showStep(0);
   updateReceipt(false);
   if (savedCustomColor) applyCustomThemeVars(savedCustomColor);
@@ -1019,7 +1014,6 @@ elements.editButton.addEventListener("click", () => {
   elements.stage.classList.remove("is-receipt-only");
   elements.appShell.classList.remove("is-receipt-view");
   elements.editButton.textContent = "Edit";
-  elements.savedNotice.classList.add("is-hidden");
   stopReceiptRefresh();
 });
 elements.downloadButton.addEventListener("click", async () => {
@@ -1045,7 +1039,6 @@ updateReceipt(false);
 
 if (hasCompleteSavedState(initialState)) {
   showStep(getActiveSteps().length - 1);
-  showSavedNoticeOnOpen = true;
   showReceipt();
 } else {
   showStep(0);
