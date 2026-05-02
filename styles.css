@@ -6,7 +6,7 @@
   --receipt: #fffefa;
   --line: #050505;
   --blue: #263cff;
-  --mono: "Courier New", Consolas, "Lucida Console", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --mono: "Lucida Console", "Courier New", Consolas, ui-monospace, SFMono-Regular, Menlo, monospace;
   --shadow: 8px 10px 0 rgba(5, 5, 5, 0.82);
 }
 
