@@ -1150,6 +1150,9 @@ if (receiptInstallBtn) {
       const { outcome } = await deferredInstallPrompt.userChoice;
       deferredInstallPrompt = null;
       if (outcome === "accepted" && receiptInstallRow) receiptInstallRow.classList.add("is-hidden");
+    } else if (isIos) {
+      const hint = document.getElementById("iosInstallHint");
+      if (hint) hint.classList.remove("is-hidden");
     }
   });
 }
