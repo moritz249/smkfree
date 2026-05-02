@@ -73,6 +73,7 @@ let currentMode = "cigarettes";
 let currentCurrency = "EUR";
 let currentAdvanced = false;
 let currentShowBenefits = false;
+let receiptRefreshTimer = null;
 
 const numberFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 const decimalFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
@@ -365,6 +366,10 @@ function hasCompleteSavedState(state) {
 
 function writeState(state) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...state, version: STORAGE_VERSION }));
+}
+
+function saveCurrentState() {
+  writeState(getFormState());
 }
 
 function getFormState() {
@@ -823,6 +828,20 @@ function showReceipt(event) {
   elements.editButton.textContent = "Details";
   elements.siteFooter.classList.add("is-hidden");
   elements.receipt.scrollIntoView({ behavior: "smooth", block: "start" });
+  startReceiptRefresh();
+}
+
+function startReceiptRefresh() {
+  if (receiptRefreshTimer) return;
+  receiptRefreshTimer = window.setInterval(() => {
+    if (elements.stage.classList.contains("is-receipt-only")) updateReceipt(false);
+  }, 30_000);
+}
+
+function stopReceiptRefresh() {
+  if (!receiptRefreshTimer) return;
+  window.clearInterval(receiptRefreshTimer);
+  receiptRefreshTimer = null;
 }
 
 function advanceWizard() {
@@ -868,6 +887,7 @@ function resetApp() {
   const savedTheme = localStorage.getItem(THEME_KEY) || "default";
   const savedCustomColor = localStorage.getItem(CUSTOM_COLOR_KEY);
   localStorage.removeItem(STORAGE_KEY);
+  stopReceiptRefresh();
   currentMode = "cigarettes";
   currentAdvanced = false;
   setFormState(readState());
@@ -948,6 +968,7 @@ elements.editButton.addEventListener("click", () => {
   elements.stage.classList.remove("is-receipt-only");
   elements.appShell.classList.remove("is-receipt-view");
   elements.editButton.textContent = "Details";
+  stopReceiptRefresh();
 });
 elements.downloadButton.addEventListener("click", async () => {
   elements.downloadButton.textContent = "Preparing";
@@ -958,6 +979,12 @@ elements.downloadButton.addEventListener("click", async () => {
     elements.downloadButton.textContent = error?.name === "AbortError" ? "Share" : "Share failed";
   }
   window.setTimeout(() => { elements.downloadButton.textContent = "Share"; }, 1600);
+});
+
+window.addEventListener("pagehide", saveCurrentState);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible") return;
+  if (elements.stage.classList.contains("is-receipt-only")) updateReceipt(false);
 });
 
 const initialState = readState();
