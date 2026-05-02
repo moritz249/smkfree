@@ -1,10 +1,17 @@
-# SMKFREE
+
+<p align="center">
+  <br>
+  <a href="https://moritz249.github.io/smkfree/">
+    <h1>*** SMKFREE ***************************** CLICK ME ***************</h2>
+  </a>
+  <br>
+</p>
 
 
 ![SMKFREE Screenshot](./assets/screenshot.png)
 
 
-SMKFREE is a lightweight, static web app that helps users track their progress after quitting smoking. It converts behavioural data into a simple, receipt-style summary to visualise impact over time.
+SMKFREE is a small static smoke-free tracker that turns quit progress into a receipt-style counter.
 
 Enter a quit date, cigarettes per day, cigarettes per pack, and pack price. The app calculates:
 
