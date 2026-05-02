@@ -267,17 +267,17 @@
             <div class="receipt__divider"></div>
 
             <section class="hero-metrics" aria-label="Main smoke free totals">
-              <div class="metric metric--days">
-                <span>Smoke free days</span>
-                <strong id="daysFree">0</strong>
-              </div>
-              <div class="metric metric--live">
-                <span>Smoke free time</span>
-                <strong id="elapsedTime">0m</strong>
+              <div class="metric">
+                <span>Minutes</span>
+                <strong id="minutesFree">0</strong>
               </div>
               <div class="metric">
-                <span>Weeks</span>
-                <strong id="weeksFree">0</strong>
+                <span>Hours</span>
+                <strong id="hoursFree">0</strong>
+              </div>
+              <div class="metric metric--days">
+                <span>Days</span>
+                <strong id="daysFree">0</strong>
               </div>
               <div class="metric">
                 <span>Months</span>
@@ -328,6 +328,21 @@
       <a href="legal.html">Privacy / Legal</a>
     </footer>
 
-    <script src="app.js?v=20260502-18"></script>
+    <!-- Android install banner -->
+    <div id="installBanner" class="install-banner is-hidden" role="banner" aria-label="Install app">
+      <p>Add SMKFREE to your home screen.</p>
+      <div class="install-banner__actions">
+        <button type="button" id="installBtn" class="primary-button">Install</button>
+        <button type="button" id="installDismiss" class="text-button">Not now</button>
+      </div>
+    </div>
+
+    <!-- iOS hint -->
+    <div id="iosBanner" class="install-banner is-hidden" role="banner" aria-label="Install hint for iOS">
+      <p>Install SMKFREE: tap <span aria-label="Share">&#x2B06;</span> then <strong>Add to Home Screen</strong>.</p>
+      <button type="button" id="iosClose" class="text-button" aria-label="Dismiss">&#x2715;</button>
+    </div>
+
+    <script src="app.js?v=20260502-19"></script>
   </body>
 </html>

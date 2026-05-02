@@ -1385,3 +1385,33 @@ ol {
     gap: 7px;
   }
 }
+
+/* Install banners */
+.install-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--paper);
+  border-top: 2px solid var(--ink);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.install-banner p {
+  margin: 0;
+  flex: 1;
+}
+
+.install-banner__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}

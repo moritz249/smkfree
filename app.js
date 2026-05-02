@@ -61,9 +61,9 @@ const elements = {
   receiptDate: document.querySelector("#receiptDate"),
   receiptRows: document.querySelector("#receiptRows"),
   moneySaved: document.querySelector("#moneySaved"),
+  minutesFree: document.querySelector("#minutesFree"),
+  hoursFree: document.querySelector("#hoursFree"),
   daysFree: document.querySelector("#daysFree"),
-  elapsedTime: document.querySelector("#elapsedTime"),
-  weeksFree: document.querySelector("#weeksFree"),
   monthsFree: document.querySelector("#monthsFree"),
   yearsFree: document.querySelector("#yearsFree"),
   milestoneList: document.querySelector("#milestoneList"),
@@ -453,6 +453,7 @@ function setFormState(state) {
 function calculateProgress(state) {
   const empty = {
     elapsedMs: 0, elapsedHours: 0, wholeDays: 0, weeks: 0, months: 0, years: 0,
+    compYears: 0, compMonths: 0, compDays: 0, compHours: 0, compMinutes: 0,
     moneySaved: 0, estimatedLifeMinutes: 0,
     cigarettesAvoided: 0, packsAvoided: 0,
     moneySpent: 0, averageHistoricPackPrice: 0, smokingDays: 0,
@@ -466,13 +467,20 @@ function calculateProgress(state) {
   const elapsedMs = Math.max(0, Date.now() - quitStart);
   const elapsedDays = elapsedMs / 86_400_000;
   const wholeDays = Math.floor(elapsedDays);
+  const compYears = Math.floor(wholeDays / 365.25);
+  const daysAfterYears = wholeDays - compYears * 365.25;
+  const compMonths = Math.floor(daysAfterYears / 30.4375);
+  const compDays = Math.floor(daysAfterYears - compMonths * 30.4375);
+  const compHours = Math.floor((elapsedMs % 86_400_000) / 3_600_000);
+  const compMinutes = Math.floor((elapsedMs % 3_600_000) / 60_000);
   const base = {
     elapsedMs,
     elapsedHours: elapsedMs / 3_600_000,
     wholeDays,
     weeks: Math.floor(wholeDays / 7),
     months: Math.floor(wholeDays / 30.4375),
-    years: Math.floor(wholeDays / 365.25),
+    years: compYears,
+    compYears, compMonths, compDays, compHours, compMinutes,
   };
 
   if (state.mode === "ryo") {
@@ -541,11 +549,11 @@ function renderReceipt(progress, state) {
   const effectiveSpent = stillUsingSpend?.moneySpent ?? progress.moneySpent;
   const effectiveAvgPackPrice = stillUsingSpend?.averagePackPrice ?? progress.averageHistoricPackPrice;
 
-  elements.daysFree.textContent = numberFormatter.format(progress.wholeDays);
-  elements.elapsedTime.textContent = formatElapsedTime(progress.elapsedMs);
-  elements.weeksFree.textContent = numberFormatter.format(progress.weeks);
-  elements.monthsFree.textContent = numberFormatter.format(progress.months);
-  elements.yearsFree.textContent = numberFormatter.format(progress.years);
+  elements.minutesFree.textContent = numberFormatter.format(progress.compMinutes);
+  elements.hoursFree.textContent = numberFormatter.format(progress.compHours);
+  elements.daysFree.textContent = numberFormatter.format(progress.compDays);
+  elements.monthsFree.textContent = numberFormatter.format(progress.compMonths);
+  elements.yearsFree.textContent = numberFormatter.format(progress.compYears);
   elements.moneySaved.textContent = formatCurrency(state.notStoppedYet ? 0 : progress.moneySaved, state.currencyCode);
 
   const rows = showAdvancedSpend
@@ -578,12 +586,6 @@ function renderReceipt(progress, state) {
       ["Accessories / mo.", formatCurrency(state.accessoriesPerMonth, state.currencyCode)],
     );
   } else {
-    if (!state.notStoppedYet) {
-      rows.push(
-        ["Not smoked", numberFormatter.format(progress.cigarettesAvoided)],
-        ["Packs not bought", decimalFormatter.format(progress.packsAvoided)],
-      );
-    }
     rows.push(
       ["Cigarettes / day", numberFormatter.format(state.cigarettesPerDay)],
       ["Cigarettes / pack", numberFormatter.format(state.cigarettesPerPack)],
@@ -591,6 +593,11 @@ function renderReceipt(progress, state) {
         ? ["Avg past pack", `~ ${formatCurrency(effectiveAvgPackPrice, state.currencyCode)} avg DE`]
         : ["Pack price", formatCurrency(state.pricePerPack || 0, state.currencyCode)],
     );
+    if (!state.notStoppedYet) {
+      rows.push(
+        ["Packs not bought", `${decimalFormatter.format(progress.packsAvoided)} × ${formatCurrency(state.pricePerPack || 0, state.currencyCode)}`],
+      );
+    }
   }
 
   if (!state.notStoppedYet) {
@@ -1121,3 +1128,57 @@ const savedCustomColor = localStorage.getItem(CUSTOM_COLOR_KEY) || "#7c3aed";
 customColorInput.value = savedCustomColor;
 applyCustomThemeVars(savedCustomColor);
 applyTheme(localStorage.getItem(THEME_KEY) || "default");
+
+// PWA
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js");
+}
+
+let deferredInstallPrompt = null;
+const installBanner = document.getElementById("installBanner");
+const installBtn = document.getElementById("installBtn");
+const installDismiss = document.getElementById("installDismiss");
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if (installBanner) installBanner.classList.remove("is-hidden");
+});
+
+if (installBtn) {
+  installBtn.addEventListener("click", async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    if (installBanner) installBanner.classList.add("is-hidden");
+  });
+}
+
+if (installDismiss) {
+  installDismiss.addEventListener("click", () => {
+    if (installBanner) installBanner.classList.add("is-hidden");
+    sessionStorage.setItem("installDismissed", "1");
+  });
+}
+
+window.addEventListener("appinstalled", () => {
+  if (installBanner) installBanner.classList.add("is-hidden");
+  deferredInstallPrompt = null;
+});
+
+// iOS hint — shown once per session if not already installed
+const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+const iosBanner = document.getElementById("iosBanner");
+const iosClose = document.getElementById("iosClose");
+
+if (iosBanner && isIos && !isStandalone && !sessionStorage.getItem("iosHintDismissed")) {
+  iosBanner.classList.remove("is-hidden");
+}
+if (iosClose) {
+  iosClose.addEventListener("click", () => {
+    if (iosBanner) iosBanner.classList.add("is-hidden");
+    sessionStorage.setItem("iosHintDismissed", "1");
+  });
+}
