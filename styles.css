@@ -442,6 +442,20 @@ label {
   text-transform: uppercase;
 }
 
+.step-hint {
+  margin: -4px 0 16px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+.field-error {
+  margin: -6px 0 12px;
+  color: #b00000;
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
 .toggle-field {
   grid-template-columns: 26px minmax(0, 1fr);
   align-items: start;
@@ -615,6 +629,14 @@ select:focus {
   font-size: 0.92rem;
   line-height: 1;
   white-space: nowrap;
+}
+
+.saved-notice {
+  margin: -10px 0 -8px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  text-align: center;
+  text-transform: uppercase;
 }
 
 .receipt {
