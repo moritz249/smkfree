@@ -1386,6 +1386,18 @@ ol {
   }
 }
 
+/* Receipt install button row */
+.receipt-actions--install {
+  justify-content: center;
+  padding: 24px 20px 8px;
+}
+
+.receipt-actions--install .secondary-button {
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+}
+
 /* Install banners */
 .install-banner {
   position: fixed;
