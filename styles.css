@@ -1429,64 +1429,6 @@ ol {
   flex-shrink: 0;
 }
 
-/* iOS install modal */
-.ios-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-}
-
-.ios-modal__backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-}
-
-.ios-modal__box {
-  position: relative;
-  z-index: 1;
-  background: var(--paper);
-  border: 2px solid var(--ink);
-  width: min(100%, 420px);
-  padding: 28px 24px 32px;
-  font-family: var(--mono);
-  margin: 0 0 env(safe-area-inset-bottom, 0);
-}
-
-.ios-modal__close {
-  position: absolute;
-  top: 14px;
-  right: 16px;
-  background: none;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-  color: var(--ink);
-  padding: 4px;
-  line-height: 1;
-}
-
-.ios-modal__title {
-  margin: 0 0 16px;
-  font-size: 15px;
-  font-weight: bold;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.ios-modal__steps {
-  margin: 0;
-  padding-left: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
 .ios-banner {
   align-items: flex-start;
   gap: 16px;
