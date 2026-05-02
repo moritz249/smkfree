@@ -1428,3 +1428,26 @@ ol {
   gap: 10px;
   flex-shrink: 0;
 }
+
+.ios-banner {
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.ios-banner__content {
+  flex: 1;
+}
+
+.ios-banner__title {
+  margin: 0 0 6px;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+}
+
+.ios-banner__steps {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
