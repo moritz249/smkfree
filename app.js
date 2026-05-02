@@ -1124,6 +1124,12 @@ function onColorChange() {
 customColorInput.addEventListener("input", onColorChange);
 customColorInput.addEventListener("change", onColorChange);
 
+if (customColorLabel) {
+  customColorLabel.addEventListener("click", (e) => {
+    if (e.target !== customColorInput) customColorInput.click();
+  });
+}
+
 const savedCustomColor = localStorage.getItem(CUSTOM_COLOR_KEY) || "#7c3aed";
 customColorInput.value = savedCustomColor;
 applyCustomThemeVars(savedCustomColor);
