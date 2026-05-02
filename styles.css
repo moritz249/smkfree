@@ -1068,6 +1068,28 @@ ol {
   letter-spacing: 0.08em;
 }
 
+.receipt-qr {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  margin: 0 auto 12px;
+}
+
+.receipt-qr img {
+  display: block;
+  width: 92px;
+  height: 92px;
+  border: 1px solid var(--line);
+  background: white;
+}
+
+.receipt-qr span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 @media (max-width: 900px) {
   .scan-frame::before,
   .scan-frame::after {
