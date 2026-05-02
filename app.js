@@ -342,6 +342,27 @@ function readState() {
   }
 }
 
+function hasCompleteSavedState(state) {
+  const hasValue = (value) => value !== "" && value !== null && value !== undefined;
+  const hasDateState = Boolean(state.notStoppedYet || state.quitDate);
+  if (!hasDateState) return false;
+
+  if (state.mode === "ryo") {
+    return Number(state.rollsPerDay) > 0 && Number(state.weeklyRyoCost) > 0;
+  }
+
+  if (state.mode === "vaping") {
+    return Number(state.mlPerWeek) > 0
+      && Number(state.costPer10ml) > 0
+      && hasValue(state.accessoriesPerMonth)
+      && Number(state.accessoriesPerMonth) >= 0;
+  }
+
+  return Number(state.cigarettesPerDay) > 0
+    && Number(state.cigarettesPerPack) > 0
+    && Number(state.pricePerPack) > 0;
+}
+
 function writeState(state) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...state, version: STORAGE_VERSION }));
 }
@@ -939,9 +960,16 @@ elements.downloadButton.addEventListener("click", async () => {
   window.setTimeout(() => { elements.downloadButton.textContent = "Share"; }, 1600);
 });
 
-setFormState(readState());
-showStep(0);
+const initialState = readState();
+setFormState(initialState);
 updateReceipt(false);
+
+if (hasCompleteSavedState(initialState)) {
+  showStep(getActiveSteps().length - 1);
+  showReceipt();
+} else {
+  showStep(0);
+}
 
 // Theme
 const THEME_KEY = "smkfree-theme";
