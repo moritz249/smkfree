@@ -757,6 +757,18 @@ async function createReceiptImageBlob() {
   }
 }
 
+let isSharing = false;
+
+function restoreColorAfterShare() {
+  const savedColor = localStorage.getItem(CUSTOM_COLOR_KEY);
+  const savedTheme = localStorage.getItem(THEME_KEY);
+  if (savedColor) {
+    customColorInput.value = savedColor;
+    applyCustomThemeVars(savedColor);
+  }
+  if (savedTheme) applyTheme(savedTheme);
+}
+
 async function shareReceiptImage() {
   const filename = "smoke-free-receipt.png";
   const blob = await createReceiptImageBlob();
@@ -768,21 +780,30 @@ async function shareReceiptImage() {
     files: [file],
   };
 
-  if (navigator.canShare?.({ files: [file] }) && navigator.share) {
-    try {
-      await navigator.share(shareData);
-      return "shared";
-    } catch (error) {
-      if (error?.name === "AbortError") {
-        throw error;
+  isSharing = true;
+  try {
+    if (navigator.canShare?.({ files: [file] }) && navigator.share) {
+      try {
+        await navigator.share(shareData);
+        return "shared";
+      } catch (error) {
+        if (error?.name === "AbortError") {
+          throw error;
+        }
       }
     }
-  }
 
-  const objectUrl = URL.createObjectURL(blob);
-  downloadUrl(objectUrl, filename);
-  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-  return "downloaded";
+    const objectUrl = URL.createObjectURL(blob);
+    downloadUrl(objectUrl, filename);
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    return "downloaded";
+  } finally {
+    restoreColorAfterShare();
+    window.setTimeout(() => {
+      isSharing = false;
+      restoreColorAfterShare();
+    }, 1500);
+  }
 }
 
 function showStep(index) {
@@ -929,24 +950,8 @@ function focusNextFieldInStep(target) {
 
 function resetApp() {
   if (!window.confirm("Reset your saved receipt?")) return;
-  localStorage.removeItem(STORAGE_KEY);
-  localStorage.removeItem(THEME_KEY);
-  localStorage.removeItem(CUSTOM_COLOR_KEY);
-  stopReceiptRefresh();
-  currentMode = "cigarettes";
-  currentAdvanced = false;
-  currentShowBenefits = false;
-  setFormState(readState());
-  elements.appShell.classList.remove("is-receipt-view");
-  elements.stage.classList.remove("is-receipt-only");
-  elements.editButton.textContent = "Edit";
-  if (receiptInstallRow) receiptInstallRow.classList.add("is-hidden");
-  const defaultColor = "#7c3aed";
-  customColorInput.value = defaultColor;
-  applyCustomThemeVars(defaultColor);
-  applyTheme("default");
-  showStep(0);
-  updateReceipt(false);
+  localStorage.clear();
+  location.reload();
 }
 
 // Mode radio change
@@ -1115,6 +1120,7 @@ function applyCustomThemeVars(hex) {
 }
 
 function onColorChange() {
+  if (isSharing) return;
   const hex = customColorInput.value;
   applyCustomThemeVars(hex);
   localStorage.setItem(CUSTOM_COLOR_KEY, hex);
