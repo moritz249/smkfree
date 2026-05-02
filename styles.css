@@ -721,10 +721,6 @@ select:focus {
   letter-spacing: 0.08em;
 }
 
-.receipt--market .receipt-logo {
-  border: 0;
-}
-
 .receipt--market .receipt__divider {
   border-top: 0;
 }
@@ -1016,38 +1012,6 @@ ol {
   line-height: 1.35;
 }
 
-.receipt-logo {
-  display: grid;
-  width: 54px;
-  height: 54px;
-  place-items: center;
-  margin: 0 auto 12px;
-  border: 1px solid var(--line);
-}
-
-.receipt-logo span {
-  position: relative;
-  display: block;
-  width: 32px;
-  height: 32px;
-  border: 2px solid var(--line);
-  border-radius: 50%;
-}
-
-.receipt-logo span::before,
-.receipt-logo span::after {
-  position: absolute;
-  inset: 7px;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  content: "";
-}
-
-.receipt-logo span::after {
-  inset: 13px;
-  background: var(--line);
-}
-
 .receipt-qr {
   display: grid;
   gap: 5px;
@@ -1247,17 +1211,6 @@ ol {
 
   .receipt__footer small {
     margin-bottom: 5px;
-  }
-
-  .receipt-logo {
-    width: 34px;
-    height: 34px;
-    margin-bottom: 6px;
-  }
-
-  .receipt-logo span {
-    width: 22px;
-    height: 22px;
   }
 
   .receipt-link {
