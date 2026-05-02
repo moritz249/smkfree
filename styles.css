@@ -942,6 +942,10 @@ select:focus {
   font-size: clamp(1.8rem, 5vw, 2.65rem);
 }
 
+.metric--live strong {
+  font-size: clamp(1rem, 3.4vw, 1.45rem);
+}
+
 .receipt__total {
   position: relative;
   display: grid;
