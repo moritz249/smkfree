@@ -34,6 +34,7 @@ const elements = {
   downloadButton: document.querySelector("#downloadButton"),
   stepCounter: document.querySelector("#stepCounter"),
   progressFill: document.querySelector("#progressFill"),
+  progressPercent: document.querySelector("#progressPercent"),
   steps: [...document.querySelectorAll(".step")],
   modeRadios: [...document.querySelectorAll("input[name='mode']")],
   modeCards: [...document.querySelectorAll(".mode-card")],
@@ -773,8 +774,10 @@ function showStep(index) {
   updateModeCards();
 
   const total = activeSteps.length;
+  const progress = Math.round(((currentStep + 1) / total) * 100);
   elements.stepCounter.textContent = `Step ${currentStep + 1} of ${total}`;
-  elements.progressFill.style.width = `${((currentStep + 1) / total) * 100}%`;
+  elements.progressFill.style.width = `${progress}%`;
+  elements.progressPercent.textContent = `${progress}%`;
   elements.backButton.disabled = currentStep === 0;
   elements.backButton.classList.toggle("is-hidden", currentStep === 0);
   elements.nextButton.textContent = currentStep === 0 ? "Start" : "Next";
