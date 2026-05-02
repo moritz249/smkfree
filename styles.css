@@ -1070,17 +1070,18 @@ ol {
 
 .receipt-qr {
   display: grid;
-  gap: 6px;
+  gap: 5px;
   justify-items: center;
-  margin: 0 auto 12px;
+  margin: -2px auto 14px;
 }
 
-.receipt-qr img {
+.receipt-qr__mark {
   display: block;
-  width: 92px;
-  height: 92px;
-  border: 1px solid var(--line);
-  background: white;
+  width: 76px;
+  height: 76px;
+  background: var(--line);
+  mask: url("assets/qr-code.svg") center / contain no-repeat;
+  -webkit-mask: url("assets/qr-code.svg") center / contain no-repeat;
 }
 
 .receipt-qr span {
