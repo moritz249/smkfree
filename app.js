@@ -952,8 +952,24 @@ function focusNextFieldInStep(target) {
 
 function resetApp() {
   if (!window.confirm("Reset your saved receipt?")) return;
-  localStorage.clear();
-  location.reload();
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(THEME_KEY);
+  localStorage.removeItem(CUSTOM_COLOR_KEY);
+
+  stopReceiptRefresh();
+  elements.stage.classList.remove("is-receipt-only");
+  elements.appShell.classList.remove("is-receipt-view");
+  if (receiptInstallRow) receiptInstallRow.classList.add("is-hidden");
+
+  const defaultState = readState();
+  setFormState(defaultState);
+  setQuitDateError("");
+  customColorInput.value = "#7c3aed";
+  applyCustomThemeVars(customColorInput.value);
+  applyTheme("default");
+  updateReceipt(false);
+  showStep(0);
+  elements.appShell.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 // Mode radio change
@@ -1182,4 +1198,3 @@ window.addEventListener("appinstalled", () => {
   deferredInstallPrompt = null;
   if (receiptInstallRow) receiptInstallRow.classList.add("is-hidden");
 });
-
