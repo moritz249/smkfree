@@ -758,6 +758,7 @@ async function createReceiptImageBlob() {
 }
 
 let isSharing = false;
+let shareRestoreTimeout = null;
 
 function restoreColorAfterShare() {
   const savedColor = localStorage.getItem(CUSTOM_COLOR_KEY);
@@ -799,8 +800,9 @@ async function shareReceiptImage() {
     return "downloaded";
   } finally {
     restoreColorAfterShare();
-    window.setTimeout(() => {
+    shareRestoreTimeout = window.setTimeout(() => {
       isSharing = false;
+      shareRestoreTimeout = null;
       restoreColorAfterShare();
     }, 1500);
   }
@@ -1126,6 +1128,20 @@ function onColorChange() {
   localStorage.setItem(CUSTOM_COLOR_KEY, hex);
   localStorage.setItem(THEME_KEY, "custom");
   applyTheme("custom");
+}
+
+function cancelShareRestore() {
+  if (shareRestoreTimeout) {
+    window.clearTimeout(shareRestoreTimeout);
+    shareRestoreTimeout = null;
+  }
+  isSharing = false;
+}
+
+customColorInput.addEventListener("click", cancelShareRestore);
+customColorInput.addEventListener("keydown", cancelShareRestore);
+if (customColorLabel) {
+  customColorLabel.addEventListener("click", cancelShareRestore);
 }
 customColorInput.addEventListener("input", onColorChange);
 customColorInput.addEventListener("change", onColorChange);
