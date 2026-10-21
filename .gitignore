@@ -1,4 +1,7 @@
-# OS / editor noise
+# Local-only project settings
+.claude/
+
+# OS noise
 .DS_Store
 Thumbs.db
 desktop.ini
@@ -6,10 +9,8 @@ desktop.ini
 # Logs
 *.log
 
-# Local dependency folders, if added later
+# Dependencies and generated output
 node_modules/
-
-# Build outputs, if a build tool is added later
 dist/
 build/
 

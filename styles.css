@@ -1031,6 +1031,22 @@ dd {
   text-align: right;
 }
 
+.receipt__rows .receipt__note {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+  align-items: start;
+}
+
+.receipt__rows .receipt__note dd {
+  font-weight: 400;
+  text-align: left;
+  text-transform: none;
+}
+
+.receipt--market .receipt__rows .receipt__note {
+  font-size: 0.72em;
+}
+
 .fine-benefits {
   position: relative;
   padding: 20px 26px 8px;
