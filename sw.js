@@ -1,10 +1,11 @@
-const CACHE = "smkfree-v7";
+const CACHE = "smkfree-v10";
 const ASSETS = [
   "./",
   "./index.html",
   "./install.html",
   "./legal.html",
   "./app.js",
+  "./app-core.js",
   "./styles.css",
   "./manifest.webmanifest",
   "./assets/icon.svg",
@@ -25,7 +26,7 @@ self.addEventListener("install", (e) => {
 self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+      Promise.all(keys.filter((k) => k.startsWith("smkfree-") && k !== CACHE).map((k) => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
 });
@@ -33,14 +34,12 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
   e.respondWith(
-    caches.match(e.request).then((cached) => {
+    caches.open(CACHE).then((cache) => cache.match(e.request).then((cached) => {
       const fresh = fetch(e.request).then((res) => {
-        if (res.ok) {
-          caches.open(CACHE).then((c) => c.put(e.request, res.clone()));
-        }
+        if (res.ok) cache.put(e.request, res.clone());
         return res;
       }).catch(() => cached);
       return cached || fresh;
-    })
+    }))
   );
 });

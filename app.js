@@ -1,24 +1,32 @@
+import {
+  calculateProgress,
+  estimateAdvancedSpend,
+  formatLifeSaved,
+  hasCompleteSavedState,
+  parseDecimal,
+} from "./app-core.js";
+
 const STORAGE_KEY = "smoke-free-progress";
 const STORAGE_VERSION = 4;
 
 const tobaccoMilestones = [
-  { hours: 8, title: "Oxygen improves", detail: "Carbon monoxide starts dropping." },
-  { hours: 24, title: "Pulse steadies", detail: "Your body starts recalibrating." },
-  { hours: 48, title: "Taste returns", detail: "Taste and smell can sharpen." },
-  { hours: 72, title: "Breathing eases", detail: "Airways may begin to relax." },
-  { hours: 336, title: "Circulation improves", detail: "Two weeks smoke free." },
-  { hours: 2160, title: "Lungs recover", detail: "Coughing may reduce." },
-  { hours: 8760, title: "Risk keeps falling", detail: "One year smoke free." },
+  { hours: 1 / 3, title: "Heart rate drops", detail: "A benefit that can begin within minutes." },
+  { hours: 24, title: "Nicotine clears", detail: "Nicotine levels in the blood drop to zero." },
+  { hours: 72, title: "Carbon monoxide falls", detail: "Within several days, levels can reach those of a nonsmoker." },
+  { hours: 720, title: "Breathing may ease", detail: "Coughing and shortness of breath can decrease over 1–12 months." },
+  { hours: 8760, title: "Heart attack risk falls", detail: "Risk drops sharply over 1–2 years after quitting." },
+  { hours: 26280, title: "Heart health improves", detail: "Added coronary heart disease risk drops over 3–6 years." },
+  { hours: 43800, title: "Stroke risk decreases", detail: "The added risk of stroke continues to fall over time." },
 ];
 
 const vapingMilestones = [
-  { hours: 24, title: "Cravings shift", detail: "Nicotine routines begin to loosen." },
-  { hours: 72, title: "Breathing settles", detail: "Irritation from vapor may start easing." },
-  { hours: 168, title: "Triggers get clearer", detail: "One week without the vape habit." },
-  { hours: 336, title: "Energy steadies", detail: "Sleep and daily rhythm may feel more even." },
-  { hours: 720, title: "Habit loop fades", detail: "A month of choosing not to vape." },
-  { hours: 2160, title: "Lungs get space", detail: "Airways have had months away from vapor." },
-  { hours: 8760, title: "New baseline", detail: "One year without vaping." },
+  { hours: 24, title: "First vape-free day", detail: "One day of practicing a new routine." },
+  { hours: 72, title: "Break a routine", detail: "Notice a moment you would usually vape." },
+  { hours: 168, title: "One week of choices", detail: "A week of practicing your plan." },
+  { hours: 336, title: "Notice your triggers", detail: "Recognize situations linked to vaping." },
+  { hours: 720, title: "One month of practice", detail: "Your new routine has had time to grow." },
+  { hours: 2160, title: "Keep building", detail: "Each vape-free choice adds to your progress." },
+  { hours: 8760, title: "A year of progress", detail: "A year of choosing your own next step." },
 ];
 
 const elements = {
@@ -84,19 +92,6 @@ const decimalFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits:
 const decimalInputIds = new Set(["pricePerPack", "weeklyRyoCost", "costPer10ml", "accessoriesPerMonth"]);
 const advancedCurrencyCode = "EUR";
 
-const germanPackPriceAnchors = [
-  { year: 1990, price: 2.15 },
-  { year: 1995, price: 2.55 },
-  { year: 2000, price: 2.95 },
-  { year: 2002, price: 3.16 },
-  { year: 2005, price: 4.21 },
-  { year: 2010, price: 5.00 },
-  { year: 2015, price: 6.00 },
-  { year: 2020, price: 7.00 },
-  { year: 2022, price: 7.60 },
-  { year: 2024, price: 8.70 },
-  { year: 2025, price: 9.40 },
-];
 
 function todayAsInputValue() {
   const now = new Date();
@@ -122,133 +117,6 @@ function formatDate(value) {
   return new Intl.DateTimeFormat("en-US", {
     year: "numeric", month: "short", day: "2-digit",
   }).format(new Date(`${value}T00:00:00`));
-}
-
-function parseDecimal(value) {
-  const normalized = String(value).trim().replace(",", ".");
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function decimalYear(date) {
-  const start = new Date(date.getFullYear(), 0, 1);
-  const next = new Date(date.getFullYear() + 1, 0, 1);
-  return date.getFullYear() + ((date - start) / (next - start));
-}
-
-function estimateGermanPackPrice20At(date) {
-  const year = decimalYear(date);
-  const first = germanPackPriceAnchors[0];
-  const last = germanPackPriceAnchors[germanPackPriceAnchors.length - 1];
-
-  if (year <= first.year) return first.price;
-  if (year >= last.year) return last.price;
-
-  for (let index = 1; index < germanPackPriceAnchors.length; index += 1) {
-    const previous = germanPackPriceAnchors[index - 1];
-    const next = germanPackPriceAnchors[index];
-
-    if (year <= next.year) {
-      const ratio = (year - previous.year) / (next.year - previous.year);
-      return previous.price + ((next.price - previous.price) * ratio);
-    }
-  }
-
-  return last.price;
-}
-
-function estimateGermanSmokingSpend(state, quitStart) {
-  if (!state.isAdvanced || state.currencyCode !== "EUR" || !state.smokingStartDate || state.mode !== "cigarettes") {
-    return { moneySpent: 0, averagePackPrice: 0, smokingDays: 0 };
-  }
-
-  const start = new Date(`${state.smokingStartDate}T00:00:00`);
-  const end = quitStart;
-
-  if (start >= end || state.cigarettesPerDay <= 0 || state.cigarettesPerPack <= 0) {
-    return { moneySpent: 0, averagePackPrice: 0, smokingDays: 0 };
-  }
-
-  let cursor = new Date(start);
-  let moneySpent = 0;
-  let weightedPackPrice = 0;
-  let smokingDays = 0;
-
-  while (cursor < end) {
-    const nextYear = new Date(cursor.getFullYear() + 1, 0, 1);
-    const segmentEnd = nextYear < end ? nextYear : end;
-    const days = (segmentEnd - cursor) / 86_400_000;
-    const pricePer20 = estimateGermanPackPrice20At(cursor);
-    const packPrice = pricePer20 * (state.cigarettesPerPack / 20);
-    moneySpent += (days * state.cigarettesPerDay / state.cigarettesPerPack) * packPrice;
-    weightedPackPrice += packPrice * days;
-    smokingDays += days;
-    cursor = segmentEnd;
-  }
-
-  return {
-    moneySpent,
-    averagePackPrice: smokingDays > 0 ? weightedPackPrice / smokingDays : 0,
-    smokingDays,
-  };
-}
-
-function estimateAdvancedSpend(state, quitStart) {
-  if (!state.isAdvanced || !state.smokingStartDate) {
-    return { moneySpent: 0, averagePackPrice: 0, smokingDays: 0 };
-  }
-
-  const start = new Date(`${state.smokingStartDate}T00:00:00`);
-  if (start >= quitStart) {
-    return { moneySpent: 0, averagePackPrice: 0, smokingDays: 0 };
-  }
-
-  const smokingDays = (quitStart - start) / 86_400_000;
-
-  if (state.mode === "cigarettes") {
-    return estimateGermanSmokingSpend(state, quitStart);
-  }
-
-  if (state.mode === "ryo") {
-    return {
-      moneySpent: (smokingDays / 7) * state.weeklyRyoCost,
-      averagePackPrice: 0,
-      smokingDays,
-    };
-  }
-
-  if (state.mode === "vaping") {
-    const liquidSpent = (smokingDays / 7) * state.mlPerWeek * (state.costPer10ml / 10);
-    const accessoriesSpent = (smokingDays / 30.4375) * state.accessoriesPerMonth;
-    return {
-      moneySpent: liquidSpent + accessoriesSpent,
-      averagePackPrice: 0,
-      smokingDays,
-    };
-  }
-
-  return { moneySpent: 0, averagePackPrice: 0, smokingDays };
-}
-
-function formatLifeSaved(minutes) {
-  const wholeMinutes = Math.floor(minutes);
-  const days = Math.floor(wholeMinutes / 1440);
-  const hours = Math.floor((wholeMinutes % 1440) / 60);
-  const mins = wholeMinutes % 60;
-  if (days > 0) return `${days}d ${hours}h`;
-  if (hours > 0) return `${hours}h ${mins}m`;
-  return `${mins}m`;
-}
-
-function formatElapsedTime(milliseconds) {
-  const totalSeconds = Math.floor(Math.max(0, milliseconds) / 1000);
-  const days = Math.floor(totalSeconds / 86_400);
-  const hours = Math.floor((totalSeconds % 86_400) / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-
-  if (days > 0) return `${days}d ${hours}h ${minutes}m`;
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  return `${minutes}m`;
 }
 
 function updateCurrencySymbols(currencyCode) {
@@ -363,27 +231,6 @@ function readState() {
   }
 }
 
-function hasCompleteSavedState(state) {
-  const hasValue = (value) => value !== "" && value !== null && value !== undefined;
-  const hasDateState = Boolean(state.notStoppedYet || state.quitDate);
-  if (!hasDateState) return false;
-
-  if (state.mode === "ryo") {
-    return Number(state.rollsPerDay) > 0 && Number(state.weeklyRyoCost) > 0;
-  }
-
-  if (state.mode === "vaping") {
-    return Number(state.mlPerWeek) > 0
-      && Number(state.costPer10ml) > 0
-      && hasValue(state.accessoriesPerMonth)
-      && Number(state.accessoriesPerMonth) >= 0;
-  }
-
-  return Number(state.cigarettesPerDay) > 0
-    && Number(state.cigarettesPerPack) > 0
-    && Number(state.pricePerPack) > 0;
-}
-
 function writeState(state) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...state, version: STORAGE_VERSION }));
 }
@@ -409,12 +256,12 @@ function getFormState() {
     currencyCode,
     cigarettesPerDay: Number(elements.cigarettesPerDay.value) || 0,
     cigarettesPerPack: Number(elements.cigarettesPerPack.value) || 0,
-    pricePerPack: parseDecimal(elements.pricePerPack.value),
+    pricePerPack: parseDecimal(elements.pricePerPack.value) ?? 0,
     rollsPerDay: Number(elements.rollsPerDay.value) || 0,
-    weeklyRyoCost: parseDecimal(elements.weeklyRyoCost.value),
+    weeklyRyoCost: parseDecimal(elements.weeklyRyoCost.value) ?? 0,
     mlPerWeek: Number(elements.mlPerWeek.value) || 0,
-    costPer10ml: parseDecimal(elements.costPer10ml.value),
-    accessoriesPerMonth: parseDecimal(elements.accessoriesPerMonth.value),
+    costPer10ml: parseDecimal(elements.costPer10ml.value) ?? 0,
+    accessoriesPerMonth: parseDecimal(elements.accessoriesPerMonth.value) ?? 0,
   };
 }
 
@@ -448,91 +295,12 @@ function setFormState(state) {
   syncAdvancedFields();
 }
 
-function calculateProgress(state) {
-  const empty = {
-    elapsedMs: 0, elapsedHours: 0, wholeDays: 0, weeks: 0, months: 0, years: 0,
-    compYears: 0, compMonths: 0, compDays: 0, compHours: 0, compMinutes: 0,
-    moneySaved: 0, estimatedLifeMinutes: 0,
-    cigarettesAvoided: 0, packsAvoided: 0,
-    moneySpent: 0, averageHistoricPackPrice: 0, smokingDays: 0,
-    rollsAvoided: 0, weeklyRyoCost: 0,
-    mlNotVaped: 0, liquidSaved: 0, accessoriesSaved: 0,
-  };
-
-  if (state.notStoppedYet || !state.quitDate) return empty;
-
-  const quitStart = new Date(`${state.quitDate}T00:00:00`);
-  const elapsedMs = Math.max(0, Date.now() - quitStart);
-  const elapsedDays = elapsedMs / 86_400_000;
-  const wholeDays = Math.floor(elapsedDays);
-  const compYears = Math.floor(wholeDays / 365.25);
-  const daysAfterYears = wholeDays - compYears * 365.25;
-  const compMonths = Math.floor(daysAfterYears / 30.4375);
-  const compDays = Math.floor(daysAfterYears - compMonths * 30.4375);
-  const compHours = Math.floor((elapsedMs % 86_400_000) / 3_600_000);
-  const compMinutes = Math.floor((elapsedMs % 3_600_000) / 60_000);
-  const base = {
-    elapsedMs,
-    elapsedHours: elapsedMs / 3_600_000,
-    wholeDays,
-    weeks: Math.floor(wholeDays / 7),
-    months: Math.floor(wholeDays / 30.4375),
-    years: compYears,
-    compYears, compMonths, compDays, compHours, compMinutes,
-  };
-
-  if (state.mode === "ryo") {
-    const rollsAvoided = elapsedDays * state.rollsPerDay;
-    const moneySaved = (elapsedDays / 7) * state.weeklyRyoCost;
-    const advancedSpend = estimateAdvancedSpend(state, quitStart);
-    return {
-      ...empty, ...base,
-      rollsAvoided,
-      weeklyRyoCost: state.weeklyRyoCost,
-      moneySaved,
-      moneySpent: advancedSpend.moneySpent,
-      smokingDays: advancedSpend.smokingDays,
-      estimatedLifeMinutes: rollsAvoided * 11,
-    };
-  }
-
-  if (state.mode === "vaping") {
-    const mlNotVaped = (elapsedDays / 7) * state.mlPerWeek;
-    const liquidSaved = mlNotVaped * (state.costPer10ml / 10);
-    const accessoriesSaved = (elapsedDays / 30.4375) * state.accessoriesPerMonth;
-    const advancedSpend = estimateAdvancedSpend(state, quitStart);
-    return {
-      ...empty, ...base,
-      mlNotVaped,
-      liquidSaved,
-      accessoriesSaved,
-      moneySaved: liquidSaved + accessoriesSaved,
-      moneySpent: advancedSpend.moneySpent,
-      smokingDays: advancedSpend.smokingDays,
-    };
-  }
-
-  // Cigarettes
-  const cigarettesAvoided = elapsedDays * state.cigarettesPerDay;
-  const packsAvoided = state.cigarettesPerPack > 0
-    ? cigarettesAvoided / state.cigarettesPerPack : 0;
-  const moneySaved = packsAvoided * state.pricePerPack;
-  const smokingSpend = estimateAdvancedSpend(state, quitStart);
-  return {
-    ...empty, ...base,
-    cigarettesAvoided,
-    packsAvoided,
-    moneySaved,
-    moneySpent: smokingSpend.moneySpent,
-    averageHistoricPackPrice: smokingSpend.averagePackPrice,
-    smokingDays: smokingSpend.smokingDays,
-    estimatedLifeMinutes: cigarettesAvoided * 11,
-  };
-}
-
 function renderReceiptRows(rows) {
   elements.receiptRows.innerHTML = rows
-    .map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`)
+    .map(([label, value]) => {
+      const noteClass = label.startsWith("*") ? " class=\"receipt__note\"" : "";
+      return `<div${noteClass}><dt>${label}</dt><dd>${value}</dd></div>`;
+    })
     .join("");
 }
 
@@ -608,8 +376,11 @@ function renderReceipt(progress, state) {
     rows.push([stillUsingAdvanced ? "- Paid so far" : "- Paid before quit", `- ${formatCurrency(effectiveSpent, state.currencyCode)}`]);
   }
 
-  if (!state.notStoppedYet && state.mode !== "vaping") {
-    rows.push(["Estimated life back", formatLifeSaved(progress.estimatedLifeMinutes)]);
+  if (!state.notStoppedYet && state.mode === "cigarettes") {
+    rows.push(
+      ["Estimated life regained*", formatLifeSaved(progress.estimatedLifeMinutes)],
+      ["*Population average", "Not a personal prediction"],
+    );
   }
 
   renderReceiptRows(rows);
@@ -696,7 +467,9 @@ function renderMilestones(elapsedHours, mode) {
     copy.append(title, detail);
 
     const time = document.createElement("span");
-    time.textContent = milestone.hours < 48
+    time.textContent = milestone.hours < 1
+      ? `${Math.round(milestone.hours * 60)}m`
+      : milestone.hours < 48
       ? `${milestone.hours}h`
       : `${Math.round(milestone.hours / 24)}d`;
     time.className = "milestone__time";
@@ -757,19 +530,6 @@ async function createReceiptImageBlob() {
   }
 }
 
-let isSharing = false;
-let shareRestoreTimeout = null;
-
-function restoreColorAfterShare() {
-  const savedColor = localStorage.getItem(CUSTOM_COLOR_KEY);
-  const savedTheme = localStorage.getItem(THEME_KEY);
-  if (savedColor) {
-    customColorInput.value = savedColor;
-    applyCustomThemeVars(savedColor);
-  }
-  if (savedTheme) applyTheme(savedTheme);
-}
-
 async function shareReceiptImage() {
   const filename = "smoke-free-receipt.png";
   const blob = await createReceiptImageBlob();
@@ -781,31 +541,19 @@ async function shareReceiptImage() {
     files: [file],
   };
 
-  isSharing = true;
-  try {
-    if (navigator.canShare?.({ files: [file] }) && navigator.share) {
-      try {
-        await navigator.share(shareData);
-        return "shared";
-      } catch (error) {
-        if (error?.name === "AbortError") {
-          throw error;
-        }
-      }
+  if (navigator.canShare?.({ files: [file] }) && navigator.share) {
+    try {
+      await navigator.share(shareData);
+      return "shared";
+    } catch (error) {
+      if (error?.name === "AbortError") throw error;
     }
-
-    const objectUrl = URL.createObjectURL(blob);
-    downloadUrl(objectUrl, filename);
-    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-    return "downloaded";
-  } finally {
-    restoreColorAfterShare();
-    shareRestoreTimeout = window.setTimeout(() => {
-      isSharing = false;
-      shareRestoreTimeout = null;
-      restoreColorAfterShare();
-    }, 1500);
   }
+
+  const objectUrl = URL.createObjectURL(blob);
+  downloadUrl(objectUrl, filename);
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  return "downloaded";
 }
 
 function showStep(index) {
@@ -860,7 +608,6 @@ function validateCurrentStep() {
     }
   }
 
-  applyDefaultsForCurrentStep(stepEl);
   const inputs = getStepFields(stepEl);
   return inputs.every((input) => {
     if (input === elements.smokingStartDate) {
@@ -870,18 +617,11 @@ function validateCurrentStep() {
     }
 
     if (decimalInputIds.has(input.id)) {
-      const isValid = input.value.trim() !== "" && parseDecimal(input.value) >= 0;
+      const value = parseDecimal(input.value);
+      const isValid = value !== null && value >= 0;
       input.setCustomValidity(isValid ? "" : "Enter a valid amount.");
     }
     return input.reportValidity();
-  });
-}
-
-function applyDefaultsForCurrentStep(stepEl) {
-  [...stepEl.querySelectorAll("input:not([type='radio'])")].forEach((input) => {
-    if (input.value.trim() !== "") return;
-    if (input.type === "date") return;
-    if (input.placeholder) input.value = input.placeholder;
   });
 }
 
@@ -938,7 +678,6 @@ function focusNextFieldInStep(target) {
     return false;
   }
 
-  applyDefaultsForCurrentStep(activeSteps[currentStep]);
   const currentField = fields[fieldIndex];
 
   if (!currentField.reportValidity()) {
@@ -1001,10 +740,6 @@ elements.quitDate.addEventListener("input", () => {
 });
 
 elements.currencyCodes.forEach((select) => {
-  select.addEventListener("input", () => {
-    updateCurrencySymbols(select.value);
-    updateReceipt();
-  });
   select.addEventListener("change", () => {
     updateCurrencySymbols(select.value);
     updateReceipt();
@@ -1029,11 +764,6 @@ elements.nextButton.addEventListener("click", () => {
 
 elements.notStoppedYet.addEventListener("input", handleNotStoppedYet);
 elements.backButton.addEventListener("click", () => showStep(currentStep - 1));
-document.addEventListener("click", (event) => {
-  if (!event.target.closest("#receiptButton")) return;
-  showReceipt(event);
-}, true);
-elements.receiptButton.addEventListener("pointerup", showReceipt);
 elements.receiptButton.addEventListener("click", showReceipt);
 elements.resetButton.addEventListener("click", resetApp);
 elements.form.addEventListener("input", () => updateReceipt());
@@ -1059,17 +789,6 @@ document.addEventListener("visibilitychange", () => {
   if (document.visibilityState !== "visible") return;
   if (elements.stage.classList.contains("is-receipt-only")) updateReceipt(false);
 });
-
-const initialState = readState();
-setFormState(initialState);
-updateReceipt(false);
-
-if (hasCompleteSavedState(initialState)) {
-  showStep(getActiveSteps().length - 1);
-  showReceipt();
-} else {
-  showStep(0);
-}
 
 // Theme
 const THEME_KEY = "smkfree-theme";
@@ -1138,7 +857,6 @@ function applyCustomThemeVars(hex) {
 }
 
 function onColorChange() {
-  if (isSharing) return;
   const hex = customColorInput.value;
   applyCustomThemeVars(hex);
   localStorage.setItem(CUSTOM_COLOR_KEY, hex);
@@ -1146,19 +864,6 @@ function onColorChange() {
   applyTheme("custom");
 }
 
-function cancelShareRestore() {
-  if (shareRestoreTimeout) {
-    window.clearTimeout(shareRestoreTimeout);
-    shareRestoreTimeout = null;
-  }
-  isSharing = false;
-}
-
-customColorInput.addEventListener("click", cancelShareRestore);
-customColorInput.addEventListener("keydown", cancelShareRestore);
-if (customColorLabel) {
-  customColorLabel.addEventListener("click", cancelShareRestore);
-}
 customColorInput.addEventListener("input", onColorChange);
 customColorInput.addEventListener("change", onColorChange);
 
@@ -1175,7 +880,6 @@ if ("serviceWorker" in navigator) {
 
 let deferredInstallPrompt = null;
 
-const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
 const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
 const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
 
@@ -1198,3 +902,14 @@ window.addEventListener("appinstalled", () => {
   deferredInstallPrompt = null;
   if (receiptInstallRow) receiptInstallRow.classList.add("is-hidden");
 });
+
+const initialState = readState();
+setFormState(initialState);
+updateReceipt(false);
+
+if (hasCompleteSavedState(initialState)) {
+  showStep(getActiveSteps().length - 1);
+  showReceipt();
+} else {
+  showStep(0);
+}
