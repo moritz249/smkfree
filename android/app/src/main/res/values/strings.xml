@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SMKFREE</string>
+    <string name="title_activity_main">SMKFREE</string>
+    <string name="package_name">io.github.moritz249.smkfree</string>
+    <string name="custom_url_scheme">io.github.moritz249.smkfree</string>
+</resources>

@@ -224,3 +224,117 @@ export function calculateProgress(state, now = new Date()) {
   };
 }
 
+
+// ---------------------------------------------------------------------------
+// Daily savings, goals and reminder planning (used by the iOS app and the PWA)
+// ---------------------------------------------------------------------------
+
+const DAY_MS = 86_400_000;
+
+export function dailySaving(state) {
+  if (state.mode === "ryo") return (Number(state.weeklyRyoCost) || 0) / 7;
+  if (state.mode === "vaping") {
+    const liquid = ((Number(state.mlPerWeek) || 0) / 7) * ((Number(state.costPer10ml) || 0) / 10);
+    return liquid + (Number(state.accessoriesPerMonth) || 0) / 30.4375;
+  }
+  const perPack = Number(state.cigarettesPerPack) || 0;
+  if (perPack <= 0) return 0;
+  return ((Number(state.cigarettesPerDay) || 0) / perPack) * (Number(state.pricePerPack) || 0);
+}
+
+export function quitStartDate(state) {
+  if (state.notStoppedYet || !state.quitDate) return null;
+  const date = new Date(`${state.quitDate}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/** Moment at which the money saved reaches `amount`, or null if it never will. */
+export function dateForSavings(state, amount) {
+  const start = quitStartDate(state);
+  const perDay = dailySaving(state);
+  if (!start || perDay <= 0 || amount < 0) return null;
+  return new Date(start.getTime() + (amount / perDay) * DAY_MS);
+}
+
+export function goalProgress(state, goal, now = new Date()) {
+  const price = Number(goal?.price) || 0;
+  if (!goal?.name || price <= 0) return null;
+  const start = quitStartDate(state);
+  const saved = start ? Math.max(0, (now - start) / DAY_MS) * dailySaving(state) : 0;
+  const ratio = Math.min(1, saved / price);
+  return {
+    name: goal.name,
+    price,
+    saved: Math.min(saved, price),
+    ratio,
+    reached: saved >= price,
+    reachedAt: dateForSavings(state, price),
+  };
+}
+
+export function asciiBar(ratio, width = 12) {
+  const clamped = Math.min(1, Math.max(0, Number(ratio) || 0));
+  const filled = Math.round(clamped * width);
+  return `[${"#".repeat(filled)}${".".repeat(width - filled)}]`;
+}
+
+export const moneyThresholds = [10, 25, 50, 100, 250, 500, 750, 1000, 1500, 2000, 2500, 5000, 7500, 10000, 15000, 20000, 25000, 50000];
+export const dayThresholds = [1, 2, 3, 7, 14, 21, 30, 60, 90, 100, 150, 180, 200, 270, 365, 500, 730, 1000, 1095, 1461, 1826, 2000, 2557, 3000, 3652];
+
+const MAX_SCHEDULED = 60; // iOS keeps at most 64 pending local notifications.
+
+/**
+ * Builds the list of local notifications to schedule. Pure: no side effects, easy to test.
+ * options: { milestones, money, daily: { enabled, hour, minute }, goal, healthMilestones, format, t }
+ */
+export function buildNotificationPlan(state, options = {}, now = new Date()) {
+  const start = quitStartDate(state);
+  if (!start) return [];
+
+  const format = options.format || ((value) => value.toFixed(2));
+  // Optional translator t(key, vars); the English key is the fallback text.
+  const tr = options.t || ((key, vars = {}) => key.replace(/\{(\w+)\}/g, (_, name) => String(vars[name] ?? "")));
+  const plan = [];
+  const add = (id, at, title, body) => {
+    if (at && at.getTime() > now.getTime() + 30_000) plan.push({ id, at, title, body });
+  };
+
+  if (options.milestones !== false) {
+    dayThresholds.forEach((days, index) => {
+      const label = days === 1 ? tr("1 day") : tr("{n} days", { n: days });
+      add(1000 + index, new Date(start.getTime() + days * DAY_MS),
+        tr("{label} smoke-free", { label }), tr("New line on your receipt. Open SMKFREE to print it."));
+    });
+    (options.healthMilestones || []).forEach((milestone, index) => {
+      add(2000 + index, new Date(start.getTime() + milestone.hours * 3_600_000),
+        milestone.title, milestone.detail);
+    });
+  }
+
+  if (options.money !== false && dailySaving(state) > 0) {
+    moneyThresholds.forEach((amount, index) => {
+      add(3000 + index, dateForSavings(state, amount),
+        tr("{amount} not burned", { amount: format(amount) }), tr("That money stayed in your pocket. Your receipt is ready."));
+    });
+  }
+
+  const goal = goalProgress(state, options.goal, now);
+  if (goal && !goal.reached && goal.reachedAt) {
+    add(4000, goal.reachedAt, tr("PAID: {name}", { name: goal.name }),
+      tr("You saved {amount}. Treat yourself, you earned it.", { amount: format(goal.price) }));
+  }
+
+  if (options.daily?.enabled) {
+    const hour = Number(options.daily.hour ?? 9);
+    const minute = Number(options.daily.minute ?? 0);
+    for (let offset = 0; offset < 14; offset += 1) {
+      const at = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset, hour, minute);
+      const days = Math.floor((at - start) / DAY_MS);
+      const saved = Math.max(0, (at - start) / DAY_MS) * dailySaving(state);
+      add(5000 + offset, at, tr("Daily receipt"),
+        tr("Day {days}: {amount} not burned. Keep the streak printing.", { days, amount: format(saved) }));
+    }
+  }
+
+  return plan.sort((a, b) => a.at - b.at).slice(0, MAX_SCHEDULED);
+}
