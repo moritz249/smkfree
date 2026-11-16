@@ -235,19 +235,10 @@ function syncAdvancedFields() {
   const canUseAdvanced = supportsAdvancedMode(currentMode);
   if (!canUseAdvanced) currentAdvanced = false;
 
-  const showStartDate = canUseAdvanced && currentAdvanced;
-  elements.advancedPanel.classList.toggle("is-hidden", !canUseAdvanced);
-  elements.advancedMode.disabled = !canUseAdvanced;
+  // Past spend now lives in its own optional sheet on the receipt, so the field stays usable.
   elements.advancedMode.checked = currentAdvanced;
-  elements.smokingStartField.classList.toggle("is-hidden", !showStartDate);
-  elements.smokingStartDate.disabled = !showStartDate;
   elements.smokingStartDate.max = elements.quitDate.value || todayAsInputValue();
-
-  if (!showStartDate) {
-    elements.smokingStartDate.setCustomValidity("");
-  } else if (currentMode === "cigarettes") {
-    updateCurrencySymbols(advancedCurrencyCode);
-  }
+  if (currentAdvanced && currentMode === "cigarettes") updateCurrencySymbols(advancedCurrencyCode);
 }
 
 function syncNotStoppedFields() {
@@ -469,6 +460,15 @@ function renderReceipt(progress, state) {
     rows.push([stillUsingAdvanced ? t("- Paid so far") : t("- Paid before quit"), `- ${formatCurrency(effectiveSpent, state.currencyCode)}`]);
   }
 
+  // Still using: the yearly cost is the message, so it belongs on the receipt too.
+  const perDay = dailySaving(state);
+  if (state.notStoppedYet && perDay > 0) {
+    rows.push(
+      [t("Costs you per month"), formatCurrency(perDay * 30.4375, state.currencyCode)],
+      [t("Costs you per year"), formatCurrency(perDay * 365, state.currencyCode)],
+    );
+  }
+
   const cravings = readCravings();
   if (cravings > 0) {
     rows.push([t("Cravings resisted"), numberFormatter.format(cravings)]);
@@ -540,6 +540,7 @@ function renderSummary(state) {
     rows.push([state.notStoppedYet ? t("- Paid so far") : t("- Paid before quit"), `- ${formatCurrency(advancedData.moneySpent, cur)}`]);
   }
 
+  if (!elements.summaryList) return;
   elements.summaryList.innerHTML = rows
     .map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`)
     .join("");
@@ -889,7 +890,11 @@ elements.nextButton.addEventListener("click", () => {
 
 elements.notStoppedYet.addEventListener("input", handleNotStoppedYet);
 elements.backButton.addEventListener("click", () => showStep(currentStep - 1));
-elements.receiptButton.addEventListener("click", showReceipt);
+elements.receiptButton.addEventListener("click", (event) => {
+  // The last data step prints directly, so it still has to be valid.
+  if (!validateCurrentStep()) return;
+  showReceipt(event);
+});
 elements.resetButton.addEventListener("click", resetApp);
 elements.form.addEventListener("input", () => updateReceipt());
 elements.editButton.addEventListener("click", () => {
@@ -1044,6 +1049,7 @@ function switchLanguage() {
   updateCurrencySymbols(currentCurrency);
   updateReceipt(false);
   showStep(currentStep);
+  if (typeof syncPastButton === "function") syncPastButton();
   haptics.select();
 }
 
@@ -1609,7 +1615,6 @@ function renderTape() {
   const state = getFormState();
   const rows = tapeRows(state);
   const perDay = dailySaving(state);
-  const isSummary = currentStep === getActiveSteps().length - 1;
 
   let total = null;
   if (perDay > 0 && state.notStoppedYet) {
@@ -1618,8 +1623,7 @@ function renderTape() {
     total = [t("Not burned so far"), formatCurrency(calculateProgress(state).moneySaved, state.currencyCode)];
   }
 
-  // The summary step already lists everything; the tape would only repeat it.
-  const visible = !isSummary && (rows.length > 0 || total);
+  const visible = rows.length > 0 || Boolean(total);
   tape.classList.toggle("is-hidden", !visible);
   if (!visible) return;
 
@@ -1737,7 +1741,81 @@ function bindRepeatingPress(button, action) {
   button.addEventListener("click", (event) => event.preventDefault());
 }
 
+// ----------------------------------------------------------------- past spend (optional)
+function yearsAgo(years) {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - years);
+  return toInputDate(date);
+}
+
+function syncPastButton() {
+  const label = document.querySelector("#pastButtonLabel");
+  const state = getFormState();
+  const active = state.isAdvanced && Boolean(state.smokingStartDate);
+  label.dataset.i18nKey = active ? "Edit past spend" : "What did smoking cost you so far?";
+  label.textContent = t(label.dataset.i18nKey);
+  document.querySelector("#pastButton").classList.toggle("is-active", active);
+}
+
+function openPastSheet() {
+  document.querySelector("#pastError").classList.add("is-hidden");
+  document.querySelector("#pastPriceHint").classList.toggle("is-hidden", currentMode !== "cigarettes");
+  document.querySelector("#pastRemove").classList.toggle("is-hidden", !currentAdvanced);
+  elements.smokingStartDate.max = elements.quitDate.value || todayAsInputValue();
+  syncPastChips();
+  openSheet(document.querySelector("#pastSheet"));
+}
+
+function syncPastChips() {
+  document.querySelectorAll(".chip[data-years-ago]").forEach((chip) => {
+    chip.classList.toggle("is-active", elements.smokingStartDate.value === yearsAgo(Number(chip.dataset.yearsAgo)));
+  });
+}
+
+function savePastSpend() {
+  const start = elements.smokingStartDate.value;
+  const quit = elements.quitDate.value || todayAsInputValue();
+  if (!start || start >= quit) {
+    document.querySelector("#pastError").classList.remove("is-hidden");
+    haptics.warning();
+    return;
+  }
+  currentAdvanced = true;
+  syncAdvancedFields();
+  updateReceipt();
+  closeSheet();
+  printReceipt();
+  syncPastButton();
+}
+
+function removePastSpend() {
+  currentAdvanced = false;
+  elements.smokingStartDate.value = "";
+  syncAdvancedFields();
+  updateReceipt();
+  closeSheet();
+  syncPastButton();
+}
+
+function initPastSpend() {
+  document.querySelector("#pastButton").addEventListener("click", openPastSheet);
+  document.querySelector("#pastSave").addEventListener("click", savePastSpend);
+  document.querySelector("#pastRemove").addEventListener("click", removePastSpend);
+  document.querySelectorAll(".chip[data-years-ago]").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      elements.smokingStartDate.value = yearsAgo(Number(chip.dataset.yearsAgo));
+      document.querySelector("#pastError").classList.add("is-hidden");
+      syncPastChips();
+      haptics.select();
+    });
+  });
+  elements.smokingStartDate.addEventListener("input", syncPastChips);
+  enableSwipeToClose(document.querySelector("#pastSheet"));
+  syncPastButton();
+}
+
 // Start-up (kept last so every declaration above is initialised).
 initTouchEnhancements();
 initTools();
 initOnboarding();
+initPastSpend();

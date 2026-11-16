@@ -31,7 +31,7 @@
     <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
     <link rel="icon" href="assets/favicon-32x32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="assets/icon-180.png">
-    <link rel="stylesheet" href="styles.css?v=20261116-2">
+    <link rel="stylesheet" href="styles.css?v=20261116-7">
     <script src="assets/html2canvas.min.js" defer></script>
   </head>
   <body>
@@ -239,26 +239,6 @@
             </label>
           </section>
 
-          <!-- Summary (shared) -->
-          <section class="step" data-mode="all">
-            <p class="kicker" data-i18n>Summary</p>
-            <h2 data-i18n>Ready to print?</h2>
-            <dl class="summary-list" id="summaryList"></dl>
-            <div class="advanced-panel" id="advancedPanel">
-              <label class="toggle-field">
-                <input id="advancedMode" name="advancedMode" type="checkbox">
-                <span>
-                  <span data-i18n>Advanced receipt</span>
-                  <small data-i18n>Estimate what you paid before quitting.</small>
-                </span>
-              </label>
-              <label id="smokingStartField" class="is-hidden">
-                <span data-i18n>Smoking start date</span>
-                <input id="smokingStartDate" name="smokingStartDate" type="date">
-              </label>
-            </div>
-          </section>
-
           <div class="tape is-hidden" id="tape" aria-live="polite">
             <dl class="tape__rows" id="tapeRows"></dl>
             <div class="tape__total is-hidden" id="tapeTotal"><span id="tapeTotalLabel"></span><strong id="tapeTotalValue"></strong></div>
@@ -343,6 +323,11 @@
             <div class="section-label" data-i18n>PROGRESS ITEMS</div>
 
             <dl class="receipt__rows" id="receiptRows"></dl>
+
+            <button type="button" class="receipt-addon" id="pastButton">
+              <span class="receipt-addon__plus" aria-hidden="true">+</span>
+              <span id="pastButtonLabel" data-i18n>What did smoking cost you so far?</span>
+            </button>
 
             <div class="receipt__divider"></div>
 
@@ -447,6 +432,32 @@
       <button type="button" class="primary-button primary-button--large sos-done is-hidden" id="sosDone" data-i18n>I made it +1</button>
     </section>
 
+    <section class="sheet" id="pastSheet" role="dialog" aria-modal="true" aria-labelledby="pastSheetTitle" hidden>
+      <div class="sheet__grip" aria-hidden="true"></div>
+      <p class="kicker" data-i18n>Past spend</p>
+      <h2 id="pastSheetTitle" data-i18n>Since when did you smoke?</h2>
+      <p class="step-hint" data-i18n>Optional. Adds what you paid before quitting to your receipt.</p>
+      <div class="chip-row" role="group" aria-label="Quick pick" data-i18n-aria>
+        <button type="button" class="chip" data-years-ago="5" data-i18n>5 years</button>
+        <button type="button" class="chip" data-years-ago="10" data-i18n>10 years</button>
+        <button type="button" class="chip" data-years-ago="20" data-i18n>20 years</button>
+        <button type="button" class="chip" data-years-ago="30" data-i18n>30 years</button>
+      </div>
+      <div id="advancedPanel">
+        <input id="advancedMode" name="advancedMode" type="checkbox" hidden>
+        <label id="smokingStartField">
+          <span class="label-with-icon"><svg class="icon" aria-hidden="true"><use href="#i-calendar"></use></svg><span data-i18n>Or pick a date</span></span>
+          <input id="smokingStartDate" name="smokingStartDate" type="date">
+        </label>
+      </div>
+      <p class="step-hint" id="pastPriceHint" data-i18n>Cigarettes use average German pack prices, so this receipt is shown in EUR.</p>
+      <p class="field-error is-hidden" id="pastError" role="alert" data-i18n>Pick a start date before your quit date.</p>
+      <div class="sheet__actions">
+        <button type="button" class="secondary-button" id="pastRemove" data-i18n>Remove</button>
+        <button type="button" class="primary-button" id="pastSave" data-i18n>Add to receipt</button>
+      </div>
+    </section>
+
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
     <footer class="site-footer">
@@ -456,6 +467,6 @@
 
 
 
-<script type="module" src="app.js?v=20261116-4"></script>
+<script type="module" src="app.js?v=20261116-6"></script>
   </body>
 </html>
