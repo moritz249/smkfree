@@ -1,0 +1,32 @@
+{
+  "appId": "io.github.moritz249.smkfree",
+  "appName": "SMKFREE",
+  "webDir": "www",
+  "backgroundColor": "#fbfbfaff",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#fbfbfaff",
+    "scrollEnabled": true,
+    "limitsNavigationsToAppBoundDomains": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 600,
+      "launchAutoHide": true,
+      "backgroundColor": "#fffef5",
+      "showSpinner": false
+    },
+    "LocalNotifications": {
+      "iconColor": "#111111"
+    },
+    "Keyboard": {
+      "resize": "native",
+      "resizeOnFullScreen": true
+    }
+  },
+  "android": {
+    "backgroundColor": "#fbfbfaff",
+    "adjustMarginsForEdgeToEdge": "auto",
+    "allowMixedContent": false
+  }
+}

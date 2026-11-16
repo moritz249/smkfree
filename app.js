@@ -4,10 +4,42 @@ import {
   formatLifeSaved,
   hasCompleteSavedState,
   parseDecimal,
+  asciiBar,
+  buildNotificationPlan,
+  dailySaving,
+  goalProgress,
 } from "./app-core.js";
+import {
+  configureChrome,
+  haptics,
+  isNativeApp,
+  mirrorAllStorage,
+  mirrorStorage,
+  notificationPermission,
+  notificationsSupported,
+  onAppResume,
+  replaceScheduledNotifications,
+  requestNotificationPermission,
+  restoreMirroredStorage,
+  shareImageNative,
+} from "./native.js";
+import { applyTranslations, getLanguage, intlLocale, languages, nextLanguage, setLanguage, t } from "./i18n.js";
+
+// Restore data that iOS may have evicted from WebView storage before anything reads it.
+await restoreMirroredStorage();
+configureChrome();
 
 const STORAGE_KEY = "smoke-free-progress";
 const STORAGE_VERSION = 4;
+const GOAL_KEY = "smkfree-goal";
+const REMINDERS_KEY = "smkfree-reminders";
+const CRAVINGS_KEY = "smkfree-cravings";
+const SOS_SECONDS = 180;
+const isTouchDevice = window.matchMedia("(pointer: coarse)").matches || "ontouchstart" in window;
+let reminderSyncTimer = null;
+let sosTimer = null;
+const modeNames = { cigarettes: "Cigarettes", ryo: "Roll-your-own", vaping: "Vaping" };
+let lastTapeSignature = "";
 
 const tobaccoMilestones = [
   { hours: 1 / 3, title: "Heart rate drops", detail: "A benefit that can begin within minutes." },
@@ -77,6 +109,38 @@ const elements = {
   milestoneList: document.querySelector("#milestoneList"),
   nextMilestone: document.querySelector("#nextMilestone"),
   receipt: document.querySelector("#receipt"),
+  receiptFeed: document.querySelector("#receiptFeed"),
+  receiptGoal: document.querySelector("#receiptGoal"),
+  goalName: document.querySelector("#goalName"),
+  goalBar: document.querySelector("#goalBar"),
+  goalSaved: document.querySelector("#goalSaved"),
+  goalPercent: document.querySelector("#goalPercent"),
+  goalEta: document.querySelector("#goalEta"),
+  goalStamp: document.querySelector("#goalStamp"),
+  sheetBackdrop: document.querySelector("#sheetBackdrop"),
+  goalSheet: document.querySelector("#goalSheet"),
+  goalNameInput: document.querySelector("#goalNameInput"),
+  goalPriceInput: document.querySelector("#goalPriceInput"),
+  goalError: document.querySelector("#goalError"),
+  alertsSheet: document.querySelector("#alertsSheet"),
+  alertsStatus: document.querySelector("#alertsStatus"),
+  alertsOptions: document.querySelector("#alertsOptions"),
+  alertMilestones: document.querySelector("#alertMilestones"),
+  alertMoney: document.querySelector("#alertMoney"),
+  alertDaily: document.querySelector("#alertDaily"),
+  alertTime: document.querySelector("#alertTime"),
+  alertTimeField: document.querySelector("#alertTimeField"),
+  alertsSave: document.querySelector("#alertsSave"),
+  sosSheet: document.querySelector("#sosSheet"),
+  sosStart: document.querySelector("#sosStart"),
+  sosDone: document.querySelector("#sosDone"),
+  sosActions: document.querySelector("#sosActions"),
+  sosTimer: document.querySelector("#sosTimer"),
+  sosCount: document.querySelector("#sosCount"),
+  sosWorth: document.querySelector("#sosWorth"),
+  breathFill: document.querySelector("#breathFill"),
+  breathPhase: document.querySelector("#breathPhase"),
+  toast: document.querySelector("#toast"),
 };
 
 let currentStep = 0;
@@ -86,12 +150,23 @@ let currentAdvanced = false;
 let currentShowBenefits = false;
 let receiptRefreshTimer = null;
 
-const numberFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
-const decimalFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
+let numberFormatter;
+let decimalFormatter;
+
+function refreshFormatters() {
+  numberFormatter = new Intl.NumberFormat(intlLocale(), { maximumFractionDigits: 0 });
+  decimalFormatter = new Intl.NumberFormat(intlLocale(), { maximumFractionDigits: 1 });
+}
+refreshFormatters();
 
 const decimalInputIds = new Set(["pricePerPack", "weeklyRyoCost", "costPer10ml", "accessoriesPerMonth"]);
 const advancedCurrencyCode = "EUR";
 
+
+function setButtonLabel(button, text) {
+  const label = button.querySelector("span[data-i18n]") || button;
+  label.textContent = text;
+}
 
 function todayAsInputValue() {
   const now = new Date();
@@ -102,11 +177,11 @@ function todayAsInputValue() {
 }
 
 function formatCurrency(value, currencyCode) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: currencyCode }).format(value);
+  return new Intl.NumberFormat(intlLocale(), { style: "currency", currency: currencyCode }).format(value);
 }
 
 function getCurrencySymbol(currencyCode) {
-  const parts = new Intl.NumberFormat("en-US", {
+  const parts = new Intl.NumberFormat(intlLocale(), {
     style: "currency", currency: currencyCode, currencyDisplay: "narrowSymbol",
   }).formatToParts(0);
   return parts.find((p) => p.type === "currency")?.value || currencyCode;
@@ -114,7 +189,7 @@ function getCurrencySymbol(currencyCode) {
 
 function formatDate(value) {
   if (!value) return "--";
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(intlLocale(), {
     year: "numeric", month: "short", day: "2-digit",
   }).format(new Date(`${value}T00:00:00`));
 }
@@ -154,25 +229,18 @@ function getEffectiveCurrencyCode(mode, isAdvanced, currencyCode) {
 
 function syncBenefitsVisibility() {
   elements.fineBenefits.classList.toggle("is-hidden", !currentShowBenefits);
+  const benefitsValue = document.querySelector("#benefitsValue");
+  if (benefitsValue) benefitsValue.textContent = currentShowBenefits ? t("On") : t("Off");
 }
 
 function syncAdvancedFields() {
   const canUseAdvanced = supportsAdvancedMode(currentMode);
   if (!canUseAdvanced) currentAdvanced = false;
 
-  const showStartDate = canUseAdvanced && currentAdvanced;
-  elements.advancedPanel.classList.toggle("is-hidden", !canUseAdvanced);
-  elements.advancedMode.disabled = !canUseAdvanced;
+  // Past spend now lives in its own optional sheet on the receipt, so the field stays usable.
   elements.advancedMode.checked = currentAdvanced;
-  elements.smokingStartField.classList.toggle("is-hidden", !showStartDate);
-  elements.smokingStartDate.disabled = !showStartDate;
   elements.smokingStartDate.max = elements.quitDate.value || todayAsInputValue();
-
-  if (!showStartDate) {
-    elements.smokingStartDate.setCustomValidity("");
-  } else if (currentMode === "cigarettes") {
-    updateCurrencySymbols(advancedCurrencyCode);
-  }
+  if (currentAdvanced && currentMode === "cigarettes") updateCurrencySymbols(advancedCurrencyCode);
 }
 
 function syncNotStoppedFields() {
@@ -188,7 +256,7 @@ function syncNotStoppedFields() {
 
 function setQuitDateError(message) {
   elements.quitDate.setCustomValidity(message);
-  elements.quitDateError.textContent = message || "Please enter a quit date.";
+  elements.quitDateError.textContent = message || t("Please enter a quit date.");
   elements.quitDateError.classList.toggle("is-hidden", !message);
 }
 
@@ -231,8 +299,26 @@ function readState() {
   }
 }
 
+function storedWizardDone() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    // States saved before this flag existed were always finished receipts.
+    return stored ? stored.wizardDone !== false : false;
+  } catch {
+    return false;
+  }
+}
+
 function writeState(state) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...state, version: STORAGE_VERSION }));
+  const wizardDone = elements.stage.classList.contains("is-receipt-only") || storedWizardDone();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    ...state,
+    version: STORAGE_VERSION,
+    wizardDone,
+    wizardStep: currentStep,
+  }));
+  mirrorStorage(STORAGE_KEY);
+  scheduleReminderSync();
 }
 
 function saveCurrentState() {
@@ -283,7 +369,7 @@ function setFormState(state) {
   elements.smokingStartDate.value = state.smokingStartDate || "";
   elements.smokingStartDate.max = state.quitDate || todayAsInputValue();
   elements.cigarettesPerDay.value = state.cigarettesPerDay || "";
-  elements.cigarettesPerPack.value = state.cigarettesPerPack || "";
+  elements.cigarettesPerPack.value = state.cigarettesPerPack || "20";
   elements.pricePerPack.value = state.pricePerPack || "";
   elements.rollsPerDay.value = state.rollsPerDay || "";
   elements.weeklyRyoCost.value = state.weeklyRyoCost || "";
@@ -306,7 +392,7 @@ function renderReceiptRows(rows) {
 
 function renderReceipt(progress, state) {
   updateCurrencySymbols(state.currencyCode);
-  elements.receiptDate.textContent = new Intl.DateTimeFormat("en-US", {
+  elements.receiptDate.textContent = new Intl.DateTimeFormat(intlLocale(), {
     dateStyle: "medium", timeStyle: "short",
   }).format(new Date());
   const showAdvancedSpend = state.isAdvanced && supportsAdvancedMode(state.mode) && Boolean(state.smokingStartDate);
@@ -324,62 +410,78 @@ function renderReceipt(progress, state) {
 
   const rows = showAdvancedSpend
     ? stillUsingAdvanced
-      ? [["Start date", formatDate(state.smokingStartDate)], ["Status", "Still using"]]
-      : [["Start date", formatDate(state.smokingStartDate)], ["Stop date", formatDate(state.quitDate)]]
+      ? [[t("Start date"), formatDate(state.smokingStartDate)], [t("Status"), t("Still using")]]
+      : [[t("Start date"), formatDate(state.smokingStartDate)], [t("Stop date"), formatDate(state.quitDate)]]
     : state.notStoppedYet
-    ? [["Status", "Still using"]]
-    : [["Quit date", formatDate(state.quitDate)]];
+    ? [[t("Status"), t("Still using")]]
+    : [[t("Quit date"), formatDate(state.quitDate)]];
 
   if (state.mode === "ryo") {
     if (!state.notStoppedYet) {
-      rows.push(["Roll-ups avoided", numberFormatter.format(progress.rollsAvoided)]);
+      rows.push([t("Roll-ups avoided"), numberFormatter.format(progress.rollsAvoided)]);
     }
     rows.push(
-      ["Roll-ups / day", numberFormatter.format(state.rollsPerDay)],
-      ["Weekly spend", formatCurrency(state.notStoppedYet ? state.weeklyRyoCost : progress.weeklyRyoCost, state.currencyCode)],
+      [t("Roll-ups / day"), numberFormatter.format(state.rollsPerDay)],
+      [t("Weekly spend"), formatCurrency(state.notStoppedYet ? state.weeklyRyoCost : progress.weeklyRyoCost, state.currencyCode)],
     );
   } else if (state.mode === "vaping") {
     if (!state.notStoppedYet) {
       rows.push(
-        ["ml not vaped", `${decimalFormatter.format(progress.mlNotVaped)} ml`],
-        ["Liquid saved", formatCurrency(progress.liquidSaved, state.currencyCode)],
-        ["Accessories saved", formatCurrency(progress.accessoriesSaved, state.currencyCode)],
+        [t("ml not vaped"), `${decimalFormatter.format(progress.mlNotVaped)} ml`],
+        [t("Liquid saved"), formatCurrency(progress.liquidSaved, state.currencyCode)],
+        [t("Accessories saved"), formatCurrency(progress.accessoriesSaved, state.currencyCode)],
       );
     }
     rows.push(
-      ["ml / week", `${decimalFormatter.format(state.mlPerWeek)} ml`],
-      ["Cost / 10ml", formatCurrency(state.costPer10ml, state.currencyCode)],
-      ["Accessories / mo.", formatCurrency(state.accessoriesPerMonth, state.currencyCode)],
+      [t("ml / week"), `${decimalFormatter.format(state.mlPerWeek)} ml`],
+      [t("Cost / 10ml"), formatCurrency(state.costPer10ml, state.currencyCode)],
+      [t("Accessories / mo."), formatCurrency(state.accessoriesPerMonth, state.currencyCode)],
     );
   } else {
     rows.push(
-      ["Cigarettes / day", numberFormatter.format(state.cigarettesPerDay)],
-      ["Cigarettes / pack", numberFormatter.format(state.cigarettesPerPack)],
-      showAdvancedSpend
-        ? ["Avg past pack", `~ ${formatCurrency(effectiveAvgPackPrice, state.currencyCode)} avg DE`]
-        : ["Pack price", formatCurrency(state.pricePerPack || 0, state.currencyCode)],
+      [t("Cigarettes / day"), numberFormatter.format(state.cigarettesPerDay)],
+      [t("Cigarettes / pack"), numberFormatter.format(state.cigarettesPerPack)],
     );
+    if (showAdvancedSpend) {
+      rows.push([t("Avg past pack"), `~ ${formatCurrency(effectiveAvgPackPrice, state.currencyCode)} ${t("avg DE")}`]);
+    }
     if (!state.notStoppedYet) {
       rows.push(
-        ["Packs not bought", `${decimalFormatter.format(progress.packsAvoided)} × ${formatCurrency(state.pricePerPack || 0, state.currencyCode)}`],
+        [t("Packs not bought"), `${decimalFormatter.format(progress.packsAvoided)} × ${formatCurrency(state.pricePerPack || 0, state.currencyCode)}`],
       );
     }
   }
 
   if (!state.notStoppedYet) {
-    rows.push([showAdvancedSpend ? "+ Saved after quit" : "Cost avoided", showAdvancedSpend
+    rows.push([showAdvancedSpend ? t("+ Saved after quit") : t("Cost avoided"), showAdvancedSpend
       ? `+ ${formatCurrency(progress.moneySaved, state.currencyCode)}`
       : formatCurrency(progress.moneySaved, state.currencyCode)]);
   }
 
   if (showAdvancedSpend) {
-    rows.push([stillUsingAdvanced ? "- Paid so far" : "- Paid before quit", `- ${formatCurrency(effectiveSpent, state.currencyCode)}`]);
+    rows.push([stillUsingAdvanced ? t("- Paid so far") : t("- Paid before quit"), `- ${formatCurrency(effectiveSpent, state.currencyCode)}`]);
   }
+
+  // Still using: the yearly cost is the message, so it belongs on the receipt too.
+  const perDay = dailySaving(state);
+  if (state.notStoppedYet && perDay > 0) {
+    rows.push(
+      [t("Costs you per month"), formatCurrency(perDay * 30.4375, state.currencyCode)],
+      [t("Costs you per year"), formatCurrency(perDay * 365, state.currencyCode)],
+    );
+  }
+
+  const cravings = readCravings();
+  if (cravings > 0) {
+    rows.push([t("Cravings resisted"), numberFormatter.format(cravings)]);
+  }
+
+  renderGoal(state);
 
   if (!state.notStoppedYet && state.mode === "cigarettes") {
     rows.push(
-      ["Estimated life regained*", formatLifeSaved(progress.estimatedLifeMinutes)],
-      ["*Population average", "Not a personal prediction"],
+      [t("Estimated life regained*"), formatLifeSaved(progress.estimatedLifeMinutes)],
+      [t("*Population average"), t("Not a personal prediction")],
     );
   }
 
@@ -397,49 +499,50 @@ function renderSummary(state) {
   const advancedData = advancedProgress || advancedSpendToday;
   const dateRows = showAdvancedSpend
     ? state.notStoppedYet
-      ? [["Start date", formatDate(state.smokingStartDate)], ["Status", "Still using"]]
-      : [["Start date", formatDate(state.smokingStartDate)], ["Stop date", formatDate(state.quitDate)]]
+      ? [[t("Start date"), formatDate(state.smokingStartDate)], [t("Status"), t("Still using")]]
+      : [[t("Start date"), formatDate(state.smokingStartDate)], [t("Stop date"), formatDate(state.quitDate)]]
     : state.notStoppedYet
-    ? [["Status", "Still using"]]
-    : [["Quit date", formatDate(state.quitDate)]];
+    ? [[t("Status"), t("Still using")]]
+    : [[t("Quit date"), formatDate(state.quitDate)]];
 
   if (state.mode === "ryo") {
     rows = [...dateRows];
 
     rows.push(
-      ["Roll-ups / day", numberFormatter.format(state.rollsPerDay)],
-      ["Weekly spend", formatCurrency(state.weeklyRyoCost, cur)],
+      [t("Roll-ups / day"), numberFormatter.format(state.rollsPerDay)],
+      [t("Weekly spend"), formatCurrency(state.weeklyRyoCost, cur)],
     );
   } else if (state.mode === "vaping") {
     rows = [...dateRows];
 
     rows.push(
-      ["ml / week", decimalFormatter.format(state.mlPerWeek) + " ml"],
-      ["Cost / 10ml", formatCurrency(state.costPer10ml, cur)],
-      ["Accessories / mo.", formatCurrency(state.accessoriesPerMonth, cur)],
+      [t("ml / week"), decimalFormatter.format(state.mlPerWeek) + " ml"],
+      [t("Cost / 10ml"), formatCurrency(state.costPer10ml, cur)],
+      [t("Accessories / mo."), formatCurrency(state.accessoriesPerMonth, cur)],
     );
   } else {
     rows = [...dateRows];
 
     rows.push(
-      ["Cigarettes / day", numberFormatter.format(state.cigarettesPerDay)],
-      ["Cigarettes / pack", numberFormatter.format(state.cigarettesPerPack)],
+      [t("Cigarettes / day"), numberFormatter.format(state.cigarettesPerDay)],
+      [t("Cigarettes / pack"), numberFormatter.format(state.cigarettesPerPack)],
       showAdvancedSpend
-        ? ["Avg pack price", `~ ${formatCurrency(advancedProgress?.averageHistoricPackPrice ?? advancedData?.averagePackPrice, cur)} avg DE`]
-        : ["Pack price", formatCurrency(state.pricePerPack, cur)],
+        ? [t("Avg pack price"), `~ ${formatCurrency(advancedProgress?.averageHistoricPackPrice ?? advancedData?.averagePackPrice, cur)} ${t("avg DE")}`]
+        : [t("Pack price"), formatCurrency(state.pricePerPack, cur)],
     );
 
     if (showAdvancedSpend) {
-      if (advancedProgress) rows.push(["+ Saved after quit", `+ ${formatCurrency(advancedProgress.moneySaved, cur)}`]);
-      rows.push([state.notStoppedYet ? "- Paid so far" : "- Paid before quit", `- ${formatCurrency(advancedData.moneySpent, cur)}`]);
+      if (advancedProgress) rows.push([t("+ Saved after quit"), `+ ${formatCurrency(advancedProgress.moneySaved, cur)}`]);
+      rows.push([state.notStoppedYet ? t("- Paid so far") : t("- Paid before quit"), `- ${formatCurrency(advancedData.moneySpent, cur)}`]);
     }
   }
 
   if (showAdvancedSpend && state.mode !== "cigarettes") {
-    if (advancedProgress) rows.push(["+ Saved after quit", `+ ${formatCurrency(advancedProgress.moneySaved, cur)}`]);
-    rows.push([state.notStoppedYet ? "- Paid so far" : "- Paid before quit", `- ${formatCurrency(advancedData.moneySpent, cur)}`]);
+    if (advancedProgress) rows.push([t("+ Saved after quit"), `+ ${formatCurrency(advancedProgress.moneySaved, cur)}`]);
+    rows.push([state.notStoppedYet ? t("- Paid so far") : t("- Paid before quit"), `- ${formatCurrency(advancedData.moneySpent, cur)}`]);
   }
 
+  if (!elements.summaryList) return;
   elements.summaryList.innerHTML = rows
     .map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`)
     .join("");
@@ -450,7 +553,7 @@ function renderMilestones(elapsedHours, mode) {
   const next = milestones.find((m) => m.hours > elapsedHours);
   elements.nextMilestone.classList.toggle("is-hidden", !next);
   elements.nextMilestone.textContent = next
-    ? `Next small-print benefit: ${next.title}`
+    ? t("Next small-print benefit: {title}", { title: t(next.title) })
     : "";
   elements.milestoneList.innerHTML = "";
 
@@ -461,9 +564,9 @@ function renderMilestones(elapsedHours, mode) {
 
     const copy = document.createElement("div");
     const title = document.createElement("strong");
-    title.textContent = milestone.title;
+    title.textContent = t(milestone.title);
     const detail = document.createElement("small");
-    detail.textContent = milestone.detail;
+    detail.textContent = t(milestone.detail);
     copy.append(title, detail);
 
     const time = document.createElement("span");
@@ -490,6 +593,8 @@ function updateReceipt(shouldSave = true) {
   renderReceipt(progress, state);
   renderSummary(state);
   renderMilestones(progress.elapsedHours, state.mode);
+  renderTape();
+  renderExtrasToggles(state);
 }
 
 function downloadUrl(url, filename) {
@@ -533,10 +638,17 @@ async function createReceiptImageBlob() {
 async function shareReceiptImage() {
   const filename = "smoke-free-receipt.png";
   const blob = await createReceiptImageBlob();
+  const title = t("SMKFREE Quit Receipt");
+  const text = t("Look at my SMKFREE receipt. This is what I didn't spend. Do yours in 30s, no hooks attached.");
+
+  if (isNativeApp && await shareImageNative(blob, { title, text, filename })) {
+    return "shared";
+  }
+
   const file = new File([blob], filename, { type: "image/png" });
   const shareData = {
-    title: "SMKFREE Quit Receipt",
-    text: "Look at my SMKFREE receipt. This is what I didn't spend. Do yours in 30s, no hooks attached.",
+    title,
+    text,
     url: "https://moritz249.github.io/smkfree/",
     files: [file],
   };
@@ -556,25 +668,38 @@ async function shareReceiptImage() {
   return "downloaded";
 }
 
-function showStep(index) {
+function showStep(index, direction = 0) {
   const activeSteps = getActiveSteps();
+  const previousStep = currentStep;
   currentStep = Math.min(Math.max(index, 0), activeSteps.length - 1);
-  elements.steps.forEach((step) => step.classList.remove("is-active"));
+  elements.steps.forEach((step) => step.classList.remove("is-active", "slide-in-left", "slide-in-right"));
   activeSteps[currentStep].classList.add("is-active");
+  const slide = direction || Math.sign(currentStep - previousStep);
+  if (slide) {
+    activeSteps[currentStep].classList.add(slide > 0 ? "slide-in-right" : "slide-in-left");
+    haptics.select();
+  }
   updateModeCards();
 
   const total = activeSteps.length;
   const progress = Math.round(((currentStep + 1) / total) * 100);
-  elements.stepCounter.textContent = `Step ${currentStep + 1} of ${total}`;
+  const secondsLeft = Math.max(0, (total - currentStep - 1) * 5);
+  elements.stepCounter.textContent = t("Step {n} of {total}", { n: currentStep + 1, total });
+  // Reset only matters once there is something to reset.
+  elements.resetButton.classList.toggle("is-hidden", localStorage.getItem(STORAGE_KEY) === null);
+  renderTape();
   elements.progressFill.style.width = `${progress}%`;
-  elements.progressPercent.textContent = `${progress}%`;
+  elements.progressPercent.textContent = secondsLeft > 0 && currentStep > 0
+    ? t("~{s} sec left", { s: secondsLeft })
+    : `${progress}%`;
   elements.backButton.disabled = currentStep === 0;
   elements.backButton.classList.toggle("is-hidden", currentStep === 0);
-  elements.nextButton.textContent = currentStep === 0 ? "Start" : "Next";
+  elements.nextButton.textContent = currentStep === 0 ? t("Start") : t("Next");
   elements.nextButton.classList.toggle("is-hidden", currentStep === total - 1);
   elements.receiptButton.classList.toggle("is-hidden", currentStep !== total - 1);
   elements.siteFooter.classList.toggle("is-hidden", currentStep !== 0);
-  window.setTimeout(focusCurrentStepField, 0);
+  // On touch devices, auto-focusing pops the keyboard over the step; only do it with a mouse.
+  if (!isTouchDevice) window.setTimeout(focusCurrentStepField, 0);
 }
 
 function focusCurrentStepField() {
@@ -600,7 +725,7 @@ function validateCurrentStep() {
       return true;
     }
 
-    const message = elements.quitDate.value ? "" : "Please enter a quit date.";
+    const message = elements.quitDate.value ? "" : t("Please enter a quit date.");
     setQuitDateError(message);
     if (message) {
       elements.quitDate.reportValidity();
@@ -613,27 +738,30 @@ function validateCurrentStep() {
     if (input === elements.smokingStartDate) {
       const needsStartDate = currentAdvanced && supportsAdvancedMode(currentMode);
       const isValid = !needsStartDate || (input.value && (!elements.quitDate.value || input.value < elements.quitDate.value));
-      input.setCustomValidity(isValid ? "" : "Enter a start date before your quit date.");
+      input.setCustomValidity(isValid ? "" : t("Enter a start date before your quit date."));
     }
 
     if (decimalInputIds.has(input.id)) {
       const value = parseDecimal(input.value);
       const isValid = value !== null && value >= 0;
-      input.setCustomValidity(isValid ? "" : "Enter a valid amount.");
+      input.setCustomValidity(isValid ? "" : t("Enter a valid amount."));
     }
     return input.reportValidity();
   });
 }
 
-function showReceipt(event) {
+function showReceipt(event, { animate = true } = {}) {
   event?.preventDefault();
   event?.stopPropagation();
-  updateReceipt();
+  document.activeElement?.blur?.();
+  // Mark the receipt view first, so the save below records the setup as finished.
   elements.appShell.classList.add("is-receipt-view");
   elements.stage.classList.add("is-receipt-only");
-  elements.editButton.textContent = "Edit";
+  updateReceipt();
+  setButtonLabel(elements.editButton, t("Edit details"));
   elements.siteFooter.classList.add("is-hidden");
-  elements.receipt.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (animate) printReceipt();
+  window.scrollTo({ top: 0, behavior: "smooth" });
   showReceiptInstallRow();
   startReceiptRefresh();
 }
@@ -690,10 +818,13 @@ function focusNextFieldInStep(target) {
 }
 
 function resetApp() {
-  if (!window.confirm("Reset your saved receipt?")) return;
-  localStorage.removeItem(STORAGE_KEY);
-  localStorage.removeItem(THEME_KEY);
-  localStorage.removeItem(CUSTOM_COLOR_KEY);
+  if (!window.confirm(t("Reset your saved receipt? Goal, reminders and craving count are deleted too."))) return;
+  haptics.warning();
+  closeSheet(false);
+  [STORAGE_KEY, THEME_KEY, CUSTOM_COLOR_KEY, GOAL_KEY, REMINDERS_KEY, CRAVINGS_KEY]
+    .forEach((key) => localStorage.removeItem(key));
+  mirrorAllStorage();
+  replaceScheduledNotifications([]);
 
   stopReceiptRefresh();
   elements.stage.classList.remove("is-receipt-only");
@@ -764,24 +895,28 @@ elements.nextButton.addEventListener("click", () => {
 
 elements.notStoppedYet.addEventListener("input", handleNotStoppedYet);
 elements.backButton.addEventListener("click", () => showStep(currentStep - 1));
-elements.receiptButton.addEventListener("click", showReceipt);
+elements.receiptButton.addEventListener("click", (event) => {
+  // The last data step prints directly, so it still has to be valid.
+  if (!validateCurrentStep()) return;
+  showReceipt(event);
+});
 elements.resetButton.addEventListener("click", resetApp);
 elements.form.addEventListener("input", () => updateReceipt());
 elements.editButton.addEventListener("click", () => {
   elements.stage.classList.remove("is-receipt-only");
   elements.appShell.classList.remove("is-receipt-view");
-  elements.editButton.textContent = "Edit";
+  setButtonLabel(elements.editButton, t("Edit details"));
   stopReceiptRefresh();
 });
 elements.downloadButton.addEventListener("click", async () => {
-  elements.downloadButton.textContent = "Preparing";
+  setButtonLabel(elements.downloadButton, t("Preparing"));
   try {
     const result = await shareReceiptImage();
-    elements.downloadButton.textContent = result === "shared" ? "Shared" : "Downloaded";
+    setButtonLabel(elements.downloadButton, result === "shared" ? t("Shared") : t("Downloaded"));
   } catch (error) {
-    elements.downloadButton.textContent = error?.name === "AbortError" ? "Share" : "Share failed";
+    setButtonLabel(elements.downloadButton, error?.name === "AbortError" ? t("Share") : t("Share failed"));
   }
-  window.setTimeout(() => { elements.downloadButton.textContent = "Share"; }, 1600);
+  window.setTimeout(() => { setButtonLabel(elements.downloadButton, t("Share")); }, 1600);
 });
 
 window.addEventListener("pagehide", saveCurrentState);
@@ -849,10 +984,10 @@ function applyCustomThemeVars(hex) {
   el.style.setProperty("--custom-receipt", receiptHex);
   el.style.setProperty("--custom-shadow", `8px 10px 0 rgba(${ri}, ${gi}, ${bi}, 0.35)`);
 
-  if (customColorLabel) {
-    customColorLabel.style.borderColor = inkHex;
-    customColorLabel.style.color = inkHex;
-    customColorLabel.style.background = dotBgHex;
+  const swatch = document.querySelector("#colorSwatch");
+  if (swatch) {
+    swatch.style.background = dotBgHex;
+    swatch.style.borderColor = inkHex;
   }
 }
 
@@ -861,6 +996,8 @@ function onColorChange() {
   applyCustomThemeVars(hex);
   localStorage.setItem(CUSTOM_COLOR_KEY, hex);
   localStorage.setItem(THEME_KEY, "custom");
+  mirrorStorage(CUSTOM_COLOR_KEY);
+  mirrorStorage(THEME_KEY);
   applyTheme("custom");
 }
 
@@ -873,8 +1010,8 @@ customColorInput.value = savedCustomColor;
 applyCustomThemeVars(savedCustomColor);
 applyTheme(localStorage.getItem(THEME_KEY) || "default");
 
-// PWA
-if ("serviceWorker" in navigator) {
+// PWA (the iOS app ships its files in the bundle, so it needs no service worker)
+if ("serviceWorker" in navigator && !isNativeApp) {
   navigator.serviceWorker.register("./sw.js");
 }
 
@@ -887,7 +1024,7 @@ const isStandalone = window.matchMedia("(display-mode: standalone)").matches || 
 const receiptInstallRow = document.getElementById("receiptInstallRow");
 
 function showReceiptInstallRow() {
-  if (isStandalone) return;
+  if (isStandalone || isNativeApp) return;
   if (!isMobile && !deferredInstallPrompt) return;
   if (receiptInstallRow) receiptInstallRow.classList.remove("is-hidden");
 }
@@ -903,13 +1040,833 @@ window.addEventListener("appinstalled", () => {
   if (receiptInstallRow) receiptInstallRow.classList.add("is-hidden");
 });
 
+// Language
+const languageButton = document.querySelector("#languageButton");
+
+function syncLanguageButton() {
+  languageButton.textContent = languages[getLanguage()].label;
+  const languageValue = document.querySelector("#languageValue");
+  if (languageValue) languageValue.textContent = languages[getLanguage()].name;
+}
+
+function switchLanguage() {
+  setLanguage(nextLanguage());
+  refreshFormatters();
+  syncLanguageButton();
+  updateCurrencySymbols(currentCurrency);
+  updateReceipt(false);
+  showStep(currentStep);
+  syncBenefitsVisibility();
+  if (typeof syncPastButton === "function") syncPastButton();
+  haptics.select();
+}
+
+languageButton.addEventListener("click", switchLanguage);
+applyTranslations();
+syncLanguageButton();
+
 const initialState = readState();
 setFormState(initialState);
 updateReceipt(false);
 
-if (hasCompleteSavedState(initialState)) {
+if (hasCompleteSavedState(initialState) && initialState.wizardDone !== false) {
   showStep(getActiveSteps().length - 1);
-  showReceipt();
+  showReceipt(null, { animate: true });
+} else if (initialState.wizardDone === false && Number(initialState.wizardStep) > 0) {
+  // Came back half-way: continue exactly where they left off.
+  showStep(Number(initialState.wizardStep));
 } else {
   showStep(0);
 }
+
+
+
+// ---------------------------------------------------------------------------
+// App extensions: goal, reminders, craving SOS, printing and touch behaviour
+// ---------------------------------------------------------------------------
+
+function readJSON(key, fallback) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key));
+    return value ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeJSON(key, value) {
+  if (value === null) localStorage.removeItem(key);
+  else localStorage.setItem(key, JSON.stringify(value));
+  mirrorStorage(key);
+}
+
+function showToast(message, duration = 2200) {
+  const toast = elements.toast;
+  toast.textContent = message;
+  toast.hidden = false;
+  toast.classList.remove("is-visible");
+  void toast.offsetWidth;
+  toast.classList.add("is-visible");
+  window.clearTimeout(showToast.timer);
+  showToast.timer = window.setTimeout(() => {
+    toast.classList.remove("is-visible");
+    window.setTimeout(() => { toast.hidden = true; }, 250);
+  }, duration);
+}
+
+function isReceiptVisible() {
+  return elements.stage.classList.contains("is-receipt-only");
+}
+
+// ----------------------------------------------------------------- printing
+function printReceipt() {
+  const feed = elements.receiptFeed;
+  if (!feed || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  feed.classList.remove("is-printing");
+  void feed.offsetWidth;
+  feed.classList.add("is-printing");
+  haptics.printer(18, 45);
+  feed.addEventListener("animationend", () => feed.classList.remove("is-printing"), { once: true });
+}
+
+// ----------------------------------------------------------------- cravings
+function readCravings() {
+  return Number(localStorage.getItem(CRAVINGS_KEY)) || 0;
+}
+
+function addCraving() {
+  localStorage.setItem(CRAVINGS_KEY, String(readCravings() + 1));
+  mirrorStorage(CRAVINGS_KEY);
+}
+
+function cravingWorth(state) {
+  const perDay = dailySaving(state);
+  if (state.mode === "cigarettes" && state.cigarettesPerDay > 0) return perDay / state.cigarettesPerDay;
+  if (state.mode === "ryo" && state.rollsPerDay > 0) return perDay / state.rollsPerDay;
+  return null;
+}
+
+// ----------------------------------------------------------------- goal
+function readGoal() {
+  const goal = readJSON(GOAL_KEY, null);
+  return goal?.name && Number(goal.price) > 0 ? goal : null;
+}
+
+function toInputDate(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function renderGoal(state) {
+  const goal = readGoal();
+  const progress = goal && !state.notStoppedYet ? goalProgress(state, goal) : null;
+  elements.receiptGoal.classList.toggle("is-hidden", !progress);
+  if (!progress) return;
+
+  const wasReached = elements.receiptGoal.classList.contains("is-paid");
+  elements.goalName.textContent = progress.name;
+  elements.goalBar.textContent = asciiBar(progress.ratio, 18);
+  elements.goalSaved.textContent = `${formatCurrency(progress.saved, state.currencyCode)} / ${formatCurrency(progress.price, state.currencyCode)}`;
+  elements.goalPercent.textContent = `${Math.floor(progress.ratio * 100)}%`;
+  elements.goalEta.textContent = progress.reached
+    ? t("Goal reached. Go get it.")
+    : progress.reachedAt
+    ? t("Paid off {date}", { date: formatDate(toInputDate(progress.reachedAt)) })
+    : "";
+  elements.receiptGoal.classList.toggle("is-paid", progress.reached);
+  if (progress.reached && !wasReached && isReceiptVisible()) haptics.success();
+}
+
+// ----------------------------------------------------------------- sheets
+let openSheetEl = null;
+
+function openSheet(sheet) {
+  closeSheet(false);
+  openSheetEl = sheet;
+  elements.sheetBackdrop.hidden = false;
+  sheet.hidden = false;
+  sheet.style.transform = "";
+  requestAnimationFrame(() => {
+    elements.sheetBackdrop.classList.add("is-open");
+    sheet.classList.add("is-open");
+  });
+  document.body.classList.add("has-sheet");
+}
+
+function closeSheet(animate = true) {
+  const sheet = openSheetEl;
+  if (!sheet) return;
+  openSheetEl = null;
+  if (sheet === elements.sosSheet) stopSos();
+  sheet.classList.remove("is-open");
+  elements.sheetBackdrop.classList.remove("is-open");
+  document.body.classList.remove("has-sheet");
+  document.activeElement?.blur?.();
+  const hide = () => {
+    if (openSheetEl === sheet) return;
+    sheet.hidden = true;
+    sheet.style.transform = "";
+    if (!openSheetEl) elements.sheetBackdrop.hidden = true;
+  };
+  if (animate) window.setTimeout(hide, 260);
+  else hide();
+}
+
+function enableSwipeToClose(sheet) {
+  let startY = null;
+  let delta = 0;
+  sheet.addEventListener("touchstart", (event) => {
+    // Only drag from the top area, so inputs and scrolling inside the sheet keep working.
+    const rect = sheet.getBoundingClientRect();
+    if (event.touches[0].clientY - rect.top > 90 || sheet.scrollTop > 0) return;
+    startY = event.touches[0].clientY;
+    delta = 0;
+    sheet.style.transition = "none";
+  }, { passive: true });
+  sheet.addEventListener("touchmove", (event) => {
+    if (startY === null) return;
+    delta = Math.max(0, event.touches[0].clientY - startY);
+    sheet.style.transform = `translateY(${delta}px)`;
+  }, { passive: true });
+  sheet.addEventListener("touchend", () => {
+    if (startY === null) return;
+    sheet.style.transition = "";
+    startY = null;
+    if (delta > 90) closeSheet();
+    else sheet.style.transform = "";
+  });
+}
+
+// ----------------------------------------------------------------- reminders
+function readReminders() {
+  return {
+    enabled: false,
+    asked: false,
+    milestones: true,
+    money: true,
+    daily: { enabled: false, hour: 9, minute: 0 },
+    ...readJSON(REMINDERS_KEY, {}),
+  };
+}
+
+function scheduleReminderSync() {
+  if (!notificationsSupported) return;
+  window.clearTimeout(reminderSyncTimer);
+  reminderSyncTimer = window.setTimeout(syncReminders, 800);
+}
+
+async function syncReminders() {
+  if (!notificationsSupported) return 0;
+  const reminders = readReminders();
+  if (!reminders.enabled) return 0;
+  const state = readState();
+  const plan = hasCompleteSavedState(state)
+    ? buildNotificationPlan(state, {
+      milestones: reminders.milestones,
+      money: reminders.money,
+      daily: reminders.daily,
+      goal: readGoal(),
+      healthMilestones: (state.mode === "vaping" ? vapingMilestones : tobaccoMilestones)
+        .map((m) => ({ ...m, title: t(m.title), detail: t(m.detail) })),
+      format: (value) => formatCurrency(value, state.currencyCode),
+      t,
+    })
+    : [];
+  return replaceScheduledNotifications(plan);
+}
+
+const notificationsOffText = "Notifications are off for SMKFREE. Turn them on in your phone settings.";
+
+async function openAlertsSheet() {
+  const reminders = readReminders();
+  elements.alertMilestones.checked = reminders.milestones;
+  elements.alertMoney.checked = reminders.money;
+  elements.alertDaily.checked = reminders.daily.enabled;
+  elements.alertTime.value = `${String(reminders.daily.hour).padStart(2, "0")}:${String(reminders.daily.minute).padStart(2, "0")}`;
+  elements.alertTimeField.classList.toggle("is-hidden", !reminders.daily.enabled);
+
+  if (!notificationsSupported) {
+    elements.alertsStatus.textContent = t("Reminders work in the SMKFREE app. The web version cannot schedule them.");
+    elements.alertsOptions.classList.add("is-hidden");
+    elements.alertsSave.classList.add("is-hidden");
+  } else {
+    const permission = await notificationPermission();
+    elements.alertsStatus.textContent = permission === "denied"
+      ? t(notificationsOffText)
+      : t("Notifications stay on this phone. Nothing is sent to a server.");
+    elements.alertsSave.textContent = reminders.enabled ? t("Save") : t("Turn on");
+  }
+  openSheet(elements.alertsSheet);
+}
+
+async function saveAlerts() {
+  const [hour, minute] = (elements.alertTime.value || "09:00").split(":").map(Number);
+  const reminders = {
+    ...readReminders(),
+    asked: true,
+    milestones: elements.alertMilestones.checked,
+    money: elements.alertMoney.checked,
+    daily: { enabled: elements.alertDaily.checked, hour, minute },
+  };
+
+  const permission = await requestNotificationPermission();
+  reminders.enabled = permission === "granted";
+  writeJSON(REMINDERS_KEY, reminders);
+
+  if (!reminders.enabled) {
+    elements.alertsStatus.textContent = t(notificationsOffText);
+    haptics.warning();
+    return;
+  }
+
+  const count = await syncReminders();
+  haptics.success();
+  closeSheet();
+  showToast(count ? t("{n} reminders printed", { n: count }) : t("Reminders on"));
+}
+
+function maybeOfferReminders() {
+  if (!notificationsSupported) return;
+  const reminders = readReminders();
+  const state = readState();
+  if (reminders.asked || reminders.enabled) return;
+  if (!hasCompleteSavedState(state) || state.notStoppedYet) return;
+  writeJSON(REMINDERS_KEY, { ...reminders, asked: true });
+  window.setTimeout(() => { if (isReceiptVisible() && !openSheetEl) openAlertsSheet(); }, 2200);
+}
+
+// ----------------------------------------------------------------- craving SOS
+const breathPattern = [
+  { label: "Breathe in", seconds: 4, fill: 100 },
+  { label: "Hold", seconds: 4, fill: 100 },
+  { label: "Breathe out", seconds: 6, fill: 0 },
+];
+
+function formatClock(seconds) {
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
+function openSos() {
+  const state = getFormState();
+  const worth = cravingWorth(state);
+  elements.sosCount.textContent = numberFormatter.format(readCravings());
+  elements.sosWorth.textContent = worth ? formatCurrency(worth, state.currencyCode) : t("Your next step");
+  resetSosUi();
+  openSheet(elements.sosSheet);
+}
+
+function resetSosUi() {
+  elements.sosTimer.textContent = formatClock(SOS_SECONDS);
+  elements.breathPhase.textContent = t("Ready");
+  elements.breathFill.style.transition = "none";
+  elements.breathFill.style.width = "0%";
+  elements.sosStart.textContent = t("Start");
+  elements.sosDone.classList.add("is-hidden");
+}
+
+function startSos() {
+  if (sosTimer) return;
+  const startedAt = Date.now();
+  let phaseIndex = -1;
+  let phaseEndsAt = startedAt;
+  elements.sosStart.textContent = t("Restart");
+
+  const tick = () => {
+    const now = Date.now();
+    const elapsed = Math.floor((now - startedAt) / 1000);
+    const remaining = Math.max(0, SOS_SECONDS - elapsed);
+    elements.sosTimer.textContent = formatClock(remaining);
+
+    if (now >= phaseEndsAt && remaining > 0) {
+      phaseIndex = (phaseIndex + 1) % breathPattern.length;
+      const phase = breathPattern[phaseIndex];
+      phaseEndsAt = now + phase.seconds * 1000;
+      elements.breathPhase.textContent = t(phase.label);
+      elements.breathFill.style.transition = `width ${phase.seconds}s linear`;
+      elements.breathFill.style.width = `${phase.fill}%`;
+      if (phaseIndex === 0) haptics.press();
+      else haptics.tap();
+    }
+
+    if (elapsed >= 45) elements.sosDone.classList.remove("is-hidden");
+    if (remaining === 0) {
+      stopSos();
+      elements.breathPhase.textContent = t("Craving passed");
+      elements.sosDone.classList.remove("is-hidden");
+      haptics.success();
+    }
+  };
+  tick();
+  sosTimer = window.setInterval(tick, 250);
+}
+
+function stopSos() {
+  window.clearInterval(sosTimer);
+  sosTimer = null;
+}
+
+function finishSos() {
+  addCraving();
+  haptics.success();
+  closeSheet();
+  updateReceipt(false);
+  printReceipt();
+  showToast(t("Craving #{n} resisted", { n: readCravings() }));
+}
+
+// ----------------------------------------------------------------- touch
+function addSteppers() {
+  document.querySelectorAll(".step input[type='number']").forEach((input) => {
+    if (input.closest(".stepper")) return;
+    const wrap = document.createElement("div");
+    wrap.className = "stepper";
+    const minus = document.createElement("button");
+    const plus = document.createElement("button");
+    minus.type = "button";
+    plus.type = "button";
+    minus.className = "stepper__button";
+    plus.className = "stepper__button";
+    minus.textContent = "-";
+    plus.textContent = "+";
+    minus.setAttribute("aria-label", t("Decrease"));
+    plus.setAttribute("aria-label", t("Increase"));
+    input.inputMode = "numeric";
+    input.parentNode.insertBefore(wrap, input);
+    wrap.append(minus, input, plus);
+
+    const step = (delta) => {
+      const min = Number(input.min) || 0;
+      const fallback = Number(input.placeholder) || min;
+      const current = input.value === "" ? fallback - delta : Number(input.value);
+      input.value = String(Math.max(min, current + delta));
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      haptics.select();
+    };
+
+    // Press and hold repeats, like a real stepper.
+    [[minus, -1], [plus, 1]].forEach(([button, delta]) => {
+      let delay = null;
+      let repeat = null;
+      const stop = () => {
+        window.clearTimeout(delay);
+        window.clearInterval(repeat);
+        delay = null;
+        repeat = null;
+      };
+      button.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        step(delta);
+        delay = window.setTimeout(() => { repeat = window.setInterval(() => step(delta), 90); }, 420);
+      });
+      ["pointerup", "pointerleave", "pointercancel"].forEach((type) => button.addEventListener(type, stop));
+      button.addEventListener("click", (event) => event.preventDefault());
+    });
+  });
+}
+
+function enableWizardSwipe() {
+  let start = null;
+  elements.form.addEventListener("touchstart", (event) => {
+    if (event.target.closest("input, select, .stepper")) { start = null; return; }
+    start = { x: event.touches[0].clientX, y: event.touches[0].clientY, t: Date.now() };
+  }, { passive: true });
+  elements.form.addEventListener("touchend", (event) => {
+    if (!start) return;
+    const dx = event.changedTouches[0].clientX - start.x;
+    const dy = event.changedTouches[0].clientY - start.y;
+    const fast = Date.now() - start.t < 600;
+    start = null;
+    if (!fast || Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    if (dx < 0) advanceWizard();
+    else if (currentStep > 0) showStep(currentStep - 1);
+  }, { passive: true });
+}
+
+function initTouchEnhancements() {
+  addSteppers();
+  addMoneySteppers();
+  enableWizardSwipe();
+
+  document.addEventListener("pointerdown", (event) => {
+    if (event.target.closest(".primary-button, .secondary-button, .mode-card, .toggle-field")) haptics.tap();
+  }, { passive: true });
+
+  document.querySelectorAll(".step input").forEach((input) => {
+    if (!input.enterKeyHint) input.enterKeyHint = "next";
+  });
+}
+
+// ----------------------------------------------------------------- wiring
+function initTools() {
+  const goalSave = document.querySelector("#goalSave");
+  const goalRemove = document.querySelector("#goalRemove");
+
+  document.querySelector("#goalButton").addEventListener("click", () => {
+    const goal = readGoal();
+    elements.goalNameInput.value = goal?.name || "";
+    elements.goalPriceInput.value = goal?.price || "";
+    elements.goalError.classList.add("is-hidden");
+    goalRemove.classList.toggle("is-hidden", !goal);
+    openSheet(elements.goalSheet);
+  });
+
+  goalSave.addEventListener("click", () => {
+    const name = elements.goalNameInput.value.trim();
+    const price = parseDecimal(elements.goalPriceInput.value);
+    if (!name || !price || price <= 0) {
+      elements.goalError.classList.remove("is-hidden");
+      haptics.warning();
+      return;
+    }
+    writeJSON(GOAL_KEY, { name, price });
+    closeSheet();
+    updateReceipt(false);
+    scheduleReminderSync();
+    haptics.success();
+    showToast(t("Goal added to your receipt"));
+  });
+
+  goalRemove.addEventListener("click", () => {
+    writeJSON(GOAL_KEY, null);
+    closeSheet();
+    updateReceipt(false);
+    scheduleReminderSync();
+  });
+
+  elements.goalNameInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") { event.preventDefault(); elements.goalPriceInput.focus(); }
+  });
+  elements.goalPriceInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") { event.preventDefault(); goalSave.click(); }
+  });
+
+  document.querySelector("#alertsButton").addEventListener("click", openAlertsSheet);
+  document.querySelector("#alertsClose").addEventListener("click", () => closeSheet());
+  elements.alertsSave.addEventListener("click", saveAlerts);
+  elements.alertDaily.addEventListener("input", () => {
+    elements.alertTimeField.classList.toggle("is-hidden", !elements.alertDaily.checked);
+  });
+
+  document.querySelector("#sosButton").addEventListener("click", openSos);
+  document.querySelector("#sosClose").addEventListener("click", () => closeSheet());
+  elements.sosStart.addEventListener("click", () => { stopSos(); resetSosUi(); startSos(); });
+  elements.sosDone.addEventListener("click", finishSos);
+
+  elements.sheetBackdrop.addEventListener("click", () => closeSheet());
+  document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeSheet(); });
+  [elements.goalSheet, elements.alertsSheet, elements.sosSheet].forEach(enableSwipeToClose);
+
+  onAppResume(() => {
+    if (isReceiptVisible()) updateReceipt(false);
+    syncReminders();
+  });
+
+  if (isReceiptVisible()) maybeOfferReminders();
+  elements.receiptButton.addEventListener("click", maybeOfferReminders);
+  syncReminders();
+}
+
+
+// ---------------------------------------------------------------------------
+// Onboarding helpers: quick date picks, auto-advance and the live receipt tape
+// ---------------------------------------------------------------------------
+
+
+function dateDaysAgo(days) {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return toInputDate(date);
+}
+
+function syncDateChips() {
+  document.querySelectorAll(".chip[data-days-ago]").forEach((chip) => {
+    chip.classList.toggle("is-active",
+      !elements.notStoppedYet.checked && elements.quitDate.value === dateDaysAgo(Number(chip.dataset.daysAgo)));
+  });
+}
+
+/** Rows for every answered step, like items scanned at a till. */
+function tapeRows(state) {
+  const activeSteps = getActiveSteps();
+  const rows = [];
+  activeSteps.slice(0, currentStep + 1).forEach((step, index) => {
+    const answered = index < currentStep;
+    if (step.querySelector("input[name='mode']")) {
+      if (answered) rows.push([t("Habit"), t(modeNames[state.mode])]);
+      return;
+    }
+    if (step.contains(elements.quitDate)) {
+      if (!answered) return;
+      rows.push(state.notStoppedYet ? [t("Status"), t("Still using")] : [t("Quit date"), formatDate(state.quitDate)]);
+      return;
+    }
+    if (!answered) return;
+    const cur = state.currencyCode;
+    const fields = {
+      cigarettesPerDay: () => [t("Cigarettes / day"), numberFormatter.format(state.cigarettesPerDay)],
+      pricePerPack: () => [t("Pack price"), `${formatCurrency(state.pricePerPack, cur)} / ${numberFormatter.format(state.cigarettesPerPack)}`],
+      rollsPerDay: () => [t("Roll-ups / day"), numberFormatter.format(state.rollsPerDay)],
+      weeklyRyoCost: () => [t("Weekly spend"), formatCurrency(state.weeklyRyoCost, cur)],
+      mlPerWeek: () => [t("ml / week"), `${decimalFormatter.format(state.mlPerWeek)} ml`],
+      costPer10ml: () => [t("Cost / 10ml"), formatCurrency(state.costPer10ml, cur)],
+      accessoriesPerMonth: () => [t("Accessories / mo."), formatCurrency(state.accessoriesPerMonth, cur)],
+    };
+    step.querySelectorAll("input[id]").forEach((input) => {
+      if (fields[input.id]) rows.push(fields[input.id]());
+    });
+  });
+  return rows;
+}
+
+function renderTape() {
+  const tape = document.querySelector("#tape");
+  if (!tape) return;
+  const state = getFormState();
+  const rows = tapeRows(state);
+  const perDay = dailySaving(state);
+
+  let total = null;
+  if (perDay > 0 && state.notStoppedYet) {
+    total = [t("Costs you per year"), formatCurrency(perDay * 365, state.currencyCode)];
+  } else if (perDay > 0 && state.quitDate) {
+    total = [t("Not burned so far"), formatCurrency(calculateProgress(state).moneySaved, state.currencyCode)];
+  }
+
+  const visible = rows.length > 0 || Boolean(total);
+  tape.classList.toggle("is-hidden", !visible);
+  if (!visible) return;
+
+  const shown = rows.slice(-4);
+  const signature = shown.map((row) => row.join("|")).join("~");
+  const rowsEl = document.querySelector("#tapeRows");
+  const grew = shown.length > 0 && signature !== lastTapeSignature && rows.length >= lastTapeSignature.split("~").filter(Boolean).length;
+  rowsEl.innerHTML = shown
+    .map(([label, value], i) => `<div${grew && i === shown.length - 1 ? ' class="is-new"' : ""}><dt>${label}</dt><dd>${value}</dd></div>`)
+    .join("");
+  lastTapeSignature = signature;
+
+  const totalEl = document.querySelector("#tapeTotal");
+  totalEl.classList.toggle("is-hidden", !total);
+  if (total) {
+    document.querySelector("#tapeTotalLabel").textContent = total[0];
+    document.querySelector("#tapeTotalValue").textContent = total[1];
+  }
+}
+
+function initOnboarding() {
+  document.querySelectorAll(".chip[data-days-ago]").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      elements.notStoppedYet.checked = false;
+      syncNotStoppedFields();
+      elements.quitDate.value = dateDaysAgo(Number(chip.dataset.daysAgo));
+      setQuitDateError("");
+      syncAdvancedFields();
+      syncDateChips();
+      updateReceipt();
+      haptics.select();
+      window.setTimeout(advanceWizard, 240);
+    });
+  });
+  elements.quitDate.addEventListener("input", syncDateChips);
+  elements.notStoppedYet.addEventListener("input", syncDateChips);
+
+  // Tapping a habit card is the answer, so move on without an extra "Next" tap.
+  let advancing = false;
+  elements.modeRadios.forEach((radio) => {
+    radio.addEventListener("click", () => {
+      if (advancing || !radio.closest("[data-autoadvance]")?.classList.contains("is-active")) return;
+      advancing = true;
+      window.setTimeout(() => { advancing = false; advanceWizard(); }, 240);
+    });
+  });
+
+  syncDateChips();
+  renderTape();
+}
+
+// ----------------------------------------------------------------- money steppers
+const moneyStepSizes = {
+  pricePerPack: 0.1,
+  costPer10ml: 0.1,
+  weeklyRyoCost: 1,
+  accessoriesPerMonth: 1,
+  goalPriceInput: 10,
+};
+
+function formatMoneyInput(value) {
+  const fixed = (Math.round(value * 100) / 100).toFixed(2);
+  return getLanguage() === "de" ? fixed.replace(".", ",") : fixed;
+}
+
+function addMoneySteppers() {
+  Object.entries(moneyStepSizes).forEach(([id, size]) => {
+    const input = document.getElementById(id);
+    const field = input?.closest(".money-field");
+    if (!field || field.closest(".stepper")) return;
+
+    const wrap = document.createElement("div");
+    wrap.className = "stepper stepper--money";
+    const minus = document.createElement("button");
+    const plus = document.createElement("button");
+    for (const [button, text, label] of [[minus, "-", "Decrease"], [plus, "+", "Increase"]]) {
+      button.type = "button";
+      button.className = "stepper__button";
+      button.textContent = text;
+      button.setAttribute("aria-label", t(label));
+    }
+    field.parentNode.insertBefore(wrap, field);
+    wrap.append(minus, field, plus);
+
+    const step = (direction) => {
+      const current = parseDecimal(input.value);
+      const fallback = parseDecimal(input.placeholder) ?? 0;
+      const base = current === null ? fallback - direction * size : current;
+      // Snap to the step grid so 9.47 + 0.10 becomes 9.50, not 9.57.
+      const next = Math.max(0, Math.round((base + direction * size) / size) * size);
+      input.value = formatMoneyInput(next);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      haptics.select();
+    };
+    bindRepeatingPress(minus, () => step(-1));
+    bindRepeatingPress(plus, () => step(1));
+  });
+}
+
+function bindRepeatingPress(button, action) {
+  let delay = null;
+  let repeat = null;
+  const stop = () => {
+    window.clearTimeout(delay);
+    window.clearInterval(repeat);
+    delay = null;
+    repeat = null;
+  };
+  button.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    action();
+    delay = window.setTimeout(() => { repeat = window.setInterval(action, 80); }, 420);
+  });
+  ["pointerup", "pointerleave", "pointercancel"].forEach((type) => button.addEventListener(type, stop));
+  button.addEventListener("click", (event) => event.preventDefault());
+}
+
+// ----------------------------------------------------------------- past spend (optional)
+function yearsAgo(years) {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - years);
+  return toInputDate(date);
+}
+
+function syncPastButton() {
+  const label = document.querySelector("#pastButtonLabel");
+  const state = getFormState();
+  const active = state.isAdvanced && Boolean(state.smokingStartDate);
+  label.dataset.i18nKey = active ? "Edit past spend" : "What did smoking cost you so far?";
+  label.textContent = t(label.dataset.i18nKey);
+  document.querySelector("#pastButton").classList.toggle("is-active", active);
+}
+
+function openPastSheet() {
+  document.querySelector("#pastError").classList.add("is-hidden");
+  document.querySelector("#pastPriceHint").classList.toggle("is-hidden", currentMode !== "cigarettes");
+  document.querySelector("#pastRemove").classList.toggle("is-hidden", !currentAdvanced);
+  elements.smokingStartDate.max = elements.quitDate.value || todayAsInputValue();
+  syncPastChips();
+  openSheet(document.querySelector("#pastSheet"));
+}
+
+function syncPastChips() {
+  document.querySelectorAll(".chip[data-years-ago]").forEach((chip) => {
+    chip.classList.toggle("is-active", elements.smokingStartDate.value === yearsAgo(Number(chip.dataset.yearsAgo)));
+  });
+}
+
+function savePastSpend() {
+  const start = elements.smokingStartDate.value;
+  const quit = elements.quitDate.value || todayAsInputValue();
+  if (!start || start >= quit) {
+    document.querySelector("#pastError").classList.remove("is-hidden");
+    haptics.warning();
+    return;
+  }
+  currentAdvanced = true;
+  syncAdvancedFields();
+  updateReceipt();
+  closeSheet();
+  printReceipt();
+  syncPastButton();
+}
+
+function removePastSpend() {
+  currentAdvanced = false;
+  elements.smokingStartDate.value = "";
+  syncAdvancedFields();
+  updateReceipt();
+  closeSheet();
+  syncPastButton();
+}
+
+function initPastSpend() {
+  document.querySelector("#pastButton").addEventListener("click", openPastSheet);
+  document.querySelector("#pastSave").addEventListener("click", savePastSpend);
+  document.querySelector("#pastRemove").addEventListener("click", removePastSpend);
+  document.querySelectorAll(".chip[data-years-ago]").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      elements.smokingStartDate.value = yearsAgo(Number(chip.dataset.yearsAgo));
+      document.querySelector("#pastError").classList.add("is-hidden");
+      syncPastChips();
+      haptics.select();
+    });
+  });
+  elements.smokingStartDate.addEventListener("input", syncPastChips);
+  enableSwipeToClose(document.querySelector("#pastSheet"));
+  syncPastButton();
+}
+
+// ----------------------------------------------------------------- bottom toolbar + More menu
+function initMoreMenu() {
+  const moreSheet = document.querySelector("#moreSheet");
+  document.querySelector("#moreButton").addEventListener("click", () => openSheet(moreSheet));
+  document.querySelector("#moreClose").addEventListener("click", () => closeSheet());
+  document.querySelector("#languageMenuButton").addEventListener("click", switchLanguage);
+  // Leaving the receipt (edit) should not leave the menu open behind the wizard.
+  elements.editButton.addEventListener("click", () => {
+    closeSheet(false);
+    window.scrollTo({ top: 0 });
+  });
+  enableSwipeToClose(moreSheet);
+  syncBenefitsVisibility();
+  syncLanguageButton();
+}
+
+// ----------------------------------------------------------------- collapsed defaults (pack size, currency)
+function renderExtrasToggles(state = getFormState()) {
+  document.querySelectorAll(".extras-toggle").forEach((toggle) => {
+    const step = toggle.closest(".step");
+    const open = toggle.getAttribute("aria-expanded") === "true";
+    const text = step.dataset.mode === "cigarettes"
+      ? t("{n} per pack · {currency} · change", { n: state.cigarettesPerPack || 20, currency: state.currencyCode })
+      : t("Currency: {currency} · change", { currency: state.currencyCode });
+    toggle.textContent = `${open ? "−" : "+"} ${text}`;
+  });
+}
+
+function initExtras() {
+  document.querySelectorAll(".extras-toggle").forEach((toggle) => {
+    toggle.addEventListener("click", () => {
+      const extras = toggle.nextElementSibling;
+      const open = extras.classList.toggle("is-hidden") === false;
+      toggle.setAttribute("aria-expanded", String(open));
+      renderExtrasToggles();
+      haptics.select();
+    });
+  });
+  renderExtrasToggles();
+}
+
+// Start-up (kept last so every declaration above is initialised).
+initTouchEnhancements();
+initTools();
+initOnboarding();
+initPastSpend();
+initMoreMenu();
+initExtras();

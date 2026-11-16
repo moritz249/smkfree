@@ -1,4 +1,4 @@
-const CACHE = "smkfree-v10";
+const CACHE = "smkfree-v15";
 const ASSETS = [
   "./",
   "./index.html",
@@ -6,6 +6,8 @@ const ASSETS = [
   "./legal.html",
   "./app.js",
   "./app-core.js",
+  "./native.js",
+  "./i18n.js",
   "./styles.css",
   "./manifest.webmanifest",
   "./assets/icon.svg",
