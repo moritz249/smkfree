@@ -31,7 +31,7 @@
     <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
     <link rel="icon" href="assets/favicon-32x32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="assets/icon-180.png">
-    <link rel="stylesheet" href="styles.css?v=20261116-8">
+    <link rel="stylesheet" href="styles.css?v=20261116-9">
     <script src="assets/html2canvas.min.js" defer></script>
   </head>
   <body>
@@ -73,24 +73,14 @@
             <strong id="progressPercent">17%</strong>
           </div>
 
-          <!-- Step 0: Intro -->
-          <section class="step is-active" data-mode="all">
+          <!-- Step 1: Welcome + habit (one tap starts) -->
+          <section class="step is-active" data-mode="all" data-autoadvance>
             <div class="intro-step">
               <p class="intro-logo">smkfree</p>
               <p class="kicker" data-i18n>Quit receipt</p>
               <h2 data-i18n>Your progress printed.</h2>
-              <ul class="intro-points">
-                <li><svg class="icon" aria-hidden="true"><use href="#i-clock"></use></svg><span data-i18n>Takes about 30 seconds</span></li>
-                <li><svg class="icon" aria-hidden="true"><use href="#i-lock"></use></svg><span data-i18n>No account, no tracking</span></li>
-                <li><svg class="icon" aria-hidden="true"><use href="#i-phone"></use></svg><span data-i18n>Data stays on your device</span></li>
-              </ul>
             </div>
-          </section>
-
-          <!-- Step 1: Mode selection -->
-          <section class="step" data-mode="all" data-autoadvance>
-            <p class="kicker" data-i18n>Your habit</p>
-            <h2 data-i18n>What are you quitting?</h2>
+            <p class="step-question" data-i18n>What are you quitting?</p>
             <div class="mode-picker">
               <label class="mode-card">
                 <input type="radio" name="mode" value="cigarettes" checked>
@@ -111,6 +101,11 @@
                 <span data-i18n>Liquid &amp; accessories</span>
               </label>
             </div>
+            <ul class="intro-points">
+              <li><svg class="icon" aria-hidden="true"><use href="#i-clock"></use></svg><span data-i18n>30 seconds</span></li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-lock"></use></svg><span data-i18n>No account</span></li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-phone"></use></svg><span data-i18n>On your device</span></li>
+            </ul>
           </section>
 
           <!-- Step 2: Quit date with quick picks -->
@@ -134,20 +129,14 @@
             </label>
           </section>
 
-          <!-- Cigarettes: per day -->
+          <!-- Step 3 (cigarettes): everything about consumption on one screen -->
           <section class="step" data-mode="cigarettes">
-            <p class="kicker" data-i18n>Daily habit</p>
-            <h2 data-i18n>How many cigarettes per day?</h2>
+            <p class="kicker" data-i18n>Your consumption</p>
+            <h2 data-i18n>How much do you smoke?</h2>
             <label>
               <span data-i18n>Cigarettes per day</span>
               <input id="cigarettesPerDay" name="cigarettesPerDay" type="number" min="1" step="1" placeholder="15" data-i18n-placeholder required>
             </label>
-          </section>
-
-          <!-- Cigarettes: pack price and size -->
-          <section class="step" data-mode="cigarettes">
-            <p class="kicker" data-i18n>Your pack</p>
-            <h2 data-i18n>How much does one pack cost?</h2>
             <label>
               <span data-i18n>Price per pack</span>
               <div class="money-field">
@@ -155,67 +144,61 @@
                 <input id="pricePerPack" name="pricePerPack" type="text" inputmode="decimal" placeholder="10.00" data-i18n-placeholder required>
               </div>
             </label>
-            <label>
-              <span data-i18n>Cigarettes per pack</span>
-              <input id="cigarettesPerPack" name="cigarettesPerPack" type="number" min="1" step="1" placeholder="20" data-i18n-placeholder required>
-            </label>
-            <label class="field-compact">
-              <span data-i18n>Currency</span>
-              <select class="currency-code" name="currencyCode">
-                <option value="EUR">EUR</option>
-                <option value="USD">USD</option>
-                <option value="GBP">GBP</option>
-                <option value="CHF">CHF</option>
-              </select>
-            </label>
+            <button type="button" class="extras-toggle" aria-expanded="false"></button>
+            <div class="step-extras is-hidden">
+              <label>
+                <span data-i18n>Cigarettes per pack</span>
+                <input id="cigarettesPerPack" name="cigarettesPerPack" type="number" min="1" step="1" placeholder="20" data-i18n-placeholder required>
+              </label>
+              <label class="field-compact">
+                <span data-i18n>Currency</span>
+                <select class="currency-code" name="currencyCode">
+                  <option value="EUR">EUR</option>
+                  <option value="USD">USD</option>
+                  <option value="GBP">GBP</option>
+                  <option value="CHF">CHF</option>
+                </select>
+              </label>
+            </div>
           </section>
 
-          <!-- RYO: rolls per day -->
+          <!-- Step 3 (roll-your-own) -->
           <section class="step" data-mode="ryo">
-            <p class="kicker" data-i18n>Daily habit</p>
-            <h2 data-i18n>How many roll-ups per day?</h2>
+            <p class="kicker" data-i18n>Your consumption</p>
+            <h2 data-i18n>How much do you roll?</h2>
             <label>
               <span data-i18n>Roll-ups per day</span>
               <input id="rollsPerDay" name="rollsPerDay" type="number" min="1" step="1" placeholder="10" data-i18n-placeholder required>
             </label>
-          </section>
-
-          <!-- RYO: weekly cost -->
-          <section class="step" data-mode="ryo">
-            <p class="kicker" data-i18n>Weekly spend</p>
-            <h2 data-i18n>Weekly cost for tobacco, papers &amp; filter?</h2>
             <label>
-              <span data-i18n>Total per week</span>
+              <span data-i18n>Tobacco, papers &amp; filter per week</span>
               <div class="money-field">
                 <span class="currency-symbol" aria-hidden="true">EUR</span>
                 <input id="weeklyRyoCost" name="weeklyRyoCost" type="text" inputmode="decimal" placeholder="25.00" data-i18n-placeholder required>
               </div>
             </label>
-            <label class="field-compact">
-              <span data-i18n>Currency</span>
-              <select class="currency-code" name="currencyCode">
-                <option value="EUR">EUR</option>
-                <option value="USD">USD</option>
-                <option value="GBP">GBP</option>
-                <option value="CHF">CHF</option>
-              </select>
-            </label>
+            <button type="button" class="extras-toggle" aria-expanded="false"></button>
+            <div class="step-extras is-hidden">
+              <label class="field-compact">
+                <span data-i18n>Currency</span>
+                <select class="currency-code" name="currencyCode">
+                  <option value="EUR">EUR</option>
+                  <option value="USD">USD</option>
+                  <option value="GBP">GBP</option>
+                  <option value="CHF">CHF</option>
+                </select>
+              </label>
+            </div>
           </section>
 
-          <!-- Vaping: ml per week -->
+          <!-- Step 3 (vaping) -->
           <section class="step" data-mode="vaping">
-            <p class="kicker" data-i18n>Usage</p>
-            <h2 data-i18n>How much did you vape per week?</h2>
+            <p class="kicker" data-i18n>Your consumption</p>
+            <h2 data-i18n>How much do you vape?</h2>
             <label>
               <span data-i18n>ml per week</span>
               <input id="mlPerWeek" name="mlPerWeek" type="number" min="1" step="1" placeholder="30" data-i18n-placeholder required>
             </label>
-          </section>
-
-          <!-- Vaping: cost per 10ml -->
-          <section class="step" data-mode="vaping">
-            <p class="kicker" data-i18n>Your costs</p>
-            <h2 data-i18n>What does vaping cost you?</h2>
             <label>
               <span data-i18n>Cost per 10ml</span>
               <div class="money-field">
@@ -224,21 +207,24 @@
               </div>
             </label>
             <label>
-              <span data-i18n>Accessories per month</span>
+              <span data-i18n>Coils, pods &amp; gear per month</span>
               <div class="money-field">
                 <span class="currency-symbol" aria-hidden="true">EUR</span>
                 <input id="accessoriesPerMonth" name="accessoriesPerMonth" type="text" inputmode="decimal" placeholder="15.00" data-i18n-placeholder required>
               </div>
             </label>
-            <label class="field-compact">
-              <span data-i18n>Currency</span>
-              <select class="currency-code" name="currencyCode">
-                <option value="EUR">EUR</option>
-                <option value="USD">USD</option>
-                <option value="GBP">GBP</option>
-                <option value="CHF">CHF</option>
-              </select>
-            </label>
+            <button type="button" class="extras-toggle" aria-expanded="false"></button>
+            <div class="step-extras is-hidden">
+              <label class="field-compact">
+                <span data-i18n>Currency</span>
+                <select class="currency-code" name="currencyCode">
+                  <option value="EUR">EUR</option>
+                  <option value="USD">USD</option>
+                  <option value="GBP">GBP</option>
+                  <option value="CHF">CHF</option>
+                </select>
+              </label>
+            </div>
           </section>
 
           <div class="tape is-hidden" id="tape" aria-live="polite">
@@ -481,6 +467,6 @@
 
 
 
-<script type="module" src="app.js?v=20261116-7"></script>
+<script type="module" src="app.js?v=20261116-9"></script>
   </body>
 </html>

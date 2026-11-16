@@ -2397,3 +2397,76 @@ body {
     display: none !important;
   }
 }
+
+/* ===================================================================== */
+/* Three-step onboarding                                                  */
+/* ===================================================================== */
+
+/* Welcome and the first question share one screen. */
+.step .intro-step {
+  min-height: 0;
+  margin-bottom: 4px;
+}
+
+.step .intro-step h2 {
+  margin-bottom: 18px;
+}
+
+.step-question {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.intro-points {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 14px 0 0;
+  border-top: 0;
+  padding: 0;
+}
+
+.intro-points li {
+  display: inline-flex;
+  gap: 6px;
+  font-size: 0.76rem;
+}
+
+.intro-points .icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Rarely changed defaults stay folded away. */
+.extras-toggle {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin: -4px 0 8px;
+  border: 0;
+  border-bottom: 1px dotted var(--line);
+  padding: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8rem;
+  text-align: left;
+  text-transform: uppercase;
+  touch-action: manipulation;
+}
+
+.step-extras {
+  padding-top: 8px;
+}
+
+/* Room between the content and the action bar. */
+.wizard__actions {
+  margin-top: 18px;
+}
+
+.step {
+  min-height: 0;
+}
