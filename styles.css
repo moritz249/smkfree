@@ -2706,3 +2706,39 @@ body.has-sheet {
 .receipt.is-capturing .receipt__footer > span {
   display: inline-block;
 }
+
+/* Close button on the health benefits block */
+.fine-benefits {
+  position: relative;
+}
+
+.benefits-close {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.benefits-close:active {
+  transform: translate(1px, 1px);
+}
+
+.receipt.is-capturing .benefits-close {
+  display: none;
+}
+
+@media print {
+  .benefits-close {
+    display: none !important;
+  }
+}

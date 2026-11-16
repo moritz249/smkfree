@@ -1843,6 +1843,13 @@ function initInteractiveReceipt() {
   });
 
   document.querySelector("#goalAddon").addEventListener("click", () => document.querySelector("#goalButton").click());
+  // Health benefits can be hidden right on the receipt, not only in the menu.
+  document.querySelector("#benefitsClose").addEventListener("click", (event) => {
+    event.stopPropagation();
+    elements.showBenefitsToggle.checked = false;
+    elements.showBenefitsToggle.dispatchEvent(new Event("input", { bubbles: true }));
+    haptics.select();
+  });
   document.querySelector("#shareAddon").addEventListener("click", (event) => {
     localStorage.setItem(SHARE_PROMPT_KEY, event.currentTarget.dataset.milestone);
     elements.downloadButton.click();
