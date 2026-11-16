@@ -31,7 +31,7 @@
     <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
     <link rel="icon" href="assets/favicon-32x32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="assets/icon-180.png">
-    <link rel="stylesheet" href="styles.css?v=20261116-7">
+    <link rel="stylesheet" href="styles.css?v=20261116-8">
     <script src="assets/html2canvas.min.js" defer></script>
   </head>
   <body>
@@ -52,6 +52,9 @@
         <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
         <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/></symbol>
         <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6M9 15h4"/></symbol>
+        <symbol id="i-more" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+        <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol>
+        <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/></symbol>
         <symbol id="i-pause" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></symbol>
       </defs>
     </svg>
@@ -62,7 +65,6 @@
             <span id="stepCounter">Step 1 of 6</span>
             <span class="wizard__top-actions">
               <button type="button" id="languageButton" class="text-button" aria-label="Language" data-i18n-aria>DE</button>
-              <button type="button" id="resetButton" class="text-button" data-i18n>Reset</button>
             </span>
           </div>
 
@@ -252,25 +254,6 @@
         </form>
 
         <section class="receipt-wrap" aria-label="SMKFREE receipt" data-i18n-aria>
-          <div class="receipt-actions" aria-label="Receipt actions" data-i18n-aria>
-            <button type="button" id="editButton" class="secondary-button icon-button"><svg class="icon" aria-hidden="true"><use href="#i-pencil"></use></svg><span data-i18n>Edit</span></button>
-            <button type="button" id="downloadButton" class="primary-button icon-button"><svg class="icon" aria-hidden="true"><use href="#i-share"></use></svg><span data-i18n>Share</span></button>
-            <div class="receipt-settings">
-              <label id="customColorLabel" class="secondary-button icon-button">
-                <input type="color" id="customColor" value="#7c3aed">
-                <svg class="icon" aria-hidden="true"><use href="#i-drop"></use></svg><span data-i18n>Color</span>
-              </label>
-              <label id="benefitsLabel" class="secondary-button icon-button">
-                <input id="showBenefits" name="showBenefits" type="checkbox">
-                <svg class="icon" aria-hidden="true"><use href="#i-heart"></use></svg><span data-i18n>Benefits</span>
-              </label>
-            </div>
-          </div>
-          <div class="receipt-actions receipt-actions--tools" aria-label="Tools" data-i18n-aria>
-            <button type="button" id="sosButton" class="primary-button sos-button icon-button"><svg class="icon" aria-hidden="true"><use href="#i-breath"></use></svg><span data-i18n>Craving SOS</span></button>
-            <button type="button" id="goalButton" class="secondary-button icon-button"><svg class="icon" aria-hidden="true"><use href="#i-target"></use></svg><span data-i18n>Goal</span></button>
-            <button type="button" id="alertsButton" class="secondary-button icon-button"><svg class="icon" aria-hidden="true"><use href="#i-bell"></use></svg><span data-i18n>Alerts</span></button>
-          </div>
           <div class="receipt-feed" id="receiptFeed">
           <div class="printer-slot" aria-hidden="true"></div>
           <article class="receipt receipt--market" id="receipt">
@@ -348,6 +331,13 @@
             </footer>
           </article>
           </div>
+          <nav class="receipt-toolbar" aria-label="Receipt actions" data-i18n-aria>
+            <button type="button" id="sosButton" class="toolbar-button toolbar-button--primary"><svg class="icon" aria-hidden="true"><use href="#i-breath"></use></svg><span data-i18n>SOS</span></button>
+            <button type="button" id="goalButton" class="toolbar-button"><svg class="icon" aria-hidden="true"><use href="#i-target"></use></svg><span data-i18n>Goal</span></button>
+            <button type="button" id="downloadButton" class="toolbar-button"><svg class="icon" aria-hidden="true"><use href="#i-share"></use></svg><span data-i18n>Share</span></button>
+            <button type="button" id="moreButton" class="toolbar-button" aria-haspopup="dialog"><svg class="icon" aria-hidden="true"><use href="#i-more"></use></svg><span data-i18n>More</span></button>
+          </nav>
+
           <div class="receipt-actions receipt-actions--install is-hidden" id="receiptInstallRow" aria-label="Install app" data-i18n-aria>
             <a href="install.html" class="secondary-button" style="text-align:center;" data-i18n>Install</a>
           </div>
@@ -458,6 +448,30 @@
       </div>
     </section>
 
+    <section class="sheet" id="moreSheet" role="dialog" aria-modal="true" aria-labelledby="moreSheetTitle" hidden>
+      <div class="sheet__grip" aria-hidden="true"></div>
+      <p class="kicker" data-i18n>Menu</p>
+      <h2 id="moreSheetTitle" data-i18n>Your receipt</h2>
+      <div class="menu-list">
+        <button type="button" class="menu-row" id="editButton"><svg class="icon" aria-hidden="true"><use href="#i-pencil"></use></svg><span data-i18n>Edit details</span><span class="menu-row__value" aria-hidden="true">›</span></button>
+        <label class="menu-row" id="customColorLabel">
+          <input type="color" id="customColor" value="#7c3aed">
+          <svg class="icon" aria-hidden="true"><use href="#i-drop"></use></svg><span data-i18n>Receipt color</span><span class="menu-row__swatch" id="colorSwatch" aria-hidden="true"></span>
+        </label>
+        <label class="menu-row" id="benefitsLabel">
+          <input id="showBenefits" name="showBenefits" type="checkbox">
+          <svg class="icon" aria-hidden="true"><use href="#i-heart"></use></svg><span data-i18n>Health benefits</span><span class="menu-row__value" id="benefitsValue">--</span>
+        </label>
+        <button type="button" class="menu-row" id="alertsButton"><svg class="icon" aria-hidden="true"><use href="#i-bell"></use></svg><span data-i18n>Reminders</span><span class="menu-row__value" aria-hidden="true">›</span></button>
+        <button type="button" class="menu-row" id="languageMenuButton"><svg class="icon" aria-hidden="true"><use href="#i-globe"></use></svg><span data-i18n>Language</span><span class="menu-row__value" id="languageValue">EN</span></button>
+        <a class="menu-row" href="legal.html"><svg class="icon" aria-hidden="true"><use href="#i-lock"></use></svg><span data-i18n>Privacy / Legal</span><span class="menu-row__value" aria-hidden="true">›</span></a>
+        <button type="button" class="menu-row menu-row--danger" id="resetButton"><svg class="icon" aria-hidden="true"><use href="#i-trash"></use></svg><span data-i18n>Reset all data</span></button>
+      </div>
+      <div class="sheet__actions">
+        <button type="button" class="secondary-button" id="moreClose" data-i18n>Close</button>
+      </div>
+    </section>
+
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
     <footer class="site-footer">
@@ -467,6 +481,6 @@
 
 
 
-<script type="module" src="app.js?v=20261116-6"></script>
+<script type="module" src="app.js?v=20261116-7"></script>
   </body>
 </html>

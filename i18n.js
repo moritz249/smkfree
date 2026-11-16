@@ -92,6 +92,16 @@ const dictionaries = {
     "Language": "Sprache",
 
     // Receipt actions
+    "SOS": "SOS",
+    "More": "Mehr",
+    "Menu": "Menü",
+    "Your receipt": "Dein Bon",
+    "Edit details": "Angaben ändern",
+    "Receipt color": "Bon-Farbe",
+    "Health benefits": "Gesundheits-Vorteile",
+    "Reset all data": "Alle Daten löschen",
+    "On": "An",
+    "Off": "Aus",
     "Edit": "Ändern",
     "Share": "Teilen",
     "Preparing": "Moment",

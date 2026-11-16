@@ -2235,3 +2235,165 @@ body {
   padding: 0 10px;
   white-space: nowrap;
 }
+
+/* ===================================================================== */
+/* Receipt view: bottom toolbar (frequent actions) and More menu         */
+/* ===================================================================== */
+
+.app-shell.is-receipt-view {
+  padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
+}
+
+.receipt-toolbar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100;
+  display: grid;
+  grid-template-columns: 1.35fr 1fr 1fr 1fr;
+  gap: 8px;
+  width: min(100%, 460px);
+  margin: 0 auto;
+  padding: 16px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+  background:
+    radial-gradient(ellipse at 30% 8%, rgba(169, 160, 95, 0.16), transparent 34%),
+    linear-gradient(90deg, rgba(5, 5, 5, 0.025) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(5, 5, 5, 0.022) 1px, transparent 1px),
+    #fffef5;
+  background-size: auto, 3px 3px, 3px 3px, auto;
+  filter: drop-shadow(0 -1px 0 var(--line));
+  -webkit-mask:
+    conic-gradient(from 135deg at top, #000 90deg, #0000 0) top / 14px 8px repeat-x,
+    linear-gradient(#000 0 0) bottom / 100% calc(100% - 8px) no-repeat;
+  mask:
+    conic-gradient(from 135deg at top, #000 90deg, #0000 0) top / 14px 8px repeat-x,
+    linear-gradient(#000 0 0) bottom / 100% calc(100% - 8px) no-repeat;
+}
+
+.toolbar-button {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 4px 2px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  transition: transform 70ms ease;
+}
+
+.toolbar-button:active {
+  transform: translate(2px, 2px);
+}
+
+.toolbar-button .icon {
+  width: 21px;
+  height: 21px;
+}
+
+.toolbar-button--primary {
+  background:
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0 6px, transparent 6px 12px),
+    var(--ink);
+  color: white;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+/* More menu: one line per item, like a receipt */
+.menu-list {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+
+.menu-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) max-content;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  min-height: 54px;
+  margin: 0;
+  border: 0;
+  border-bottom: 1px dotted var(--line);
+  padding: 0 4px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 400;
+  text-align: left;
+  text-decoration: none;
+  text-transform: uppercase;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.menu-row:active {
+  background: rgba(5, 5, 5, 0.06);
+}
+
+.menu-row .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.menu-row__value {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.menu-row__swatch {
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--ink);
+  background: #b9a3ef;
+}
+
+.menu-row input[type="color"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.menu-row input[type="checkbox"] {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#benefitsLabel:has(input:checked) .menu-row__value {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.menu-row--danger {
+  color: #b00000;
+}
+
+.menu-row.is-hidden {
+  display: none;
+}
+
+@media print {
+  .receipt-toolbar {
+    display: none !important;
+  }
+}
