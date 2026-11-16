@@ -88,7 +88,6 @@ const elements = {
   showBenefitsToggle: document.querySelector("#showBenefits"),
   fineBenefits: document.querySelector(".fine-benefits"),
   smokingStartDate: document.querySelector("#smokingStartDate"),
-  smokingStartField: document.querySelector("#smokingStartField"),
   currencyCodes: [...document.querySelectorAll(".currency-code")],
   currencySymbols: document.querySelectorAll(".currency-symbol"),
   cigarettesPerDay: document.querySelector("#cigarettesPerDay"),
@@ -103,11 +102,7 @@ const elements = {
   receiptDate: document.querySelector("#receiptDate"),
   receiptRows: document.querySelector("#receiptRows"),
   moneySaved: document.querySelector("#moneySaved"),
-  minutesFree: document.querySelector("#minutesFree"),
-  hoursFree: document.querySelector("#hoursFree"),
   daysFree: document.querySelector("#daysFree"),
-  monthsFree: document.querySelector("#monthsFree"),
-  yearsFree: document.querySelector("#yearsFree"),
   milestoneList: document.querySelector("#milestoneList"),
   nextMilestone: document.querySelector("#nextMilestone"),
   receipt: document.querySelector("#receipt"),
@@ -355,7 +350,7 @@ function getFormState() {
 
 function setFormState(state) {
   currentMode = state.mode || "cigarettes";
-  currentAdvanced = supportsAdvancedMode(currentMode) && Boolean(state.isAdvanced);
+  currentAdvanced = false; // past-spend feature removed
   currentCurrency = getEffectiveCurrencyCode(currentMode, currentAdvanced, state.currencyCode);
   const radio = elements.modeRadios.find((r) => r.value === currentMode);
   if (radio) radio.checked = true;
@@ -397,24 +392,14 @@ function renderReceipt(progress, state) {
   elements.receiptDate.textContent = new Intl.DateTimeFormat(intlLocale(), {
     dateStyle: "medium", timeStyle: "short",
   }).format(new Date());
-  const showAdvancedSpend = state.isAdvanced && supportsAdvancedMode(state.mode) && Boolean(state.smokingStartDate);
-  const stillUsingAdvanced = showAdvancedSpend && state.notStoppedYet;
-  const stillUsingSpend = stillUsingAdvanced ? estimateAdvancedSpend(state, new Date()) : null;
-  const effectiveSpent = stillUsingSpend?.moneySpent ?? progress.moneySpent;
-  const effectiveAvgPackPrice = stillUsingSpend?.averagePackPrice ?? progress.averageHistoricPackPrice;
-
-  elements.minutesFree.textContent = numberFormatter.format(progress.compMinutes);
-  elements.hoursFree.textContent = numberFormatter.format(progress.compHours);
-  elements.daysFree.textContent = numberFormatter.format(progress.compDays);
-  elements.monthsFree.textContent = numberFormatter.format(progress.compMonths);
-  elements.yearsFree.textContent = numberFormatter.format(progress.compYears);
+  // One big number: whole days smoke-free, hours and minutes as small print.
+  document.querySelector("#heroDays").classList.toggle("is-hidden", state.notStoppedYet);
+  elements.daysFree.textContent = numberFormatter.format(progress.wholeDays);
+  document.querySelector("#daysLabel").textContent = progress.wholeDays === 1 ? t("Day smoke-free") : t("Days smoke-free");
+  document.querySelector("#timeFree").textContent = t("+ {h} h {m} min", { h: progress.compHours, m: progress.compMinutes });
   elements.moneySaved.textContent = formatCurrency(state.notStoppedYet ? 0 : progress.moneySaved, state.currencyCode);
 
-  const rows = showAdvancedSpend
-    ? stillUsingAdvanced
-      ? [[t("Start date"), formatDate(state.smokingStartDate)], [t("Status"), t("Still using")]]
-      : [[t("Start date"), formatDate(state.smokingStartDate)], [t("Stop date"), formatDate(state.quitDate)]]
-    : state.notStoppedYet
+  const rows = state.notStoppedYet
     ? [[t("Status"), t("Still using")]]
     : [[t("Quit date"), formatDate(state.quitDate)]];
 
@@ -430,8 +415,6 @@ function renderReceipt(progress, state) {
     if (!state.notStoppedYet) {
       rows.push(
         [t("ml not vaped"), `${decimalFormatter.format(progress.mlNotVaped)} ml`],
-        [t("Liquid saved"), formatCurrency(progress.liquidSaved, state.currencyCode)],
-        [t("Accessories saved"), formatCurrency(progress.accessoriesSaved, state.currencyCode)],
       );
     }
     rows.push(
@@ -442,26 +425,12 @@ function renderReceipt(progress, state) {
   } else {
     rows.push(
       [t("Cigarettes / day"), numberFormatter.format(state.cigarettesPerDay)],
-      [t("Cigarettes / pack"), numberFormatter.format(state.cigarettesPerPack)],
     );
-    if (showAdvancedSpend) {
-      rows.push([t("Avg past pack"), `~ ${formatCurrency(effectiveAvgPackPrice, state.currencyCode)} ${t("avg DE")}`]);
-    }
     if (!state.notStoppedYet) {
       rows.push(
         [t("Packs not bought"), `${decimalFormatter.format(progress.packsAvoided)} × ${formatCurrency(state.pricePerPack || 0, state.currencyCode)}`],
       );
     }
-  }
-
-  if (!state.notStoppedYet) {
-    rows.push([showAdvancedSpend ? t("+ Saved after quit") : t("Cost avoided"), showAdvancedSpend
-      ? `+ ${formatCurrency(progress.moneySaved, state.currencyCode)}`
-      : formatCurrency(progress.moneySaved, state.currencyCode)]);
-  }
-
-  if (showAdvancedSpend) {
-    rows.push([stillUsingAdvanced ? t("- Paid so far") : t("- Paid before quit"), `- ${formatCurrency(effectiveSpent, state.currencyCode)}`]);
   }
 
   // Still using: the yearly cost is the message, so it belongs on the receipt too.
@@ -483,7 +452,6 @@ function renderReceipt(progress, state) {
   if (!state.notStoppedYet && state.mode === "cigarettes") {
     rows.push(
       [t("Estimated life regained*"), formatLifeSaved(progress.estimatedLifeMinutes)],
-      [t("*Population average"), t("Not a personal prediction")],
     );
   }
 
@@ -1061,7 +1029,6 @@ function switchLanguage() {
   updateReceipt(false);
   showStep(currentStep);
   syncBenefitsVisibility();
-  if (typeof syncPastButton === "function") syncPastButton();
   haptics.select();
 }
 
@@ -1753,79 +1720,6 @@ function bindRepeatingPress(button, action) {
   button.addEventListener("click", (event) => event.preventDefault());
 }
 
-// ----------------------------------------------------------------- past spend (optional)
-function yearsAgo(years) {
-  const date = new Date();
-  date.setFullYear(date.getFullYear() - years);
-  return toInputDate(date);
-}
-
-function syncPastButton() {
-  const label = document.querySelector("#pastButtonLabel");
-  const state = getFormState();
-  const active = state.isAdvanced && Boolean(state.smokingStartDate);
-  label.dataset.i18nKey = active ? "Edit past spend" : "What did smoking cost you so far?";
-  label.textContent = t(label.dataset.i18nKey);
-  document.querySelector("#pastButton").classList.toggle("is-active", active);
-}
-
-function openPastSheet() {
-  document.querySelector("#pastError").classList.add("is-hidden");
-  document.querySelector("#pastPriceHint").classList.toggle("is-hidden", currentMode !== "cigarettes");
-  document.querySelector("#pastRemove").classList.toggle("is-hidden", !currentAdvanced);
-  elements.smokingStartDate.max = elements.quitDate.value || todayAsInputValue();
-  syncPastChips();
-  openSheet(document.querySelector("#pastSheet"));
-}
-
-function syncPastChips() {
-  document.querySelectorAll(".chip[data-years-ago]").forEach((chip) => {
-    chip.classList.toggle("is-active", elements.smokingStartDate.value === yearsAgo(Number(chip.dataset.yearsAgo)));
-  });
-}
-
-function savePastSpend() {
-  const start = elements.smokingStartDate.value;
-  const quit = elements.quitDate.value || todayAsInputValue();
-  if (!start || start >= quit) {
-    document.querySelector("#pastError").classList.remove("is-hidden");
-    haptics.warning();
-    return;
-  }
-  currentAdvanced = true;
-  syncAdvancedFields();
-  updateReceipt();
-  closeSheet();
-  printReceipt();
-  syncPastButton();
-}
-
-function removePastSpend() {
-  currentAdvanced = false;
-  elements.smokingStartDate.value = "";
-  syncAdvancedFields();
-  updateReceipt();
-  closeSheet();
-  syncPastButton();
-}
-
-function initPastSpend() {
-  document.querySelector("#pastButton").addEventListener("click", openPastSheet);
-  document.querySelector("#pastSave").addEventListener("click", savePastSpend);
-  document.querySelector("#pastRemove").addEventListener("click", removePastSpend);
-  document.querySelectorAll(".chip[data-years-ago]").forEach((chip) => {
-    chip.addEventListener("click", () => {
-      elements.smokingStartDate.value = yearsAgo(Number(chip.dataset.yearsAgo));
-      document.querySelector("#pastError").classList.add("is-hidden");
-      syncPastChips();
-      haptics.select();
-    });
-  });
-  elements.smokingStartDate.addEventListener("input", syncPastChips);
-  enableSwipeToClose(document.querySelector("#pastSheet"));
-  syncPastButton();
-}
-
 // ----------------------------------------------------------------- bottom toolbar + More menu
 function initMoreMenu() {
   const moreSheet = document.querySelector("#moreSheet");
@@ -1930,8 +1824,7 @@ function renderInteractive(state, progress) {
       ? t("1 day! Share your receipt")
       : t("{days} days! Share your receipt", { days: milestone });
   }
-  document.querySelector("#goalAddon").classList.toggle("is-hidden", Boolean(readGoal()) || state.notStoppedYet);
-  document.querySelector("#benefitsAddon").classList.toggle("is-hidden", currentShowBenefits);
+  document.querySelector("#goalAddon").classList.toggle("is-hidden", Boolean(milestone) || Boolean(readGoal()) || state.notStoppedYet);
 }
 
 function toggleBreakdown() {
@@ -1950,12 +1843,6 @@ function initInteractiveReceipt() {
   });
 
   document.querySelector("#goalAddon").addEventListener("click", () => document.querySelector("#goalButton").click());
-  document.querySelector("#benefitsAddon").addEventListener("click", () => {
-    elements.showBenefitsToggle.checked = true;
-    elements.showBenefitsToggle.dispatchEvent(new Event("input", { bubbles: true }));
-    haptics.success();
-    window.setTimeout(() => elements.fineBenefits.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
-  });
   document.querySelector("#shareAddon").addEventListener("click", (event) => {
     localStorage.setItem(SHARE_PROMPT_KEY, event.currentTarget.dataset.milestone);
     elements.downloadButton.click();
@@ -2007,7 +1894,6 @@ function renderGoalIdeas() {
 initTouchEnhancements();
 initTools();
 initOnboarding();
-initPastSpend();
 initMoreMenu();
 initExtras();
 initInteractiveReceipt();

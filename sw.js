@@ -1,4 +1,4 @@
-const CACHE = "smkfree-v17";
+const CACHE = "smkfree-v18";
 const ASSETS = [
   "./",
   "./index.html",
