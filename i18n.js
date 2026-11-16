@@ -13,6 +13,17 @@ export const languages = {
 const dictionaries = {
   de: {
     // Wizard
+    "30 seconds": "30 Sekunden",
+    "No account": "Kein Konto",
+    "On your device": "Nur auf deinem Gerät",
+    "Your consumption": "Dein Konsum",
+    "How much do you smoke?": "Wie viel rauchst du?",
+    "How much do you roll?": "Wie viel drehst du?",
+    "How much do you vape?": "Wie viel vapst du?",
+    "Tobacco, papers & filter per week": "Tabak, Papers & Filter pro Woche",
+    "Coils, pods & gear per month": "Coils, Pods & Zubehör pro Monat",
+    "{n} per pack · {currency} · change": "{n} pro Schachtel · {currency} · ändern",
+    "Currency: {currency} · change": "Währung: {currency} · ändern",
     "Takes about 30 seconds": "Dauert etwa 30 Sekunden",
     "No account, no tracking": "Kein Konto, kein Tracking",
     "Data stays on your device": "Daten bleiben auf deinem Gerät",

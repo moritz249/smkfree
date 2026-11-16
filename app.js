@@ -441,10 +441,10 @@ function renderReceipt(progress, state) {
     rows.push(
       [t("Cigarettes / day"), numberFormatter.format(state.cigarettesPerDay)],
       [t("Cigarettes / pack"), numberFormatter.format(state.cigarettesPerPack)],
-      showAdvancedSpend
-        ? [t("Avg past pack"), `~ ${formatCurrency(effectiveAvgPackPrice, state.currencyCode)} ${t("avg DE")}`]
-        : [t("Pack price"), formatCurrency(state.pricePerPack || 0, state.currencyCode)],
     );
+    if (showAdvancedSpend) {
+      rows.push([t("Avg past pack"), `~ ${formatCurrency(effectiveAvgPackPrice, state.currencyCode)} ${t("avg DE")}`]);
+    }
     if (!state.notStoppedYet) {
       rows.push(
         [t("Packs not bought"), `${decimalFormatter.format(progress.packsAvoided)} × ${formatCurrency(state.pricePerPack || 0, state.currencyCode)}`],
@@ -594,6 +594,7 @@ function updateReceipt(shouldSave = true) {
   renderSummary(state);
   renderMilestones(progress.elapsedHours, state.mode);
   renderTape();
+  renderExtrasToggles(state);
 }
 
 function downloadUrl(url, filename) {
@@ -753,9 +754,10 @@ function showReceipt(event, { animate = true } = {}) {
   event?.preventDefault();
   event?.stopPropagation();
   document.activeElement?.blur?.();
-  updateReceipt();
+  // Mark the receipt view first, so the save below records the setup as finished.
   elements.appShell.classList.add("is-receipt-view");
   elements.stage.classList.add("is-receipt-only");
+  updateReceipt();
   setButtonLabel(elements.editButton, t("Edit details"));
   elements.siteFooter.classList.add("is-hidden");
   if (animate) printReceipt();
@@ -1836,9 +1838,35 @@ function initMoreMenu() {
   syncLanguageButton();
 }
 
+// ----------------------------------------------------------------- collapsed defaults (pack size, currency)
+function renderExtrasToggles(state = getFormState()) {
+  document.querySelectorAll(".extras-toggle").forEach((toggle) => {
+    const step = toggle.closest(".step");
+    const open = toggle.getAttribute("aria-expanded") === "true";
+    const text = step.dataset.mode === "cigarettes"
+      ? t("{n} per pack · {currency} · change", { n: state.cigarettesPerPack || 20, currency: state.currencyCode })
+      : t("Currency: {currency} · change", { currency: state.currencyCode });
+    toggle.textContent = `${open ? "−" : "+"} ${text}`;
+  });
+}
+
+function initExtras() {
+  document.querySelectorAll(".extras-toggle").forEach((toggle) => {
+    toggle.addEventListener("click", () => {
+      const extras = toggle.nextElementSibling;
+      const open = extras.classList.toggle("is-hidden") === false;
+      toggle.setAttribute("aria-expanded", String(open));
+      renderExtrasToggles();
+      haptics.select();
+    });
+  });
+  renderExtrasToggles();
+}
+
 // Start-up (kept last so every declaration above is initialised).
 initTouchEnhancements();
 initTools();
 initOnboarding();
 initPastSpend();
 initMoreMenu();
+initExtras();
