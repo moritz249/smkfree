@@ -4,6 +4,9 @@ Reihenfolge nach Priorität: Optik → Usability → Funktionen → Monetarisier
 
 ## Usability
 
+- [x] Bon vereinfacht: große Tage-Zahl statt 5 Zeitzeilen, doppelte Zeilen raus, nur 1 Coupon, QR/Link nur im geteilten Bild.
+- [x] „Frühere Ausgaben“ (erweiterter Bon) entfernt. Rechenlogik bleibt in app-core.js, falls sie später wieder gebraucht wird.
+
 - [ ] **Zurücksetzen überdenken**: Ändern geht jederzeit über „Ändern“. Zurücksetzen in ein kleines
       Einstellungs-Menü verschieben (zusammen mit Sprache, Export, Erinnerungen) statt im Assistenten-Kopf.
 - [ ] **Rückfall-Modus**: Ausrutscher festhalten statt alles zu löschen (neues Startdatum mit Verlauf).
@@ -22,6 +25,14 @@ Verloren gehen sie nur beim Löschen der App bzw. der Browserdaten.
 - [ ] **Export / Import** als Datei (JSON) oder Teilen-Link für Gerätewechsel.
 - [ ] Optional **iCloud-Sync** (iOS Key-Value Store) bzw. Android Auto Backup prüfen. Bleibt ohne eigenen Server.
 - [ ] Wenn Daten von einer zur nächsten Version wechseln: Migration statt Löschen (`STORAGE_VERSION`).
+
+## Teilen / Wachstum
+
+- [x] Persönlicher Teilen-Text mit Zahlen und Frage an Freunde; Meilenstein-Coupon „7 Tage! Teile deinen Bon“.
+- [ ] Story-Format 9:16 (Bon zentriert auf Papier-Hintergrund) für Instagram/WhatsApp-Status.
+- [ ] „Freund herausfordern“: Link öffnet direkt den Rechner mit der Frage „Was verbrennst du?“.
+- [ ] Jahres-Bon / Rückblick zum Jahrestag als besonderer Beleg.
+- [ ] Universal Links / App-Store-Link im QR-Code, sobald die App im Store ist.
 
 ## Funktionen
 

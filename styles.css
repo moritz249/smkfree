@@ -2470,3 +2470,275 @@ body {
 .step {
   min-height: 0;
 }
+
+/* ===================================================================== */
+/* Fixed feel on iPhone + interactive receipt                            */
+/* ===================================================================== */
+
+html,
+body {
+  overflow-x: hidden;
+  overscroll-behavior: none;
+  touch-action: pan-y;
+}
+
+/* iOS Safari ignores overflow:hidden on body, so the page is pinned instead. */
+body.has-sheet {
+  position: fixed;
+  right: 0;
+  left: 0;
+  overflow: hidden;
+}
+
+/* Total: tap to project per day / week / month / year */
+.receipt__total.is-interactive {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.receipt__total.is-interactive strong::after {
+  display: inline-block;
+  margin-left: 6px;
+  content: "▾";
+  font-size: 0.6em;
+  transition: transform 160ms ease;
+}
+
+.receipt__total[aria-expanded="true"] strong::after {
+  transform: rotate(180deg);
+}
+
+.receipt.is-capturing .receipt__total strong::after {
+  content: none;
+}
+
+.receipt-breakdown {
+  margin: -8px 22px 16px;
+  border-bottom: 1px dashed var(--line);
+  padding: 0 0 10px;
+  animation: tape-print 300ms steps(5, end) both;
+}
+
+.receipt-breakdown.is-hidden {
+  display: none;
+}
+
+.receipt-breakdown__title {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.receipt-breakdown dl {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+
+.receipt-breakdown div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  gap: 12px;
+  font-size: 0.92rem;
+}
+
+.receipt-breakdown dt {
+  color: var(--ink);
+}
+
+.receipt-breakdown dd {
+  font-weight: 400;
+}
+
+/* Coupon stack */
+.receipt-addons {
+  display: grid;
+  gap: 8px;
+  margin: -8px 22px 18px;
+}
+
+.receipt-addons .receipt-addon {
+  width: 100%;
+  margin: 0;
+}
+
+.receipt-addon.is-hidden {
+  display: none;
+}
+
+.receipt-addon--share {
+  border-style: solid;
+  background: var(--ink);
+  color: white;
+  font-weight: 700;
+}
+
+.receipt-addon .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.receipt-goal {
+  cursor: pointer;
+}
+
+.receipt.is-capturing .receipt-addons {
+  display: none;
+}
+
+@media print {
+  .receipt-addons,
+  .receipt-breakdown {
+    display: none !important;
+  }
+}
+
+/* Goal ideas: icon, name and a rough price */
+.goal-ideas {
+  margin-bottom: 18px;
+}
+
+.goal-idea {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  column-gap: 8px;
+  align-items: center;
+  min-height: 56px;
+  padding: 6px 10px;
+  text-align: left;
+}
+
+.goal-idea .icon {
+  grid-row: span 2;
+  width: 20px;
+  height: 20px;
+}
+
+.goal-idea__name {
+  overflow: hidden;
+  font-size: 0.8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goal-idea small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: none;
+}
+
+.goal-idea.is-active small {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Straight edges: no torn zigzag on sheets and toolbar */
+.sheet,
+.receipt-toolbar {
+  -webkit-mask: none;
+  mask: none;
+}
+
+.sheet {
+  border-top: 1px solid var(--line);
+  padding-top: 24px;
+}
+
+.receipt-toolbar {
+  filter: none;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.printer-slot {
+  display: none;
+}
+
+/* ===================================================================== */
+/* Simplified receipt                                                     */
+/* ===================================================================== */
+
+/* One big day count instead of five time rows */
+.hero-days {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 18px 22px 10px;
+  color: var(--ink);
+  text-align: center;
+}
+
+.hero-days.is-hidden {
+  display: none;
+}
+
+.hero-days strong {
+  font-size: clamp(3.4rem, 18vw, 5rem);
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+}
+
+.hero-days span {
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero-days small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+/* Footer: QR, link and stars only on the shared image */
+.receipt__footer .receipt-qr,
+.receipt__footer .receipt-link,
+.receipt__footer > span {
+  display: none;
+}
+
+.receipt.is-capturing .receipt__footer .receipt-qr {
+  display: grid;
+}
+
+.receipt.is-capturing .receipt__footer .receipt-link,
+.receipt.is-capturing .receipt__footer > span {
+  display: inline-block;
+}
+
+/* Close button on the health benefits block */
+.fine-benefits {
+  position: relative;
+}
+
+.benefits-close {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.benefits-close:active {
+  transform: translate(1px, 1px);
+}
+
+.receipt.is-capturing .benefits-close {
+  display: none;
+}
+
+@media print {
+  .benefits-close {
+    display: none !important;
+  }
+}
