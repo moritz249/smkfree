@@ -23,6 +23,14 @@ Verloren gehen sie nur beim Löschen der App bzw. der Browserdaten.
 - [ ] Optional **iCloud-Sync** (iOS Key-Value Store) bzw. Android Auto Backup prüfen. Bleibt ohne eigenen Server.
 - [ ] Wenn Daten von einer zur nächsten Version wechseln: Migration statt Löschen (`STORAGE_VERSION`).
 
+## Teilen / Wachstum
+
+- [x] Persönlicher Teilen-Text mit Zahlen und Frage an Freunde; Meilenstein-Coupon „7 Tage! Teile deinen Bon“.
+- [ ] Story-Format 9:16 (Bon zentriert auf Papier-Hintergrund) für Instagram/WhatsApp-Status.
+- [ ] „Freund herausfordern“: Link öffnet direkt den Rechner mit der Frage „Was verbrennst du?“.
+- [ ] Jahres-Bon / Rückblick zum Jahrestag als besonderer Beleg.
+- [ ] Universal Links / App-Store-Link im QR-Code, sobald die App im Store ist.
+
 ## Funktionen
 
 - [ ] **Widgets** (Home- und Sperrbildschirm): „Tage rauchfrei“ und „€ gespart“ im Bon-Stil. Braucht

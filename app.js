@@ -8,6 +8,7 @@ import {
   buildNotificationPlan,
   dailySaving,
   goalProgress,
+  dayThresholds,
 } from "./app-core.js";
 import {
   configureChrome,
@@ -34,6 +35,7 @@ const STORAGE_VERSION = 4;
 const GOAL_KEY = "smkfree-goal";
 const REMINDERS_KEY = "smkfree-reminders";
 const CRAVINGS_KEY = "smkfree-cravings";
+const SHARE_PROMPT_KEY = "smkfree-share-milestone";
 const SOS_SECONDS = 180;
 const isTouchDevice = window.matchMedia("(pointer: coarse)").matches || "ontouchstart" in window;
 let reminderSyncTimer = null;
@@ -595,6 +597,7 @@ function updateReceipt(shouldSave = true) {
   renderMilestones(progress.elapsedHours, state.mode);
   renderTape();
   renderExtrasToggles(state);
+  renderInteractive(state, progress);
 }
 
 function downloadUrl(url, filename) {
@@ -639,9 +642,10 @@ async function shareReceiptImage() {
   const filename = "smoke-free-receipt.png";
   const blob = await createReceiptImageBlob();
   const title = t("SMKFREE Quit Receipt");
-  const text = t("Look at my SMKFREE receipt. This is what I didn't spend. Do yours in 30s, no hooks attached.");
+  const text = shareText();
+  const link = "https://moritz249.github.io/smkfree/";
 
-  if (isNativeApp && await shareImageNative(blob, { title, text, filename })) {
+  if (isNativeApp && await shareImageNative(blob, { title, text: `${text} ${link}`, filename })) {
     return "shared";
   }
 
@@ -821,7 +825,7 @@ function resetApp() {
   if (!window.confirm(t("Reset your saved receipt? Goal, reminders and craving count are deleted too."))) return;
   haptics.warning();
   closeSheet(false);
-  [STORAGE_KEY, THEME_KEY, CUSTOM_COLOR_KEY, GOAL_KEY, REMINDERS_KEY, CRAVINGS_KEY]
+  [STORAGE_KEY, THEME_KEY, CUSTOM_COLOR_KEY, GOAL_KEY, REMINDERS_KEY, CRAVINGS_KEY, SHARE_PROMPT_KEY]
     .forEach((key) => localStorage.removeItem(key));
   mirrorAllStorage();
   replaceScheduledNotifications([]);
@@ -1189,7 +1193,7 @@ function openSheet(sheet) {
     elements.sheetBackdrop.classList.add("is-open");
     sheet.classList.add("is-open");
   });
-  document.body.classList.add("has-sheet");
+  lockScroll();
 }
 
 function closeSheet(animate = true) {
@@ -1199,7 +1203,7 @@ function closeSheet(animate = true) {
   if (sheet === elements.sosSheet) stopSos();
   sheet.classList.remove("is-open");
   elements.sheetBackdrop.classList.remove("is-open");
-  document.body.classList.remove("has-sheet");
+  unlockScroll();
   document.activeElement?.blur?.();
   const hide = () => {
     if (openSheetEl === sheet) return;
@@ -1863,6 +1867,107 @@ function initExtras() {
   renderExtrasToggles();
 }
 
+// ----------------------------------------------------------------- scroll lock (iOS-safe)
+let lockedScrollY = 0;
+
+function lockScroll() {
+  if (document.body.classList.contains("has-sheet")) return;
+  lockedScrollY = window.scrollY;
+  document.body.style.top = `-${lockedScrollY}px`;
+  document.body.classList.add("has-sheet");
+}
+
+function unlockScroll() {
+  if (!document.body.classList.contains("has-sheet")) return;
+  document.body.classList.remove("has-sheet");
+  document.body.style.top = "";
+  window.scrollTo(0, lockedScrollY);
+}
+
+// ----------------------------------------------------------------- sharing hooks
+function shareText() {
+  const state = getFormState();
+  const cur = state.currencyCode;
+  if (state.notStoppedYet) {
+    return t("Smoking costs me {amount} a year. What does it cost you? Find out in 30 seconds:",
+      { amount: formatCurrency(dailySaving(state) * 365, cur) });
+  }
+  const progress = calculateProgress(state);
+  return t("{days} days smoke-free and {amount} not burned. What would you save? Find out in 30 seconds:",
+    { days: numberFormatter.format(progress.wholeDays), amount: formatCurrency(progress.moneySaved, cur) });
+}
+
+/** Highest day milestone reached that has not been offered for sharing yet. */
+function pendingShareMilestone(state, progress) {
+  if (state.notStoppedYet || !state.quitDate) return null;
+  const reached = dayThresholds.filter((days) => progress.wholeDays >= days).pop();
+  if (!reached) return null;
+  return Number(localStorage.getItem(SHARE_PROMPT_KEY)) >= reached ? null : reached;
+}
+
+// ----------------------------------------------------------------- interactive receipt
+function renderInteractive(state, progress) {
+  const perDay = dailySaving(state);
+  const cur = state.currencyCode;
+
+  // Projection under the total.
+  document.querySelector("#breakdownTitle").textContent = state.notStoppedYet ? t("Costs you") : t("You save");
+  document.querySelector("#breakdownRows").innerHTML = [
+    [t("Per day"), perDay],
+    [t("Per week"), perDay * 7],
+    [t("Per month"), perDay * 30.4375],
+    [t("Per year"), perDay * 365],
+  ].map(([label, value]) => `<div><dt>${label}</dt><dd>${formatCurrency(value, cur)}</dd></div>`).join("");
+  document.querySelector("#totalToggle").classList.toggle("is-interactive", perDay > 0);
+
+  // Coupons.
+  const milestone = pendingShareMilestone(state, progress);
+  const shareAddon = document.querySelector("#shareAddon");
+  shareAddon.classList.toggle("is-hidden", !milestone);
+  shareAddon.dataset.milestone = milestone || "";
+  if (milestone) {
+    document.querySelector("#shareAddonLabel").textContent = milestone === 1
+      ? t("1 day! Share your receipt")
+      : t("{days} days! Share your receipt", { days: milestone });
+  }
+  document.querySelector("#goalAddon").classList.toggle("is-hidden", Boolean(readGoal()) || state.notStoppedYet);
+  document.querySelector("#benefitsAddon").classList.toggle("is-hidden", currentShowBenefits);
+}
+
+function toggleBreakdown() {
+  const toggle = document.querySelector("#totalToggle");
+  if (!toggle.classList.contains("is-interactive")) return;
+  const open = document.querySelector("#breakdown").classList.toggle("is-hidden") === false;
+  toggle.setAttribute("aria-expanded", String(open));
+  haptics.select();
+}
+
+function initInteractiveReceipt() {
+  const total = document.querySelector("#totalToggle");
+  total.addEventListener("click", toggleBreakdown);
+  total.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") { event.preventDefault(); toggleBreakdown(); }
+  });
+
+  document.querySelector("#goalAddon").addEventListener("click", () => document.querySelector("#goalButton").click());
+  document.querySelector("#benefitsAddon").addEventListener("click", () => {
+    elements.showBenefitsToggle.checked = true;
+    elements.showBenefitsToggle.dispatchEvent(new Event("input", { bubbles: true }));
+    haptics.success();
+    window.setTimeout(() => elements.fineBenefits.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
+  });
+  document.querySelector("#shareAddon").addEventListener("click", (event) => {
+    localStorage.setItem(SHARE_PROMPT_KEY, event.currentTarget.dataset.milestone);
+    elements.downloadButton.click();
+    updateReceipt(false);
+  });
+  elements.receiptGoal.addEventListener("click", () => document.querySelector("#goalButton").click());
+
+  // iOS Safari: no pinch zoom, the app should feel fixed in place.
+  ["gesturestart", "gesturechange"].forEach((type) => document.addEventListener(type, (event) => event.preventDefault()));
+  updateReceipt(false);
+}
+
 // Start-up (kept last so every declaration above is initialised).
 initTouchEnhancements();
 initTools();
@@ -1870,3 +1975,4 @@ initOnboarding();
 initPastSpend();
 initMoreMenu();
 initExtras();
+initInteractiveReceipt();
