@@ -128,6 +128,7 @@ const dictionaries = {
     "Privacy / Legal": "Datenschutz / Rechtliches",
 
     // Receipt
+    "Hide health benefits": "Gesundheits-Vorteile ausblenden",
     "Days smoke-free": "Tage rauchfrei",
     "Day smoke-free": "Tag rauchfrei",
     "+ {h} h {m} min": "+ {h} Std {m} Min",
