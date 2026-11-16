@@ -31,7 +31,7 @@
     <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
     <link rel="icon" href="assets/favicon-32x32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="assets/icon-180.png">
-    <link rel="stylesheet" href="styles.css?v=20261116-10">
+    <link rel="stylesheet" href="styles.css?v=20261116-11">
     <script src="assets/html2canvas.min.js" defer></script>
   </head>
   <body>
@@ -55,6 +55,12 @@
         <symbol id="i-more" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
         <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol>
         <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/></symbol>
+        <symbol id="i-laptop" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="11"/><path d="M2 19h20"/></symbol>
+        <symbol id="i-bike" viewBox="0 0 24 24"><circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-7h5l3 7M10 9l3 7M14 6h3"/></symbol>
+        <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></symbol>
+        <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol>
+        <symbol id="i-car" viewBox="0 0 24 24"><path d="M3 15l2-5h14l2 5v3H3z"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></symbol>
+        <symbol id="i-house" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v10H3z"/><path d="M10 21v-6h4v6"/></symbol>
         <symbol id="i-pause" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></symbol>
       </defs>
     </svg>
@@ -241,7 +247,6 @@
 
         <section class="receipt-wrap" aria-label="SMKFREE receipt" data-i18n-aria>
           <div class="receipt-feed" id="receiptFeed">
-          <div class="printer-slot" aria-hidden="true"></div>
           <article class="receipt receipt--market" id="receipt">
             <div class="receipt__edge" aria-hidden="true"></div>
             <header class="receipt__header">
@@ -353,6 +358,7 @@
       <p class="kicker" data-i18n>Savings goal</p>
       <h2 id="goalSheetTitle" data-i18n>What are you saving for?</h2>
       <p class="step-hint" data-i18n>Your receipt shows how close the money you did not burn gets you.</p>
+      <div class="chip-row goal-ideas" id="goalIdeas" role="group" aria-label="Ideas" data-i18n-aria></div>
       <label>
         <span data-i18n>Goal</span>
         <input id="goalNameInput" type="text" maxlength="28" placeholder="New headphones" data-i18n-placeholder autocomplete="off" enterkeyhint="next">
@@ -483,6 +489,6 @@
 
 
 
-<script type="module" src="app.js?v=20261116-10"></script>
+<script type="module" src="app.js?v=20261116-12"></script>
   </body>
 </html>

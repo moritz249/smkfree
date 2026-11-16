@@ -203,6 +203,11 @@ const dictionaries = {
       "Mein SMKFREE-Bon: Das habe ich nicht ausgegeben. Mach deinen in 30 Sekunden, ohne Haken.",
 
     // Goal sheet
+    "Ideas": "Ideen",
+    "Bicycle": "Fahrrad",
+    "Vacation": "Urlaub",
+    "Instrument": "Instrument",
+    "House": "Haus",
     "Savings goal": "Sparziel",
     "What are you saving for?": "Worauf sparst du?",
     "Your receipt shows how close the money you did not burn gets you.": "Dein Bon zeigt, wie nah dich das nicht verbrannte Geld bringt.",

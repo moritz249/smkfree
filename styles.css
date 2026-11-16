@@ -2594,3 +2594,63 @@ body.has-sheet {
     display: none !important;
   }
 }
+
+/* Goal ideas: icon, name and a rough price */
+.goal-ideas {
+  margin-bottom: 18px;
+}
+
+.goal-idea {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  column-gap: 8px;
+  align-items: center;
+  min-height: 56px;
+  padding: 6px 10px;
+  text-align: left;
+}
+
+.goal-idea .icon {
+  grid-row: span 2;
+  width: 20px;
+  height: 20px;
+}
+
+.goal-idea__name {
+  overflow: hidden;
+  font-size: 0.8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goal-idea small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: none;
+}
+
+.goal-idea.is-active small {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Straight edges: no torn zigzag on sheets and toolbar */
+.sheet,
+.receipt-toolbar {
+  -webkit-mask: none;
+  mask: none;
+}
+
+.sheet {
+  border-top: 1px solid var(--line);
+  padding-top: 24px;
+}
+
+.receipt-toolbar {
+  filter: none;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.printer-slot {
+  display: none;
+}
