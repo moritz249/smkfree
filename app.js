@@ -229,6 +229,8 @@ function getEffectiveCurrencyCode(mode, isAdvanced, currencyCode) {
 
 function syncBenefitsVisibility() {
   elements.fineBenefits.classList.toggle("is-hidden", !currentShowBenefits);
+  const benefitsValue = document.querySelector("#benefitsValue");
+  if (benefitsValue) benefitsValue.textContent = currentShowBenefits ? t("On") : t("Off");
 }
 
 function syncAdvancedFields() {
@@ -754,7 +756,7 @@ function showReceipt(event, { animate = true } = {}) {
   updateReceipt();
   elements.appShell.classList.add("is-receipt-view");
   elements.stage.classList.add("is-receipt-only");
-  setButtonLabel(elements.editButton, t("Edit"));
+  setButtonLabel(elements.editButton, t("Edit details"));
   elements.siteFooter.classList.add("is-hidden");
   if (animate) printReceipt();
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -816,6 +818,7 @@ function focusNextFieldInStep(target) {
 function resetApp() {
   if (!window.confirm(t("Reset your saved receipt? Goal, reminders and craving count are deleted too."))) return;
   haptics.warning();
+  closeSheet(false);
   [STORAGE_KEY, THEME_KEY, CUSTOM_COLOR_KEY, GOAL_KEY, REMINDERS_KEY, CRAVINGS_KEY]
     .forEach((key) => localStorage.removeItem(key));
   mirrorAllStorage();
@@ -900,7 +903,7 @@ elements.form.addEventListener("input", () => updateReceipt());
 elements.editButton.addEventListener("click", () => {
   elements.stage.classList.remove("is-receipt-only");
   elements.appShell.classList.remove("is-receipt-view");
-  setButtonLabel(elements.editButton, t("Edit"));
+  setButtonLabel(elements.editButton, t("Edit details"));
   stopReceiptRefresh();
 });
 elements.downloadButton.addEventListener("click", async () => {
@@ -979,10 +982,10 @@ function applyCustomThemeVars(hex) {
   el.style.setProperty("--custom-receipt", receiptHex);
   el.style.setProperty("--custom-shadow", `8px 10px 0 rgba(${ri}, ${gi}, ${bi}, 0.35)`);
 
-  if (customColorLabel) {
-    customColorLabel.style.borderColor = inkHex;
-    customColorLabel.style.color = inkHex;
-    customColorLabel.style.background = dotBgHex;
+  const swatch = document.querySelector("#colorSwatch");
+  if (swatch) {
+    swatch.style.background = dotBgHex;
+    swatch.style.borderColor = inkHex;
   }
 }
 
@@ -1040,6 +1043,8 @@ const languageButton = document.querySelector("#languageButton");
 
 function syncLanguageButton() {
   languageButton.textContent = languages[getLanguage()].label;
+  const languageValue = document.querySelector("#languageValue");
+  if (languageValue) languageValue.textContent = languages[getLanguage()].name;
 }
 
 function switchLanguage() {
@@ -1049,6 +1054,7 @@ function switchLanguage() {
   updateCurrencySymbols(currentCurrency);
   updateReceipt(false);
   showStep(currentStep);
+  syncBenefitsVisibility();
   if (typeof syncPastButton === "function") syncPastButton();
   haptics.select();
 }
@@ -1814,8 +1820,25 @@ function initPastSpend() {
   syncPastButton();
 }
 
+// ----------------------------------------------------------------- bottom toolbar + More menu
+function initMoreMenu() {
+  const moreSheet = document.querySelector("#moreSheet");
+  document.querySelector("#moreButton").addEventListener("click", () => openSheet(moreSheet));
+  document.querySelector("#moreClose").addEventListener("click", () => closeSheet());
+  document.querySelector("#languageMenuButton").addEventListener("click", switchLanguage);
+  // Leaving the receipt (edit) should not leave the menu open behind the wizard.
+  elements.editButton.addEventListener("click", () => {
+    closeSheet(false);
+    window.scrollTo({ top: 0 });
+  });
+  enableSwipeToClose(moreSheet);
+  syncBenefitsVisibility();
+  syncLanguageButton();
+}
+
 // Start-up (kept last so every declaration above is initialised).
 initTouchEnhancements();
 initTools();
 initOnboarding();
 initPastSpend();
+initMoreMenu();
