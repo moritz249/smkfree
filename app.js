@@ -38,6 +38,8 @@ const SOS_SECONDS = 180;
 const isTouchDevice = window.matchMedia("(pointer: coarse)").matches || "ontouchstart" in window;
 let reminderSyncTimer = null;
 let sosTimer = null;
+const modeNames = { cigarettes: "Cigarettes", ryo: "Roll-your-own", vaping: "Vaping" };
+let lastTapeSignature = "";
 
 const tobaccoMilestones = [
   { hours: 1 / 3, title: "Heart rate drops", detail: "A benefit that can begin within minutes." },
@@ -160,6 +162,11 @@ refreshFormatters();
 const decimalInputIds = new Set(["pricePerPack", "weeklyRyoCost", "costPer10ml", "accessoriesPerMonth"]);
 const advancedCurrencyCode = "EUR";
 
+
+function setButtonLabel(button, text) {
+  const label = button.querySelector("span[data-i18n]") || button;
+  label.textContent = text;
+}
 
 function todayAsInputValue() {
   const now = new Date();
@@ -299,8 +306,24 @@ function readState() {
   }
 }
 
+function storedWizardDone() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    // States saved before this flag existed were always finished receipts.
+    return stored ? stored.wizardDone !== false : false;
+  } catch {
+    return false;
+  }
+}
+
 function writeState(state) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...state, version: STORAGE_VERSION }));
+  const wizardDone = elements.stage.classList.contains("is-receipt-only") || storedWizardDone();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    ...state,
+    version: STORAGE_VERSION,
+    wizardDone,
+    wizardStep: currentStep,
+  }));
   mirrorStorage(STORAGE_KEY);
   scheduleReminderSync();
 }
@@ -353,7 +376,7 @@ function setFormState(state) {
   elements.smokingStartDate.value = state.smokingStartDate || "";
   elements.smokingStartDate.max = state.quitDate || todayAsInputValue();
   elements.cigarettesPerDay.value = state.cigarettesPerDay || "";
-  elements.cigarettesPerPack.value = state.cigarettesPerPack || "";
+  elements.cigarettesPerPack.value = state.cigarettesPerPack || "20";
   elements.pricePerPack.value = state.pricePerPack || "";
   elements.rollsPerDay.value = state.rollsPerDay || "";
   elements.weeklyRyoCost.value = state.weeklyRyoCost || "";
@@ -567,6 +590,7 @@ function updateReceipt(shouldSave = true) {
   renderReceipt(progress, state);
   renderSummary(state);
   renderMilestones(progress.elapsedHours, state.mode);
+  renderTape();
 }
 
 function downloadUrl(url, filename) {
@@ -655,9 +679,15 @@ function showStep(index, direction = 0) {
 
   const total = activeSteps.length;
   const progress = Math.round(((currentStep + 1) / total) * 100);
+  const secondsLeft = Math.max(0, (total - currentStep - 1) * 5);
   elements.stepCounter.textContent = t("Step {n} of {total}", { n: currentStep + 1, total });
+  // Reset only matters once there is something to reset.
+  elements.resetButton.classList.toggle("is-hidden", localStorage.getItem(STORAGE_KEY) === null);
+  renderTape();
   elements.progressFill.style.width = `${progress}%`;
-  elements.progressPercent.textContent = `${progress}%`;
+  elements.progressPercent.textContent = secondsLeft > 0 && currentStep > 0
+    ? t("~{s} sec left", { s: secondsLeft })
+    : `${progress}%`;
   elements.backButton.disabled = currentStep === 0;
   elements.backButton.classList.toggle("is-hidden", currentStep === 0);
   elements.nextButton.textContent = currentStep === 0 ? t("Start") : t("Next");
@@ -723,7 +753,7 @@ function showReceipt(event, { animate = true } = {}) {
   updateReceipt();
   elements.appShell.classList.add("is-receipt-view");
   elements.stage.classList.add("is-receipt-only");
-  elements.editButton.textContent = t("Edit");
+  setButtonLabel(elements.editButton, t("Edit"));
   elements.siteFooter.classList.add("is-hidden");
   if (animate) printReceipt();
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -865,18 +895,18 @@ elements.form.addEventListener("input", () => updateReceipt());
 elements.editButton.addEventListener("click", () => {
   elements.stage.classList.remove("is-receipt-only");
   elements.appShell.classList.remove("is-receipt-view");
-  elements.editButton.textContent = t("Edit");
+  setButtonLabel(elements.editButton, t("Edit"));
   stopReceiptRefresh();
 });
 elements.downloadButton.addEventListener("click", async () => {
-  elements.downloadButton.textContent = t("Preparing");
+  setButtonLabel(elements.downloadButton, t("Preparing"));
   try {
     const result = await shareReceiptImage();
-    elements.downloadButton.textContent = result === "shared" ? t("Shared") : t("Downloaded");
+    setButtonLabel(elements.downloadButton, result === "shared" ? t("Shared") : t("Downloaded"));
   } catch (error) {
-    elements.downloadButton.textContent = error?.name === "AbortError" ? t("Share") : t("Share failed");
+    setButtonLabel(elements.downloadButton, error?.name === "AbortError" ? t("Share") : t("Share failed"));
   }
-  window.setTimeout(() => { elements.downloadButton.textContent = t("Share"); }, 1600);
+  window.setTimeout(() => { setButtonLabel(elements.downloadButton, t("Share")); }, 1600);
 });
 
 window.addEventListener("pagehide", saveCurrentState);
@@ -1025,9 +1055,12 @@ const initialState = readState();
 setFormState(initialState);
 updateReceipt(false);
 
-if (hasCompleteSavedState(initialState)) {
+if (hasCompleteSavedState(initialState) && initialState.wizardDone !== false) {
   showStep(getActiveSteps().length - 1);
   showReceipt(null, { animate: true });
+} else if (initialState.wizardDone === false && Number(initialState.wizardStep) > 0) {
+  // Came back half-way: continue exactly where they left off.
+  showStep(Number(initialState.wizardStep));
 } else {
   showStep(0);
 }
@@ -1436,6 +1469,7 @@ function enableWizardSwipe() {
 
 function initTouchEnhancements() {
   addSteppers();
+  addMoneySteppers();
   enableWizardSwipe();
 
   document.addEventListener("pointerdown", (event) => {
@@ -1517,6 +1551,193 @@ function initTools() {
   syncReminders();
 }
 
+
+// ---------------------------------------------------------------------------
+// Onboarding helpers: quick date picks, auto-advance and the live receipt tape
+// ---------------------------------------------------------------------------
+
+
+function dateDaysAgo(days) {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return toInputDate(date);
+}
+
+function syncDateChips() {
+  document.querySelectorAll(".chip[data-days-ago]").forEach((chip) => {
+    chip.classList.toggle("is-active",
+      !elements.notStoppedYet.checked && elements.quitDate.value === dateDaysAgo(Number(chip.dataset.daysAgo)));
+  });
+}
+
+/** Rows for every answered step, like items scanned at a till. */
+function tapeRows(state) {
+  const activeSteps = getActiveSteps();
+  const rows = [];
+  activeSteps.slice(0, currentStep + 1).forEach((step, index) => {
+    const answered = index < currentStep;
+    if (step.querySelector("input[name='mode']")) {
+      if (answered) rows.push([t("Habit"), t(modeNames[state.mode])]);
+      return;
+    }
+    if (step.contains(elements.quitDate)) {
+      if (!answered) return;
+      rows.push(state.notStoppedYet ? [t("Status"), t("Still using")] : [t("Quit date"), formatDate(state.quitDate)]);
+      return;
+    }
+    if (!answered) return;
+    const cur = state.currencyCode;
+    const fields = {
+      cigarettesPerDay: () => [t("Cigarettes / day"), numberFormatter.format(state.cigarettesPerDay)],
+      pricePerPack: () => [t("Pack price"), `${formatCurrency(state.pricePerPack, cur)} / ${numberFormatter.format(state.cigarettesPerPack)}`],
+      rollsPerDay: () => [t("Roll-ups / day"), numberFormatter.format(state.rollsPerDay)],
+      weeklyRyoCost: () => [t("Weekly spend"), formatCurrency(state.weeklyRyoCost, cur)],
+      mlPerWeek: () => [t("ml / week"), `${decimalFormatter.format(state.mlPerWeek)} ml`],
+      costPer10ml: () => [t("Cost / 10ml"), formatCurrency(state.costPer10ml, cur)],
+      accessoriesPerMonth: () => [t("Accessories / mo."), formatCurrency(state.accessoriesPerMonth, cur)],
+    };
+    step.querySelectorAll("input[id]").forEach((input) => {
+      if (fields[input.id]) rows.push(fields[input.id]());
+    });
+  });
+  return rows;
+}
+
+function renderTape() {
+  const tape = document.querySelector("#tape");
+  if (!tape) return;
+  const state = getFormState();
+  const rows = tapeRows(state);
+  const perDay = dailySaving(state);
+  const isSummary = currentStep === getActiveSteps().length - 1;
+
+  let total = null;
+  if (perDay > 0 && state.notStoppedYet) {
+    total = [t("Costs you per year"), formatCurrency(perDay * 365, state.currencyCode)];
+  } else if (perDay > 0 && state.quitDate) {
+    total = [t("Not burned so far"), formatCurrency(calculateProgress(state).moneySaved, state.currencyCode)];
+  }
+
+  // The summary step already lists everything; the tape would only repeat it.
+  const visible = !isSummary && (rows.length > 0 || total);
+  tape.classList.toggle("is-hidden", !visible);
+  if (!visible) return;
+
+  const shown = rows.slice(-4);
+  const signature = shown.map((row) => row.join("|")).join("~");
+  const rowsEl = document.querySelector("#tapeRows");
+  const grew = shown.length > 0 && signature !== lastTapeSignature && rows.length >= lastTapeSignature.split("~").filter(Boolean).length;
+  rowsEl.innerHTML = shown
+    .map(([label, value], i) => `<div${grew && i === shown.length - 1 ? ' class="is-new"' : ""}><dt>${label}</dt><dd>${value}</dd></div>`)
+    .join("");
+  lastTapeSignature = signature;
+
+  const totalEl = document.querySelector("#tapeTotal");
+  totalEl.classList.toggle("is-hidden", !total);
+  if (total) {
+    document.querySelector("#tapeTotalLabel").textContent = total[0];
+    document.querySelector("#tapeTotalValue").textContent = total[1];
+  }
+}
+
+function initOnboarding() {
+  document.querySelectorAll(".chip[data-days-ago]").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      elements.notStoppedYet.checked = false;
+      syncNotStoppedFields();
+      elements.quitDate.value = dateDaysAgo(Number(chip.dataset.daysAgo));
+      setQuitDateError("");
+      syncAdvancedFields();
+      syncDateChips();
+      updateReceipt();
+      haptics.select();
+      window.setTimeout(advanceWizard, 240);
+    });
+  });
+  elements.quitDate.addEventListener("input", syncDateChips);
+  elements.notStoppedYet.addEventListener("input", syncDateChips);
+
+  // Tapping a habit card is the answer, so move on without an extra "Next" tap.
+  let advancing = false;
+  elements.modeRadios.forEach((radio) => {
+    radio.addEventListener("click", () => {
+      if (advancing || !radio.closest("[data-autoadvance]")?.classList.contains("is-active")) return;
+      advancing = true;
+      window.setTimeout(() => { advancing = false; advanceWizard(); }, 240);
+    });
+  });
+
+  syncDateChips();
+  renderTape();
+}
+
+// ----------------------------------------------------------------- money steppers
+const moneyStepSizes = {
+  pricePerPack: 0.1,
+  costPer10ml: 0.1,
+  weeklyRyoCost: 1,
+  accessoriesPerMonth: 1,
+  goalPriceInput: 10,
+};
+
+function formatMoneyInput(value) {
+  const fixed = (Math.round(value * 100) / 100).toFixed(2);
+  return getLanguage() === "de" ? fixed.replace(".", ",") : fixed;
+}
+
+function addMoneySteppers() {
+  Object.entries(moneyStepSizes).forEach(([id, size]) => {
+    const input = document.getElementById(id);
+    const field = input?.closest(".money-field");
+    if (!field || field.closest(".stepper")) return;
+
+    const wrap = document.createElement("div");
+    wrap.className = "stepper stepper--money";
+    const minus = document.createElement("button");
+    const plus = document.createElement("button");
+    for (const [button, text, label] of [[minus, "-", "Decrease"], [plus, "+", "Increase"]]) {
+      button.type = "button";
+      button.className = "stepper__button";
+      button.textContent = text;
+      button.setAttribute("aria-label", t(label));
+    }
+    field.parentNode.insertBefore(wrap, field);
+    wrap.append(minus, field, plus);
+
+    const step = (direction) => {
+      const current = parseDecimal(input.value);
+      const fallback = parseDecimal(input.placeholder) ?? 0;
+      const base = current === null ? fallback - direction * size : current;
+      // Snap to the step grid so 9.47 + 0.10 becomes 9.50, not 9.57.
+      const next = Math.max(0, Math.round((base + direction * size) / size) * size);
+      input.value = formatMoneyInput(next);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      haptics.select();
+    };
+    bindRepeatingPress(minus, () => step(-1));
+    bindRepeatingPress(plus, () => step(1));
+  });
+}
+
+function bindRepeatingPress(button, action) {
+  let delay = null;
+  let repeat = null;
+  const stop = () => {
+    window.clearTimeout(delay);
+    window.clearInterval(repeat);
+    delay = null;
+    repeat = null;
+  };
+  button.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    action();
+    delay = window.setTimeout(() => { repeat = window.setInterval(action, 80); }, 420);
+  });
+  ["pointerup", "pointerleave", "pointercancel"].forEach((type) => button.addEventListener(type, stop));
+  button.addEventListener("click", (event) => event.preventDefault());
+}
+
 // Start-up (kept last so every declaration above is initialised).
 initTouchEnhancements();
 initTools();
+initOnboarding();
