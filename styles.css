@@ -2654,3 +2654,55 @@ body.has-sheet {
 .printer-slot {
   display: none;
 }
+
+/* ===================================================================== */
+/* Simplified receipt                                                     */
+/* ===================================================================== */
+
+/* One big day count instead of five time rows */
+.hero-days {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 18px 22px 10px;
+  color: var(--ink);
+  text-align: center;
+}
+
+.hero-days.is-hidden {
+  display: none;
+}
+
+.hero-days strong {
+  font-size: clamp(3.4rem, 18vw, 5rem);
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+}
+
+.hero-days span {
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero-days small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+/* Footer: QR, link and stars only on the shared image */
+.receipt__footer .receipt-qr,
+.receipt__footer .receipt-link,
+.receipt__footer > span {
+  display: none;
+}
+
+.receipt.is-capturing .receipt__footer .receipt-qr {
+  display: grid;
+}
+
+.receipt.is-capturing .receipt__footer .receipt-link,
+.receipt.is-capturing .receipt__footer > span {
+  display: inline-block;
+}

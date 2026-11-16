@@ -4,6 +4,9 @@ Reihenfolge nach Priorität: Optik → Usability → Funktionen → Monetarisier
 
 ## Usability
 
+- [x] Bon vereinfacht: große Tage-Zahl statt 5 Zeitzeilen, doppelte Zeilen raus, nur 1 Coupon, QR/Link nur im geteilten Bild.
+- [x] „Frühere Ausgaben“ (erweiterter Bon) entfernt. Rechenlogik bleibt in app-core.js, falls sie später wieder gebraucht wird.
+
 - [ ] **Zurücksetzen überdenken**: Ändern geht jederzeit über „Ändern“. Zurücksetzen in ein kleines
       Einstellungs-Menü verschieben (zusammen mit Sprache, Export, Erinnerungen) statt im Assistenten-Kopf.
 - [ ] **Rückfall-Modus**: Ausrutscher festhalten statt alles zu löschen (neues Startdatum mit Verlauf).

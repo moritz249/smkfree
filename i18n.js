@@ -128,6 +128,9 @@ const dictionaries = {
     "Privacy / Legal": "Datenschutz / Rechtliches",
 
     // Receipt
+    "Days smoke-free": "Tage rauchfrei",
+    "Day smoke-free": "Tag rauchfrei",
+    "+ {h} h {m} min": "+ {h} Std {m} Min",
     "Estimates for motivation, not medical advice. Health figures are population averages; costs use your entries. Sources in the legal notes.": "Schätzungen zur Motivation, keine medizinische Beratung. Gesundheitswerte sind Durchschnittswerte, Kosten beruhen auf deinen Angaben. Quellen in den rechtlichen Hinweisen.",
     "Add a savings goal": "Sparziel hinzufügen",
     "Show health benefits": "Gesundheits-Vorteile zeigen",
