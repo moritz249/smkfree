@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="format-detection" content="telephone=no">
@@ -31,7 +31,7 @@
     <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
     <link rel="icon" href="assets/favicon-32x32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="assets/icon-180.png">
-    <link rel="stylesheet" href="styles.css?v=20261116-9">
+    <link rel="stylesheet" href="styles.css?v=20261116-10">
     <script src="assets/html2canvas.min.js" defer></script>
   </head>
   <body>
@@ -276,9 +276,13 @@
               </div>
             </section>
 
-            <div class="receipt__total">
+            <div class="receipt__total" id="totalToggle" role="button" tabindex="0" aria-expanded="false" aria-controls="breakdown">
               <span data-i18n>Sum money not burned</span>
               <strong id="moneySaved">EUR 0.00</strong>
+            </div>
+            <div class="receipt-breakdown is-hidden" id="breakdown">
+              <p class="receipt-breakdown__title" id="breakdownTitle"></p>
+              <dl id="breakdownRows"></dl>
             </div>
 
             <section class="receipt-goal is-hidden" id="receiptGoal" aria-label="Savings goal" data-i18n-aria>
@@ -293,10 +297,24 @@
 
             <dl class="receipt__rows" id="receiptRows"></dl>
 
-            <button type="button" class="receipt-addon" id="pastButton">
-              <span class="receipt-addon__plus" aria-hidden="true">+</span>
-              <span id="pastButtonLabel" data-i18n>What did smoking cost you so far?</span>
-            </button>
+            <div class="receipt-addons">
+              <button type="button" class="receipt-addon receipt-addon--share is-hidden" id="shareAddon">
+                <svg class="icon" aria-hidden="true"><use href="#i-share"></use></svg>
+                <span id="shareAddonLabel"></span>
+              </button>
+              <button type="button" class="receipt-addon is-hidden" id="goalAddon">
+                <span class="receipt-addon__plus" aria-hidden="true">+</span>
+                <span data-i18n>Add a savings goal</span>
+              </button>
+              <button type="button" class="receipt-addon is-hidden" id="benefitsAddon">
+                <span class="receipt-addon__plus" aria-hidden="true">+</span>
+                <span data-i18n>Show health benefits</span>
+              </button>
+              <button type="button" class="receipt-addon" id="pastButton">
+                <span class="receipt-addon__plus" aria-hidden="true">+</span>
+                <span id="pastButtonLabel" data-i18n>What did smoking cost you so far?</span>
+              </button>
+            </div>
 
             <div class="receipt__divider"></div>
 
@@ -307,7 +325,7 @@
             </section>
 
             <footer class="receipt__footer">
-              <small data-i18n>Health milestones and life-expectancy estimates are simplified population estimates, not individual predictions or medical advice. Sources are listed in the legal notes. Actual effects vary from person to person. Cost totals use your entries; advanced past-spend totals assume steady use and use historical pack price estimates for cigarettes.</small>
+              <small data-i18n>Estimates for motivation, not medical advice. Health figures are population averages; costs use your entries. Sources in the legal notes.</small>
               <div class="receipt-qr" aria-label="SMKFREE link QR code" data-i18n-aria>
                 <img src="assets/qr-code.svg" alt="QR code for SMKFREE">
               </div>
@@ -324,9 +342,6 @@
             <button type="button" id="moreButton" class="toolbar-button" aria-haspopup="dialog"><svg class="icon" aria-hidden="true"><use href="#i-more"></use></svg><span data-i18n>More</span></button>
           </nav>
 
-          <div class="receipt-actions receipt-actions--install is-hidden" id="receiptInstallRow" aria-label="Install app" data-i18n-aria>
-            <a href="install.html" class="secondary-button" style="text-align:center;" data-i18n>Install</a>
-          </div>
         </section>
       </section>
     </main>
@@ -450,6 +465,7 @@
         </label>
         <button type="button" class="menu-row" id="alertsButton"><svg class="icon" aria-hidden="true"><use href="#i-bell"></use></svg><span data-i18n>Reminders</span><span class="menu-row__value" aria-hidden="true">›</span></button>
         <button type="button" class="menu-row" id="languageMenuButton"><svg class="icon" aria-hidden="true"><use href="#i-globe"></use></svg><span data-i18n>Language</span><span class="menu-row__value" id="languageValue">EN</span></button>
+        <a class="menu-row is-hidden" id="receiptInstallRow" href="install.html"><svg class="icon" aria-hidden="true"><use href="#i-phone"></use></svg><span data-i18n>Install app</span><span class="menu-row__value" aria-hidden="true">›</span></a>
         <a class="menu-row" href="legal.html"><svg class="icon" aria-hidden="true"><use href="#i-lock"></use></svg><span data-i18n>Privacy / Legal</span><span class="menu-row__value" aria-hidden="true">›</span></a>
         <button type="button" class="menu-row menu-row--danger" id="resetButton"><svg class="icon" aria-hidden="true"><use href="#i-trash"></use></svg><span data-i18n>Reset all data</span></button>
       </div>
@@ -467,6 +483,6 @@
 
 
 
-<script type="module" src="app.js?v=20261116-9"></script>
+<script type="module" src="app.js?v=20261116-10"></script>
   </body>
 </html>
