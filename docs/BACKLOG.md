@@ -7,6 +7,8 @@ Reihenfolge nach Priorität: Optik → Usability → Funktionen → Monetarisier
 - [ ] **Zurücksetzen überdenken**: Ändern geht jederzeit über „Ändern“. Zurücksetzen in ein kleines
       Einstellungs-Menü verschieben (zusammen mit Sprache, Export, Erinnerungen) statt im Assistenten-Kopf.
 - [ ] **Rückfall-Modus**: Ausrutscher festhalten statt alles zu löschen (neues Startdatum mit Verlauf).
+- [ ] **Navigation auf dem Bon**: Unten-Werkzeugleiste (SOS, Ziel, Teilen, Mehr) statt 7 Buttons oben; Ändern, Farbe, Gesundheit, Erinnern, Sprache, Zurücksetzen ins „Mehr“-Menü (Apple HIG: Aktionen in eine Toolbar unten).
+- [ ] Bon bei „noch nicht aufgehört“: oben statt Nullen „Verbrannt pro Jahr“ zeigen.
 - [ ] Erstes Öffnen nach dem Bon: kurzer einmaliger Hinweis auf den Craving-SOS-Knopf.
 - [ ] Datum-Eingabe: natives iOS-Datumsrad im Bottom-Sheet statt Browser-Datumsfeld prüfen.
 - [ ] Usability-Test mit 3–5 Leuten (Ziel: Bon in unter 45 s, ohne Hilfe).
