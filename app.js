@@ -1968,6 +1968,41 @@ function initInteractiveReceipt() {
   updateReceipt(false);
 }
 
+// ----------------------------------------------------------------- goal ideas
+const goalIdeas = [
+  { name: "MacBook", price: 1499, icon: "laptop" },
+  { name: "Bicycle", price: 800, icon: "bike" },
+  { name: "Vacation", price: 1500, icon: "sun" },
+  { name: "Instrument", price: 600, icon: "music" },
+  { name: "Porsche 911", price: 130000, icon: "car" },
+  { name: "House", price: 350000, icon: "house" },
+];
+
+function renderGoalIdeas() {
+  const cur = getFormState().currencyCode;
+  const wrap = document.querySelector("#goalIdeas");
+  wrap.innerHTML = "";
+  goalIdeas.forEach((idea) => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "chip goal-idea";
+    chip.innerHTML = `<svg class="icon" aria-hidden="true"><use href="#i-${idea.icon}"></use></svg><span class="goal-idea__name"></span><small></small>`;
+    chip.querySelector(".goal-idea__name").textContent = t(idea.name);
+    chip.querySelector("small").textContent = new Intl.NumberFormat(intlLocale(), {
+      style: "currency", currency: cur, maximumFractionDigits: 0,
+    }).format(idea.price);
+    chip.classList.toggle("is-active", elements.goalNameInput.value === t(idea.name));
+    chip.addEventListener("click", () => {
+      elements.goalNameInput.value = t(idea.name);
+      elements.goalPriceInput.value = formatMoneyInput(idea.price);
+      elements.goalError.classList.add("is-hidden");
+      wrap.querySelectorAll(".goal-idea").forEach((other) => other.classList.toggle("is-active", other === chip));
+      haptics.select();
+    });
+    wrap.append(chip);
+  });
+}
+
 // Start-up (kept last so every declaration above is initialised).
 initTouchEnhancements();
 initTools();
@@ -1976,3 +2011,4 @@ initPastSpend();
 initMoreMenu();
 initExtras();
 initInteractiveReceipt();
+document.querySelector("#goalButton").addEventListener("click", renderGoalIdeas);
