@@ -8,6 +8,7 @@ import {
   buildNotificationPlan,
   dailySaving,
   goalProgress,
+  dayThresholds,
 } from "./app-core.js";
 import {
   configureChrome,
@@ -34,6 +35,7 @@ const STORAGE_VERSION = 4;
 const GOAL_KEY = "smkfree-goal";
 const REMINDERS_KEY = "smkfree-reminders";
 const CRAVINGS_KEY = "smkfree-cravings";
+const SHARE_PROMPT_KEY = "smkfree-share-milestone";
 const SOS_SECONDS = 180;
 const isTouchDevice = window.matchMedia("(pointer: coarse)").matches || "ontouchstart" in window;
 let reminderSyncTimer = null;
@@ -86,7 +88,6 @@ const elements = {
   showBenefitsToggle: document.querySelector("#showBenefits"),
   fineBenefits: document.querySelector(".fine-benefits"),
   smokingStartDate: document.querySelector("#smokingStartDate"),
-  smokingStartField: document.querySelector("#smokingStartField"),
   currencyCodes: [...document.querySelectorAll(".currency-code")],
   currencySymbols: document.querySelectorAll(".currency-symbol"),
   cigarettesPerDay: document.querySelector("#cigarettesPerDay"),
@@ -101,11 +102,7 @@ const elements = {
   receiptDate: document.querySelector("#receiptDate"),
   receiptRows: document.querySelector("#receiptRows"),
   moneySaved: document.querySelector("#moneySaved"),
-  minutesFree: document.querySelector("#minutesFree"),
-  hoursFree: document.querySelector("#hoursFree"),
   daysFree: document.querySelector("#daysFree"),
-  monthsFree: document.querySelector("#monthsFree"),
-  yearsFree: document.querySelector("#yearsFree"),
   milestoneList: document.querySelector("#milestoneList"),
   nextMilestone: document.querySelector("#nextMilestone"),
   receipt: document.querySelector("#receipt"),
@@ -353,7 +350,7 @@ function getFormState() {
 
 function setFormState(state) {
   currentMode = state.mode || "cigarettes";
-  currentAdvanced = supportsAdvancedMode(currentMode) && Boolean(state.isAdvanced);
+  currentAdvanced = false; // past-spend feature removed
   currentCurrency = getEffectiveCurrencyCode(currentMode, currentAdvanced, state.currencyCode);
   const radio = elements.modeRadios.find((r) => r.value === currentMode);
   if (radio) radio.checked = true;
@@ -395,24 +392,14 @@ function renderReceipt(progress, state) {
   elements.receiptDate.textContent = new Intl.DateTimeFormat(intlLocale(), {
     dateStyle: "medium", timeStyle: "short",
   }).format(new Date());
-  const showAdvancedSpend = state.isAdvanced && supportsAdvancedMode(state.mode) && Boolean(state.smokingStartDate);
-  const stillUsingAdvanced = showAdvancedSpend && state.notStoppedYet;
-  const stillUsingSpend = stillUsingAdvanced ? estimateAdvancedSpend(state, new Date()) : null;
-  const effectiveSpent = stillUsingSpend?.moneySpent ?? progress.moneySpent;
-  const effectiveAvgPackPrice = stillUsingSpend?.averagePackPrice ?? progress.averageHistoricPackPrice;
-
-  elements.minutesFree.textContent = numberFormatter.format(progress.compMinutes);
-  elements.hoursFree.textContent = numberFormatter.format(progress.compHours);
-  elements.daysFree.textContent = numberFormatter.format(progress.compDays);
-  elements.monthsFree.textContent = numberFormatter.format(progress.compMonths);
-  elements.yearsFree.textContent = numberFormatter.format(progress.compYears);
+  // One big number: whole days smoke-free, hours and minutes as small print.
+  document.querySelector("#heroDays").classList.toggle("is-hidden", state.notStoppedYet);
+  elements.daysFree.textContent = numberFormatter.format(progress.wholeDays);
+  document.querySelector("#daysLabel").textContent = progress.wholeDays === 1 ? t("Day smoke-free") : t("Days smoke-free");
+  document.querySelector("#timeFree").textContent = t("+ {h} h {m} min", { h: progress.compHours, m: progress.compMinutes });
   elements.moneySaved.textContent = formatCurrency(state.notStoppedYet ? 0 : progress.moneySaved, state.currencyCode);
 
-  const rows = showAdvancedSpend
-    ? stillUsingAdvanced
-      ? [[t("Start date"), formatDate(state.smokingStartDate)], [t("Status"), t("Still using")]]
-      : [[t("Start date"), formatDate(state.smokingStartDate)], [t("Stop date"), formatDate(state.quitDate)]]
-    : state.notStoppedYet
+  const rows = state.notStoppedYet
     ? [[t("Status"), t("Still using")]]
     : [[t("Quit date"), formatDate(state.quitDate)]];
 
@@ -428,8 +415,6 @@ function renderReceipt(progress, state) {
     if (!state.notStoppedYet) {
       rows.push(
         [t("ml not vaped"), `${decimalFormatter.format(progress.mlNotVaped)} ml`],
-        [t("Liquid saved"), formatCurrency(progress.liquidSaved, state.currencyCode)],
-        [t("Accessories saved"), formatCurrency(progress.accessoriesSaved, state.currencyCode)],
       );
     }
     rows.push(
@@ -440,26 +425,12 @@ function renderReceipt(progress, state) {
   } else {
     rows.push(
       [t("Cigarettes / day"), numberFormatter.format(state.cigarettesPerDay)],
-      [t("Cigarettes / pack"), numberFormatter.format(state.cigarettesPerPack)],
     );
-    if (showAdvancedSpend) {
-      rows.push([t("Avg past pack"), `~ ${formatCurrency(effectiveAvgPackPrice, state.currencyCode)} ${t("avg DE")}`]);
-    }
     if (!state.notStoppedYet) {
       rows.push(
         [t("Packs not bought"), `${decimalFormatter.format(progress.packsAvoided)} × ${formatCurrency(state.pricePerPack || 0, state.currencyCode)}`],
       );
     }
-  }
-
-  if (!state.notStoppedYet) {
-    rows.push([showAdvancedSpend ? t("+ Saved after quit") : t("Cost avoided"), showAdvancedSpend
-      ? `+ ${formatCurrency(progress.moneySaved, state.currencyCode)}`
-      : formatCurrency(progress.moneySaved, state.currencyCode)]);
-  }
-
-  if (showAdvancedSpend) {
-    rows.push([stillUsingAdvanced ? t("- Paid so far") : t("- Paid before quit"), `- ${formatCurrency(effectiveSpent, state.currencyCode)}`]);
   }
 
   // Still using: the yearly cost is the message, so it belongs on the receipt too.
@@ -481,7 +452,6 @@ function renderReceipt(progress, state) {
   if (!state.notStoppedYet && state.mode === "cigarettes") {
     rows.push(
       [t("Estimated life regained*"), formatLifeSaved(progress.estimatedLifeMinutes)],
-      [t("*Population average"), t("Not a personal prediction")],
     );
   }
 
@@ -595,6 +565,7 @@ function updateReceipt(shouldSave = true) {
   renderMilestones(progress.elapsedHours, state.mode);
   renderTape();
   renderExtrasToggles(state);
+  renderInteractive(state, progress);
 }
 
 function downloadUrl(url, filename) {
@@ -639,9 +610,10 @@ async function shareReceiptImage() {
   const filename = "smoke-free-receipt.png";
   const blob = await createReceiptImageBlob();
   const title = t("SMKFREE Quit Receipt");
-  const text = t("Look at my SMKFREE receipt. This is what I didn't spend. Do yours in 30s, no hooks attached.");
+  const text = shareText();
+  const link = "https://moritz249.github.io/smkfree/";
 
-  if (isNativeApp && await shareImageNative(blob, { title, text, filename })) {
+  if (isNativeApp && await shareImageNative(blob, { title, text: `${text} ${link}`, filename })) {
     return "shared";
   }
 
@@ -821,7 +793,7 @@ function resetApp() {
   if (!window.confirm(t("Reset your saved receipt? Goal, reminders and craving count are deleted too."))) return;
   haptics.warning();
   closeSheet(false);
-  [STORAGE_KEY, THEME_KEY, CUSTOM_COLOR_KEY, GOAL_KEY, REMINDERS_KEY, CRAVINGS_KEY]
+  [STORAGE_KEY, THEME_KEY, CUSTOM_COLOR_KEY, GOAL_KEY, REMINDERS_KEY, CRAVINGS_KEY, SHARE_PROMPT_KEY]
     .forEach((key) => localStorage.removeItem(key));
   mirrorAllStorage();
   replaceScheduledNotifications([]);
@@ -1057,7 +1029,6 @@ function switchLanguage() {
   updateReceipt(false);
   showStep(currentStep);
   syncBenefitsVisibility();
-  if (typeof syncPastButton === "function") syncPastButton();
   haptics.select();
 }
 
@@ -1189,7 +1160,7 @@ function openSheet(sheet) {
     elements.sheetBackdrop.classList.add("is-open");
     sheet.classList.add("is-open");
   });
-  document.body.classList.add("has-sheet");
+  lockScroll();
 }
 
 function closeSheet(animate = true) {
@@ -1199,7 +1170,7 @@ function closeSheet(animate = true) {
   if (sheet === elements.sosSheet) stopSos();
   sheet.classList.remove("is-open");
   elements.sheetBackdrop.classList.remove("is-open");
-  document.body.classList.remove("has-sheet");
+  unlockScroll();
   document.activeElement?.blur?.();
   const hide = () => {
     if (openSheetEl === sheet) return;
@@ -1749,79 +1720,6 @@ function bindRepeatingPress(button, action) {
   button.addEventListener("click", (event) => event.preventDefault());
 }
 
-// ----------------------------------------------------------------- past spend (optional)
-function yearsAgo(years) {
-  const date = new Date();
-  date.setFullYear(date.getFullYear() - years);
-  return toInputDate(date);
-}
-
-function syncPastButton() {
-  const label = document.querySelector("#pastButtonLabel");
-  const state = getFormState();
-  const active = state.isAdvanced && Boolean(state.smokingStartDate);
-  label.dataset.i18nKey = active ? "Edit past spend" : "What did smoking cost you so far?";
-  label.textContent = t(label.dataset.i18nKey);
-  document.querySelector("#pastButton").classList.toggle("is-active", active);
-}
-
-function openPastSheet() {
-  document.querySelector("#pastError").classList.add("is-hidden");
-  document.querySelector("#pastPriceHint").classList.toggle("is-hidden", currentMode !== "cigarettes");
-  document.querySelector("#pastRemove").classList.toggle("is-hidden", !currentAdvanced);
-  elements.smokingStartDate.max = elements.quitDate.value || todayAsInputValue();
-  syncPastChips();
-  openSheet(document.querySelector("#pastSheet"));
-}
-
-function syncPastChips() {
-  document.querySelectorAll(".chip[data-years-ago]").forEach((chip) => {
-    chip.classList.toggle("is-active", elements.smokingStartDate.value === yearsAgo(Number(chip.dataset.yearsAgo)));
-  });
-}
-
-function savePastSpend() {
-  const start = elements.smokingStartDate.value;
-  const quit = elements.quitDate.value || todayAsInputValue();
-  if (!start || start >= quit) {
-    document.querySelector("#pastError").classList.remove("is-hidden");
-    haptics.warning();
-    return;
-  }
-  currentAdvanced = true;
-  syncAdvancedFields();
-  updateReceipt();
-  closeSheet();
-  printReceipt();
-  syncPastButton();
-}
-
-function removePastSpend() {
-  currentAdvanced = false;
-  elements.smokingStartDate.value = "";
-  syncAdvancedFields();
-  updateReceipt();
-  closeSheet();
-  syncPastButton();
-}
-
-function initPastSpend() {
-  document.querySelector("#pastButton").addEventListener("click", openPastSheet);
-  document.querySelector("#pastSave").addEventListener("click", savePastSpend);
-  document.querySelector("#pastRemove").addEventListener("click", removePastSpend);
-  document.querySelectorAll(".chip[data-years-ago]").forEach((chip) => {
-    chip.addEventListener("click", () => {
-      elements.smokingStartDate.value = yearsAgo(Number(chip.dataset.yearsAgo));
-      document.querySelector("#pastError").classList.add("is-hidden");
-      syncPastChips();
-      haptics.select();
-    });
-  });
-  elements.smokingStartDate.addEventListener("input", syncPastChips);
-  enableSwipeToClose(document.querySelector("#pastSheet"));
-  syncPastButton();
-}
-
 // ----------------------------------------------------------------- bottom toolbar + More menu
 function initMoreMenu() {
   const moreSheet = document.querySelector("#moreSheet");
@@ -1863,10 +1761,147 @@ function initExtras() {
   renderExtrasToggles();
 }
 
+// ----------------------------------------------------------------- scroll lock (iOS-safe)
+let lockedScrollY = 0;
+
+function lockScroll() {
+  if (document.body.classList.contains("has-sheet")) return;
+  lockedScrollY = window.scrollY;
+  document.body.style.top = `-${lockedScrollY}px`;
+  document.body.classList.add("has-sheet");
+}
+
+function unlockScroll() {
+  if (!document.body.classList.contains("has-sheet")) return;
+  document.body.classList.remove("has-sheet");
+  document.body.style.top = "";
+  window.scrollTo(0, lockedScrollY);
+}
+
+// ----------------------------------------------------------------- sharing hooks
+function shareText() {
+  const state = getFormState();
+  const cur = state.currencyCode;
+  if (state.notStoppedYet) {
+    return t("Smoking costs me {amount} a year. What does it cost you? Find out in 30 seconds:",
+      { amount: formatCurrency(dailySaving(state) * 365, cur) });
+  }
+  const progress = calculateProgress(state);
+  return t("{days} days smoke-free and {amount} not burned. What would you save? Find out in 30 seconds:",
+    { days: numberFormatter.format(progress.wholeDays), amount: formatCurrency(progress.moneySaved, cur) });
+}
+
+/** Highest day milestone reached that has not been offered for sharing yet. */
+function pendingShareMilestone(state, progress) {
+  if (state.notStoppedYet || !state.quitDate) return null;
+  const reached = dayThresholds.filter((days) => progress.wholeDays >= days).pop();
+  if (!reached) return null;
+  return Number(localStorage.getItem(SHARE_PROMPT_KEY)) >= reached ? null : reached;
+}
+
+// ----------------------------------------------------------------- interactive receipt
+function renderInteractive(state, progress) {
+  const perDay = dailySaving(state);
+  const cur = state.currencyCode;
+
+  // Projection under the total.
+  document.querySelector("#breakdownTitle").textContent = state.notStoppedYet ? t("Costs you") : t("You save");
+  document.querySelector("#breakdownRows").innerHTML = [
+    [t("Per day"), perDay],
+    [t("Per week"), perDay * 7],
+    [t("Per month"), perDay * 30.4375],
+    [t("Per year"), perDay * 365],
+  ].map(([label, value]) => `<div><dt>${label}</dt><dd>${formatCurrency(value, cur)}</dd></div>`).join("");
+  document.querySelector("#totalToggle").classList.toggle("is-interactive", perDay > 0);
+
+  // Coupons.
+  const milestone = pendingShareMilestone(state, progress);
+  const shareAddon = document.querySelector("#shareAddon");
+  shareAddon.classList.toggle("is-hidden", !milestone);
+  shareAddon.dataset.milestone = milestone || "";
+  if (milestone) {
+    document.querySelector("#shareAddonLabel").textContent = milestone === 1
+      ? t("1 day! Share your receipt")
+      : t("{days} days! Share your receipt", { days: milestone });
+  }
+  document.querySelector("#goalAddon").classList.toggle("is-hidden", Boolean(milestone) || Boolean(readGoal()) || state.notStoppedYet);
+}
+
+function toggleBreakdown() {
+  const toggle = document.querySelector("#totalToggle");
+  if (!toggle.classList.contains("is-interactive")) return;
+  const open = document.querySelector("#breakdown").classList.toggle("is-hidden") === false;
+  toggle.setAttribute("aria-expanded", String(open));
+  haptics.select();
+}
+
+function initInteractiveReceipt() {
+  const total = document.querySelector("#totalToggle");
+  total.addEventListener("click", toggleBreakdown);
+  total.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") { event.preventDefault(); toggleBreakdown(); }
+  });
+
+  document.querySelector("#goalAddon").addEventListener("click", () => document.querySelector("#goalButton").click());
+  // Health benefits can be hidden right on the receipt, not only in the menu.
+  document.querySelector("#benefitsClose").addEventListener("click", (event) => {
+    event.stopPropagation();
+    elements.showBenefitsToggle.checked = false;
+    elements.showBenefitsToggle.dispatchEvent(new Event("input", { bubbles: true }));
+    haptics.select();
+  });
+  document.querySelector("#shareAddon").addEventListener("click", (event) => {
+    localStorage.setItem(SHARE_PROMPT_KEY, event.currentTarget.dataset.milestone);
+    elements.downloadButton.click();
+    updateReceipt(false);
+  });
+  elements.receiptGoal.addEventListener("click", () => document.querySelector("#goalButton").click());
+
+  // iOS Safari: no pinch zoom, the app should feel fixed in place.
+  ["gesturestart", "gesturechange"].forEach((type) => document.addEventListener(type, (event) => event.preventDefault()));
+  updateReceipt(false);
+}
+
+// ----------------------------------------------------------------- goal ideas
+const goalIdeas = [
+  { name: "MacBook", price: 1499, icon: "laptop" },
+  { name: "Bicycle", price: 800, icon: "bike" },
+  { name: "Vacation", price: 1500, icon: "sun" },
+  { name: "Instrument", price: 600, icon: "music" },
+  { name: "Porsche 911", price: 130000, icon: "car" },
+  { name: "House", price: 350000, icon: "house" },
+];
+
+function renderGoalIdeas() {
+  const cur = getFormState().currencyCode;
+  const wrap = document.querySelector("#goalIdeas");
+  wrap.innerHTML = "";
+  goalIdeas.forEach((idea) => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "chip goal-idea";
+    chip.innerHTML = `<svg class="icon" aria-hidden="true"><use href="#i-${idea.icon}"></use></svg><span class="goal-idea__name"></span><small></small>`;
+    chip.querySelector(".goal-idea__name").textContent = t(idea.name);
+    chip.querySelector("small").textContent = new Intl.NumberFormat(intlLocale(), {
+      style: "currency", currency: cur, maximumFractionDigits: 0,
+    }).format(idea.price);
+    chip.classList.toggle("is-active", elements.goalNameInput.value === t(idea.name));
+    chip.addEventListener("click", () => {
+      elements.goalNameInput.value = t(idea.name);
+      elements.goalPriceInput.value = formatMoneyInput(idea.price);
+      elements.goalError.classList.add("is-hidden");
+      wrap.querySelectorAll(".goal-idea").forEach((other) => other.classList.toggle("is-active", other === chip));
+      haptics.select();
+    });
+    wrap.append(chip);
+  });
+}
+
 // Start-up (kept last so every declaration above is initialised).
 initTouchEnhancements();
 initTools();
 initOnboarding();
-initPastSpend();
 initMoreMenu();
 initExtras();
+initInteractiveReceipt();
+document.querySelector("#goalButton").addEventListener("click", renderGoalIdeas);
