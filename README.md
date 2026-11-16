@@ -25,7 +25,7 @@ Your entries and preferences are stored in your browser. The app has no account 
 
 ## Run locally
 
-SMKFREE has no build step or package dependencies. To run it from a local web server, use Python 3:
+The website has no build step. To run it from a local web server, use Python 3 (or `npm run serve` with Node.js):
 
 ```bash
 git clone https://github.com/moritz249/smkfree.git
@@ -45,30 +45,50 @@ npm test
 
 ## Deploy with GitHub Pages
 
-The repository is a static site and can be served directly from its root. In the repository's **Settings → Pages**, choose the branch you want to publish and select `/(root)`. No build command is required.
+The repository is a static site and can be served directly from its root. In the repository's **Settings → Pages**, choose the branch you want to publish and select `/(root)`. No build command is required. The `ios/`, `android/`, `docs/` and `resources/` folders are ignored by the website.
+
+## Native apps (iOS and Android)
+
+The same web code ships as a native app through [Capacitor](https://capacitorjs.com). In the app it also gets
+local notifications, haptics, the native share sheet, and storage that iOS cannot evict.
+
+```bash
+npm install
+npm run sync          # copies the site to www/ and updates ios/ and android/
+npx cap open ios      # Xcode (macOS)
+npx cap open android  # Android Studio (Windows, macOS, Linux)
+```
+
+Step-by-step guides: [docs/IOS.md](docs/IOS.md) · [docs/ANDROID.md](docs/ANDROID.md) · open work: [docs/BACKLOG.md](docs/BACKLOG.md)
+
+## Languages
+
+English and German, detected from the device and switchable in the app (EN/DE). Texts live in `i18n.js`:
+the English text is the key, and each language is one dictionary. `npm test` fails if a visible string has no translation.
 
 ## Project structure
 
 ```text
 .
-├── .gitignore              Ignore OS files, local settings, and generated output
-├── .nojekyll               Keep GitHub Pages from applying Jekyll processing
-├── README.md               Project overview and setup
-├── assets/                 Icons, screenshots, QR code, and receipt image exporter
-├── app.js                  UI, storage, and sharing
-├── app-core.js             Pure calculations and input validation
-├── package.json            Dependency-free Node test command
-├── tests/                  Calculation regression tests
-├── index.html              Main app
-├── install.html            PWA installation instructions
-├── legal.html              Privacy notes and estimate disclaimers
-├── manifest.webmanifest    PWA metadata
-├── styles.css              App and receipt styles
-└── sw.js                   Service worker and offline asset cache
+├── app.js                  UI, storage, sharing, onboarding, goal, reminders, craving SOS
+├── app-core.js             Pure calculations, savings goal and reminder planning (tested)
+├── native.js               Capacitor bridge with web fallbacks (haptics, share, notifications)
+├── i18n.js                 Translations and locale formatting
+├── index.html / styles.css Main app and receipt styles
+├── legal.html, install.html
+├── manifest.webmanifest, sw.js   PWA metadata and offline cache
+├── assets/                 Icons, QR code, html2canvas
+├── resources/              Source images for native icons and splash screens
+├── scripts/build-web.mjs   Copies the site into www/ for Capacitor
+├── capacitor.config.json   Native app id, name and plugin settings
+├── ios/, android/          Generated native projects
+├── docs/                   iOS, Android and backlog notes
+└── tests/                  Calculation, reminder and translation tests
 ```
 
 ## Built with
 
-- HTML, CSS, and vanilla JavaScript
+- HTML, CSS, and vanilla JavaScript (no bundler)
+- Capacitor 8 for iOS and Android
 - Browser `localStorage`, Web Share, and service worker APIs
 - [html2canvas](https://github.com/niklasvh/html2canvas) for receipt image export

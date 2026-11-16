@@ -31,10 +31,30 @@
     <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
     <link rel="icon" href="assets/favicon-32x32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="assets/icon-180.png">
-    <link rel="stylesheet" href="styles.css?v=20261116-1">
+    <link rel="stylesheet" href="styles.css?v=20261116-2">
     <script src="assets/html2canvas.min.js" defer></script>
   </head>
   <body>
+    <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+      <defs>
+        <symbol id="i-cigarette" viewBox="0 0 24 24"><rect x="2" y="12" width="20" height="4"/><path d="M16 12v4M18 9c0-2 2-2 2-4M15 9c0-1.5 1.5-1.5 1.5-3"/></symbol>
+        <symbol id="i-rollup" viewBox="0 0 24 24"><path d="M3 15l16-4 2 3-16 4z"/><path d="M17 8c0-2 2-2 2-4"/></symbol>
+        <symbol id="i-vape" viewBox="0 0 24 24"><rect x="8" y="5" width="8" height="17"/><path d="M10 5V2h4v3M8 10h8"/><circle cx="12" cy="17" r="1.5"/></symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+        <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+        <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20"/><path d="M11 18h2"/></symbol>
+        <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+        <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4L20 8l-4-4L4 16z"/><path d="M13 7l4 4"/></symbol>
+        <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5M5 13v8h14v-8"/></symbol>
+        <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/></symbol>
+        <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-8-5-8-11a4 4 0 0 1 8-2 4 4 0 0 1 8 2c0 6-8 11-8 11z"/></symbol>
+        <symbol id="i-breath" viewBox="0 0 24 24"><path d="M3 8h11a3 3 0 1 0-3-3M3 16h14a3 3 0 1 1-3 3M3 12h7"/></symbol>
+        <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+        <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/></symbol>
+        <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6M9 15h4"/></symbol>
+        <symbol id="i-pause" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></symbol>
+      </defs>
+    </svg>
     <main class="app-shell scan-frame" id="appShell">
       <section class="stage" id="stage" aria-label="Smoke free setup and receipt" data-i18n-aria>
         <form class="wizard" id="quitForm" novalidate>
@@ -57,46 +77,59 @@
               <p class="intro-logo">smkfree</p>
               <p class="kicker" data-i18n>Quit receipt</p>
               <h2 data-i18n>Your progress printed.</h2>
+              <ul class="intro-points">
+                <li><svg class="icon" aria-hidden="true"><use href="#i-clock"></use></svg><span data-i18n>Takes about 30 seconds</span></li>
+                <li><svg class="icon" aria-hidden="true"><use href="#i-lock"></use></svg><span data-i18n>No account, no tracking</span></li>
+                <li><svg class="icon" aria-hidden="true"><use href="#i-phone"></use></svg><span data-i18n>Data stays on your device</span></li>
+              </ul>
             </div>
           </section>
 
-          <!-- Step 1: Quit date -->
-          <section class="step" data-mode="all">
-            <p class="kicker" data-i18n>Start date</p>
-            <h2 data-i18n>When did you stop?</h2>
-            <p class="step-hint" data-i18n>Pick your quit date, or check the box if you still smoke.</p>
-            <label>
-              <span data-i18n>Quit date</span>
-              <input id="quitDate" name="quitDate" type="date" aria-describedby="quitDateError" required>
-            </label>
-            <p class="field-error is-hidden" id="quitDateError" role="alert">Please enter a quit date.</p>
-            <label class="toggle-field field-action">
-              <input id="notStoppedYet" name="notStoppedYet" type="checkbox">
-              <span data-i18n>I did not stop yet</span>
-            </label>
-          </section>
-
-          <!-- Step 2: Mode selection -->
-          <section class="step" data-mode="all">
+          <!-- Step 1: Mode selection -->
+          <section class="step" data-mode="all" data-autoadvance>
             <p class="kicker" data-i18n>Your habit</p>
             <h2 data-i18n>What are you quitting?</h2>
             <div class="mode-picker">
               <label class="mode-card">
                 <input type="radio" name="mode" value="cigarettes" checked>
+                <svg class="icon" aria-hidden="true"><use href="#i-cigarette"></use></svg>
                 <strong data-i18n>Cigarettes</strong>
                 <span data-i18n>Packs of cigarettes</span>
               </label>
               <label class="mode-card">
                 <input type="radio" name="mode" value="ryo">
+                <svg class="icon" aria-hidden="true"><use href="#i-rollup"></use></svg>
                 <strong data-i18n>Roll-your-own</strong>
                 <span data-i18n>Tobacco, papers &amp; filter</span>
               </label>
               <label class="mode-card">
                 <input type="radio" name="mode" value="vaping">
+                <svg class="icon" aria-hidden="true"><use href="#i-vape"></use></svg>
                 <strong data-i18n>Vaping</strong>
                 <span data-i18n>Liquid &amp; accessories</span>
               </label>
             </div>
+          </section>
+
+          <!-- Step 2: Quit date with quick picks -->
+          <section class="step" data-mode="all">
+            <p class="kicker" data-i18n>Start date</p>
+            <h2 data-i18n>When did you stop?</h2>
+            <div class="chip-row" role="group" aria-label="Quick pick" data-i18n-aria>
+              <button type="button" class="chip" data-days-ago="0" data-i18n>Today</button>
+              <button type="button" class="chip" data-days-ago="1" data-i18n>Yesterday</button>
+              <button type="button" class="chip" data-days-ago="7" data-i18n>1 week ago</button>
+              <button type="button" class="chip" data-days-ago="30" data-i18n>1 month ago</button>
+            </div>
+            <label>
+              <span class="label-with-icon"><svg class="icon" aria-hidden="true"><use href="#i-calendar"></use></svg><span data-i18n>Or pick a date</span></span>
+              <input id="quitDate" name="quitDate" type="date" aria-describedby="quitDateError" required>
+            </label>
+            <p class="field-error is-hidden" id="quitDateError" role="alert">Please enter a quit date.</p>
+            <label class="toggle-field field-action">
+              <input id="notStoppedYet" name="notStoppedYet" type="checkbox">
+              <span><span data-i18n>I did not stop yet</span><small data-i18n>See what smoking costs you right now.</small></span>
+            </label>
           </section>
 
           <!-- Cigarettes: per day -->
@@ -109,19 +142,9 @@
             </label>
           </section>
 
-          <!-- Cigarettes: per pack -->
+          <!-- Cigarettes: pack price and size -->
           <section class="step" data-mode="cigarettes">
-            <p class="kicker" data-i18n>Pack size</p>
-            <h2 data-i18n>How many cigarettes per pack?</h2>
-            <label>
-              <span data-i18n>Cigarettes per pack</span>
-              <input id="cigarettesPerPack" name="cigarettesPerPack" type="number" min="1" step="1" placeholder="20" data-i18n-placeholder required>
-            </label>
-          </section>
-
-          <!-- Cigarettes: pack price -->
-          <section class="step" data-mode="cigarettes">
-            <p class="kicker" data-i18n>Pack price</p>
+            <p class="kicker" data-i18n>Your pack</p>
             <h2 data-i18n>How much does one pack cost?</h2>
             <label>
               <span data-i18n>Price per pack</span>
@@ -131,6 +154,10 @@
               </div>
             </label>
             <label>
+              <span data-i18n>Cigarettes per pack</span>
+              <input id="cigarettesPerPack" name="cigarettesPerPack" type="number" min="1" step="1" placeholder="20" data-i18n-placeholder required>
+            </label>
+            <label class="field-compact">
               <span data-i18n>Currency</span>
               <select class="currency-code" name="currencyCode">
                 <option value="EUR">EUR</option>
@@ -162,7 +189,7 @@
                 <input id="weeklyRyoCost" name="weeklyRyoCost" type="text" inputmode="decimal" placeholder="25.00" data-i18n-placeholder required>
               </div>
             </label>
-            <label>
+            <label class="field-compact">
               <span data-i18n>Currency</span>
               <select class="currency-code" name="currencyCode">
                 <option value="EUR">EUR</option>
@@ -185,8 +212,8 @@
 
           <!-- Vaping: cost per 10ml -->
           <section class="step" data-mode="vaping">
-            <p class="kicker" data-i18n>Liquid cost</p>
-            <h2 data-i18n>How much does 10ml cost?</h2>
+            <p class="kicker" data-i18n>Your costs</p>
+            <h2 data-i18n>What does vaping cost you?</h2>
             <label>
               <span data-i18n>Cost per 10ml</span>
               <div class="money-field">
@@ -195,6 +222,13 @@
               </div>
             </label>
             <label>
+              <span data-i18n>Accessories per month</span>
+              <div class="money-field">
+                <span class="currency-symbol" aria-hidden="true">EUR</span>
+                <input id="accessoriesPerMonth" name="accessoriesPerMonth" type="text" inputmode="decimal" placeholder="15.00" data-i18n-placeholder required>
+              </div>
+            </label>
+            <label class="field-compact">
               <span data-i18n>Currency</span>
               <select class="currency-code" name="currencyCode">
                 <option value="EUR">EUR</option>
@@ -205,23 +239,10 @@
             </label>
           </section>
 
-          <!-- Vaping: accessories per month -->
-          <section class="step" data-mode="vaping">
-            <p class="kicker" data-i18n>Accessories</p>
-            <h2 data-i18n>Monthly spend on coils, pods &amp; gear?</h2>
-            <label>
-              <span data-i18n>Accessories per month</span>
-              <div class="money-field">
-                <span class="currency-symbol" aria-hidden="true">EUR</span>
-                <input id="accessoriesPerMonth" name="accessoriesPerMonth" type="text" inputmode="decimal" placeholder="15.00" data-i18n-placeholder required>
-              </div>
-            </label>
-          </section>
-
           <!-- Summary (shared) -->
           <section class="step" data-mode="all">
             <p class="kicker" data-i18n>Summary</p>
-            <h2 data-i18n>Check your details</h2>
+            <h2 data-i18n>Ready to print?</h2>
             <dl class="summary-list" id="summaryList"></dl>
             <div class="advanced-panel" id="advancedPanel">
               <label class="toggle-field">
@@ -238,32 +259,37 @@
             </div>
           </section>
 
+          <div class="tape is-hidden" id="tape" aria-live="polite">
+            <dl class="tape__rows" id="tapeRows"></dl>
+            <div class="tape__total is-hidden" id="tapeTotal"><span id="tapeTotalLabel"></span><strong id="tapeTotalValue"></strong></div>
+          </div>
+
           <div class="wizard__actions">
             <button type="button" id="backButton" class="secondary-button" data-i18n>Back</button>
             <button type="button" id="nextButton" class="primary-button" data-i18n>Next</button>
-            <button type="button" id="receiptButton" class="primary-button primary-button--large is-hidden" data-i18n>Show receipt</button>
+            <button type="button" id="receiptButton" class="primary-button primary-button--large is-hidden"><svg class="icon" aria-hidden="true"><use href="#i-receipt"></use></svg><span data-i18n>Print my receipt</span></button>
           </div>
         </form>
 
         <section class="receipt-wrap" aria-label="SMKFREE receipt" data-i18n-aria>
           <div class="receipt-actions" aria-label="Receipt actions" data-i18n-aria>
-            <button type="button" id="editButton" class="secondary-button" data-i18n>Edit</button>
-            <button type="button" id="downloadButton" class="primary-button" data-i18n>Share</button>
+            <button type="button" id="editButton" class="secondary-button icon-button"><svg class="icon" aria-hidden="true"><use href="#i-pencil"></use></svg><span data-i18n>Edit</span></button>
+            <button type="button" id="downloadButton" class="primary-button icon-button"><svg class="icon" aria-hidden="true"><use href="#i-share"></use></svg><span data-i18n>Share</span></button>
             <div class="receipt-settings">
-              <label id="customColorLabel" class="secondary-button">
+              <label id="customColorLabel" class="secondary-button icon-button">
                 <input type="color" id="customColor" value="#7c3aed">
-                <span data-i18n>Color</span>
+                <svg class="icon" aria-hidden="true"><use href="#i-drop"></use></svg><span data-i18n>Color</span>
               </label>
-              <label id="benefitsLabel" class="secondary-button">
+              <label id="benefitsLabel" class="secondary-button icon-button">
                 <input id="showBenefits" name="showBenefits" type="checkbox">
-                <span data-i18n>Benefits</span>
+                <svg class="icon" aria-hidden="true"><use href="#i-heart"></use></svg><span data-i18n>Benefits</span>
               </label>
             </div>
           </div>
           <div class="receipt-actions receipt-actions--tools" aria-label="Tools" data-i18n-aria>
-            <button type="button" id="sosButton" class="primary-button sos-button" data-i18n>Craving SOS</button>
-            <button type="button" id="goalButton" class="secondary-button" data-i18n>Goal</button>
-            <button type="button" id="alertsButton" class="secondary-button" data-i18n>Alerts</button>
+            <button type="button" id="sosButton" class="primary-button sos-button icon-button"><svg class="icon" aria-hidden="true"><use href="#i-breath"></use></svg><span data-i18n>Craving SOS</span></button>
+            <button type="button" id="goalButton" class="secondary-button icon-button"><svg class="icon" aria-hidden="true"><use href="#i-target"></use></svg><span data-i18n>Goal</span></button>
+            <button type="button" id="alertsButton" class="secondary-button icon-button"><svg class="icon" aria-hidden="true"><use href="#i-bell"></use></svg><span data-i18n>Alerts</span></button>
           </div>
           <div class="receipt-feed" id="receiptFeed">
           <div class="printer-slot" aria-hidden="true"></div>
@@ -430,6 +456,6 @@
 
 
 
-<script type="module" src="app.js?v=20261116-1"></script>
+<script type="module" src="app.js?v=20261116-4"></script>
   </body>
 </html>
