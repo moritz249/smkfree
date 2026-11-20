@@ -31,7 +31,7 @@
     <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
     <link rel="icon" href="assets/favicon-32x32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="assets/icon-180.png">
-    <link rel="stylesheet" href="styles.css?v=20261116-14">
+    <link rel="stylesheet" href="styles.css?v=20261120-5">
     <script src="assets/html2canvas.min.js" defer></script>
   </head>
   <body>
@@ -83,40 +83,39 @@
           <section class="step is-active" data-mode="all" data-autoadvance>
             <div class="intro-step">
               <p class="intro-logo">smkfree</p>
-              <p class="kicker" data-i18n>Quit receipt</p>
-              <h2 data-i18n>Your progress printed.</h2>
+              <details class="intro-info">
+                <summary class="intro-heading">
+                  <h2 data-i18n>What are you quitting?</h2>
+                  <span class="info-button" aria-label="Info" data-i18n-aria>i</span>
+                </summary>
+                <ul class="intro-points">
+                  <li><svg class="icon" aria-hidden="true"><use href="#i-clock"></use></svg><span data-i18n>30 seconds</span></li>
+                  <li><svg class="icon" aria-hidden="true"><use href="#i-lock"></use></svg><span data-i18n>No account</span></li>
+                  <li><svg class="icon" aria-hidden="true"><use href="#i-phone"></use></svg><span data-i18n>On your device</span></li>
+                </ul>
+              </details>
             </div>
-            <p class="step-question" data-i18n>What are you quitting?</p>
             <div class="mode-picker">
-              <label class="mode-card">
+              <label class="mode-card mode-card--compact">
                 <input type="radio" name="mode" value="cigarettes" checked>
                 <svg class="icon" aria-hidden="true"><use href="#i-cigarette"></use></svg>
                 <strong data-i18n>Cigarettes</strong>
-                <span data-i18n>Packs of cigarettes</span>
               </label>
-              <label class="mode-card">
+              <label class="mode-card mode-card--compact">
                 <input type="radio" name="mode" value="ryo">
                 <svg class="icon" aria-hidden="true"><use href="#i-rollup"></use></svg>
                 <strong data-i18n>Roll-your-own</strong>
-                <span data-i18n>Tobacco, papers &amp; filter</span>
               </label>
-              <label class="mode-card">
+              <label class="mode-card mode-card--compact">
                 <input type="radio" name="mode" value="vaping">
                 <svg class="icon" aria-hidden="true"><use href="#i-vape"></use></svg>
                 <strong data-i18n>Vaping</strong>
-                <span data-i18n>Liquid &amp; accessories</span>
               </label>
             </div>
-            <ul class="intro-points">
-              <li><svg class="icon" aria-hidden="true"><use href="#i-clock"></use></svg><span data-i18n>30 seconds</span></li>
-              <li><svg class="icon" aria-hidden="true"><use href="#i-lock"></use></svg><span data-i18n>No account</span></li>
-              <li><svg class="icon" aria-hidden="true"><use href="#i-phone"></use></svg><span data-i18n>On your device</span></li>
-            </ul>
           </section>
 
           <!-- Step 2: Quit date with quick picks -->
           <section class="step" data-mode="all">
-            <p class="kicker" data-i18n>Start date</p>
             <h2 data-i18n>When did you stop?</h2>
             <div class="chip-row" role="group" aria-label="Quick pick" data-i18n-aria>
               <button type="button" class="chip" data-days-ago="0" data-i18n>Today</button>
@@ -131,13 +130,12 @@
             <p class="field-error is-hidden" id="quitDateError" role="alert">Please enter a quit date.</p>
             <label class="toggle-field field-action">
               <input id="notStoppedYet" name="notStoppedYet" type="checkbox">
-              <span><span data-i18n>I did not stop yet</span><small data-i18n>See what smoking costs you right now.</small></span>
+              <span><span data-i18n>I did not stop yet</span></span>
             </label>
           </section>
 
           <!-- Step 3 (cigarettes): everything about consumption on one screen -->
           <section class="step" data-mode="cigarettes">
-            <p class="kicker" data-i18n>Your consumption</p>
             <h2 data-i18n>How much do you smoke?</h2>
             <label>
               <span data-i18n>Cigarettes per day</span>
@@ -170,7 +168,6 @@
 
           <!-- Step 3 (roll-your-own) -->
           <section class="step" data-mode="ryo">
-            <p class="kicker" data-i18n>Your consumption</p>
             <h2 data-i18n>How much do you roll?</h2>
             <label>
               <span data-i18n>Roll-ups per day</span>
@@ -199,7 +196,6 @@
 
           <!-- Step 3 (vaping) -->
           <section class="step" data-mode="vaping">
-            <p class="kicker" data-i18n>Your consumption</p>
             <h2 data-i18n>How much do you vape?</h2>
             <label>
               <span data-i18n>ml per week</span>
@@ -238,11 +234,6 @@
             <input id="smokingStartDate" name="smokingStartDate" type="date">
           </div>
 
-          <div class="tape is-hidden" id="tape" aria-live="polite">
-            <dl class="tape__rows" id="tapeRows"></dl>
-            <div class="tape__total is-hidden" id="tapeTotal"><span id="tapeTotalLabel"></span><strong id="tapeTotalValue"></strong></div>
-          </div>
-
           <div class="wizard__actions">
             <button type="button" id="backButton" class="secondary-button" data-i18n>Back</button>
             <button type="button" id="nextButton" class="primary-button" data-i18n>Next</button>
@@ -256,6 +247,10 @@
             <div class="receipt__edge" aria-hidden="true"></div>
             <header class="receipt__header">
               <span class="receipt__top-gap" aria-hidden="true"></span>
+              <label class="receipt-color" aria-label="Receipt color" data-i18n-aria>
+                <input type="color" id="receiptColor" value="#7c3aed">
+                <span class="receipt-color__dot" id="receiptColorDot" aria-hidden="true"></span>
+              </label>
               <p>SMKFREE</p>
               <h2 data-i18n>Quit Receipt</h2>
               <span id="receiptDate">--</span>
@@ -336,9 +331,7 @@
 
     <section class="sheet" id="goalSheet" role="dialog" aria-modal="true" aria-labelledby="goalSheetTitle" hidden>
       <div class="sheet__grip" aria-hidden="true"></div>
-      <p class="kicker" data-i18n>Savings goal</p>
       <h2 id="goalSheetTitle" data-i18n>What are you saving for?</h2>
-      <p class="step-hint" data-i18n>Your receipt shows how close the money you did not burn gets you.</p>
       <div class="chip-row goal-ideas" id="goalIdeas" role="group" aria-label="Ideas" data-i18n-aria></div>
       <label>
         <span data-i18n>Goal</span>
@@ -389,9 +382,7 @@
 
     <section class="sheet sheet--sos" id="sosSheet" role="dialog" aria-modal="true" aria-labelledby="sosTitle" hidden>
       <div class="sheet__grip" aria-hidden="true"></div>
-      <p class="kicker" data-i18n>Craving SOS</p>
       <h2 id="sosTitle" data-i18n>Ride it out. 3 minutes.</h2>
-      <p class="step-hint" data-i18n>Cravings peak and pass. Breathe with the bar.</p>
       <div class="breath" aria-live="polite">
         <div class="breath__bar"><span id="breathFill"></span></div>
         <div class="breath__meta">
@@ -401,7 +392,7 @@
       </div>
       <dl class="summary-list sos-stats">
         <div><dt data-i18n>Cravings resisted</dt><dd id="sosCount">0</dd></div>
-        <div><dt data-i18n>One craving is worth</dt><dd id="sosWorth">--</dd></div>
+        <div hidden><dt data-i18n>One craving is worth</dt><dd id="sosWorth">--</dd></div>
       </dl>
       <div class="sheet__actions" id="sosActions">
         <button type="button" class="secondary-button" id="sosClose" data-i18n>Close</button>
@@ -444,6 +435,6 @@
 
 
 
-<script type="module" src="app.js?v=20261116-14"></script>
+<script type="module" src="app.js?v=20261120-5"></script>
   </body>
 </html>
