@@ -43,16 +43,9 @@ There is no linter configured. `.claude/launch.json` in the parent folder define
 - New top-level web files must also be added to the `files` list in `scripts/build-web.mjs`, otherwise they won't reach the native apps.
 - `www/`, `android/app/src/main/assets/public/`, and `ios/App/App/public/` are generated copies (gitignored) — edit the root files, never these.
 
-## Open handover: Android test APK (as of 2026-11-20)
+## Android test builds
 
-Goal: a debug APK the owner can send to a friend for testing (not a Play Store release). Nothing has been built yet.
-
-- `android/` is ready (Capacitor 8, minSdk 24, targetSdk 36, versionCode 1). Running `npm install` is enough to get dependencies.
-- Building needs **JDK 21** and the **Android SDK** (platform 36, build-tools, platform-tools). On Windows the simplest setup is Microsoft OpenJDK 21 via `winget install Microsoft.OpenJDK.21` plus either Android Studio or the cmdline-tools in `%LOCALAPPDATA%\Android\Sdk`. Accepting Google's SDK licenses needs the owner's explicit OK. `android/local.properties` (`sdk.dir=...`) is gitignored and has to be created on each machine.
-- Build: `npm run sync:android`, then `cd android && ./gradlew assembleDebug` (on Windows: `gradlew.bat assembleDebug`). The output is `android/app/build/outputs/apk/debug/app-debug.apk`.
-- The friend installs it by allowing "install unknown apps". The debug signing key lives in `~/.android/debug.keystore` on the machine that built it, so later updates must be built on the same machine, or the friend has to uninstall first. Bump `versionCode` for each new test build.
-
-Remove this section once the APK has been delivered.
+Debug APKs for testers: `npm run sync:android`, then `gradlew.bat assembleDebug` in `android/` (needs JDK 21 and the Android SDK; `android/local.properties` with `sdk.dir` is per machine). Output: `android/app/build/outputs/apk/debug/app-debug.apk`. Bump `versionCode` in `android/app/build.gradle` per build, and build on the same machine (its `~/.android/debug.keystore` signs it), or testers must uninstall first.
 
 ## Docs
 
