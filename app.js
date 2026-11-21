@@ -9,6 +9,8 @@ import {
   dailySaving,
   goalProgress,
   dayThresholds,
+  normalizePlan,
+  PLAN_MAX_ITEMS,
 } from "./app-core.js";
 import {
   configureChrome,
@@ -35,6 +37,7 @@ const STORAGE_VERSION = 4;
 const GOAL_KEY = "smkfree-goal";
 const REMINDERS_KEY = "smkfree-reminders";
 const CRAVINGS_KEY = "smkfree-cravings";
+const PLAN_KEY = "smkfree-plan";
 const SHARE_PROMPT_KEY = "smkfree-share-milestone";
 const SOS_SECONDS = 180;
 const isTouchDevice = window.matchMedia("(pointer: coarse)").matches || "ontouchstart" in window;
@@ -136,6 +139,14 @@ const elements = {
   sosWorth: document.querySelector("#sosWorth"),
   breathFill: document.querySelector("#breathFill"),
   breathPhase: document.querySelector("#breathPhase"),
+  sosPlanBox: document.querySelector("#sosPlanBox"),
+  sosPlanList: document.querySelector("#sosPlanList"),
+  sosPlanEdit: document.querySelector("#sosPlanEdit"),
+  planSheet: document.querySelector("#planSheet"),
+  planTriggers: document.querySelector("#planTriggers"),
+  planRows: document.querySelector("#planRows"),
+  planRemove: document.querySelector("#planRemove"),
+  planValue: document.querySelector("#planValue"),
   toast: document.querySelector("#toast"),
 };
 
@@ -807,10 +818,10 @@ function focusNextFieldInStep(target) {
 }
 
 function resetApp() {
-  if (!window.confirm(t("Reset your saved receipt? Goal, reminders and craving count are deleted too."))) return;
+  if (!window.confirm(t("Reset your saved receipt? Goal, plan, reminders and craving count are deleted too."))) return;
   haptics.warning();
   closeSheet(false);
-  [STORAGE_KEY, THEME_KEY, CUSTOM_COLOR_KEY, GOAL_KEY, REMINDERS_KEY, CRAVINGS_KEY, SHARE_PROMPT_KEY]
+  [STORAGE_KEY, THEME_KEY, CUSTOM_COLOR_KEY, GOAL_KEY, REMINDERS_KEY, CRAVINGS_KEY, PLAN_KEY, SHARE_PROMPT_KEY]
     .forEach((key) => localStorage.removeItem(key));
   mirrorAllStorage();
   replaceScheduledNotifications([]);
@@ -1348,6 +1359,7 @@ function openSos() {
   elements.sosCount.textContent = numberFormatter.format(readCravings());
   elements.sosWorth.textContent = worth ? formatCurrency(worth, state.currencyCode) : t("Your next step");
   resetSosUi();
+  renderSosPlan();
   openSheet(elements.sosSheet);
   startSos();
 }
@@ -1409,6 +1421,132 @@ function finishSos() {
   updateReceipt(false);
   printReceipt();
   showToast(t("Craving #{n} resisted", { n: readCravings() }));
+}
+
+// ----------------------------------------------------------------- if-then plan
+// Implementation intentions: link a moment you would smoke to what you do instead.
+// Each trigger suggests a fitting action, which the user can change.
+const planTriggers = [
+  { id: "coffee", label: "Coffee", action: "water" },
+  { id: "meal", label: "After a meal", action: "walk" },
+  { id: "alcohol", label: "Drinking alcohol", action: "hands" },
+  { id: "stress", label: "Stress", action: "breathe" },
+  { id: "break", label: "Breaks", action: "walk" },
+  { id: "smokers", label: "Others smoke", action: "leave" },
+  { id: "bored", label: "Boredom", action: "text" },
+  { id: "driving", label: "Driving", action: "gum" },
+];
+
+const planActions = [
+  { id: "walk", label: "Walk for 5 minutes" },
+  { id: "squats", label: "Do 10 squats" },
+  { id: "breathe", label: "Breathe with SOS" },
+  { id: "water", label: "Drink a glass of water" },
+  { id: "gum", label: "Chew gum" },
+  { id: "text", label: "Text a friend" },
+  { id: "leave", label: "Step away" },
+  { id: "hands", label: "Keep my hands busy" },
+];
+
+const planTriggerIds = planTriggers.map((item) => item.id);
+const planActionIds = planActions.map((item) => item.id);
+let planDraft = [];
+
+function planLabel(list, id) {
+  const entry = list.find((item) => item.id === id);
+  return entry ? t(entry.label) : "";
+}
+
+function readPlan() {
+  return normalizePlan(readJSON(PLAN_KEY, null), planTriggerIds, planActionIds);
+}
+
+function syncPlanValue() {
+  const count = readPlan().items.length;
+  elements.planValue.textContent = count ? `${count}/${PLAN_MAX_ITEMS}` : "--";
+}
+
+function openPlanSheet() {
+  planDraft = readPlan().items.map((item) => ({ ...item }));
+  elements.planRemove.classList.toggle("is-hidden", planDraft.length === 0);
+  renderPlanEditor();
+  openSheet(elements.planSheet);
+}
+
+function togglePlanTrigger(trigger) {
+  const index = planDraft.findIndex((item) => item.trigger === trigger.id);
+  if (index >= 0) {
+    planDraft.splice(index, 1);
+  } else if (planDraft.length >= PLAN_MAX_ITEMS) {
+    haptics.warning();
+    showToast(t("Up to {n} moments. Remove one first.", { n: PLAN_MAX_ITEMS }));
+    return;
+  } else {
+    planDraft.push({ trigger: trigger.id, action: trigger.action });
+  }
+  haptics.select();
+  renderPlanEditor();
+}
+
+function renderPlanEditor() {
+  elements.planTriggers.innerHTML = "";
+  planTriggers.forEach((trigger) => {
+    const active = planDraft.some((item) => item.trigger === trigger.id);
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "chip";
+    chip.textContent = t(trigger.label);
+    chip.classList.toggle("is-active", active);
+    chip.setAttribute("aria-pressed", String(active));
+    chip.addEventListener("click", () => togglePlanTrigger(trigger));
+    elements.planTriggers.append(chip);
+  });
+
+  elements.planRows.innerHTML = "";
+  planDraft.forEach((item) => {
+    const row = document.createElement("li");
+    const label = document.createElement("label");
+    const trigger = document.createElement("span");
+    trigger.className = "plan-list__if";
+    trigger.textContent = `${planLabel(planTriggers, item.trigger)} →`;
+    const select = document.createElement("select");
+    select.setAttribute("aria-label", t("What you do instead"));
+    planActions.forEach((action) => {
+      select.append(new Option(t(action.label), action.id, false, action.id === item.action));
+    });
+    select.addEventListener("input", () => {
+      item.action = select.value;
+      haptics.select();
+    });
+    label.append(trigger, select);
+    row.append(label);
+    elements.planRows.append(row);
+  });
+}
+
+function savePlan() {
+  writeJSON(PLAN_KEY, planDraft.length ? { items: planDraft } : null);
+  syncPlanValue();
+  closeSheet();
+  haptics.success();
+  showToast(planDraft.length ? t("Plan saved. It shows up in SOS.") : t("Plan removed"));
+}
+
+function renderSosPlan() {
+  const items = readPlan().items;
+  elements.sosPlanList.innerHTML = "";
+  items.forEach((item) => {
+    const row = document.createElement("li");
+    const trigger = document.createElement("span");
+    trigger.className = "plan-list__if";
+    trigger.textContent = `${planLabel(planTriggers, item.trigger)} →`;
+    const action = document.createElement("strong");
+    action.textContent = planLabel(planActions, item.action);
+    row.append(trigger, action);
+    elements.sosPlanList.append(row);
+  });
+  elements.sosPlanBox.classList.toggle("is-hidden", items.length === 0);
+  elements.sosPlanEdit.textContent = items.length ? t("Edit plan") : t("Plan what you do instead");
 }
 
 // ----------------------------------------------------------------- touch
@@ -1548,10 +1686,18 @@ function initTools() {
   document.querySelector("#sosClose").addEventListener("click", () => closeSheet());
   elements.sosStart.addEventListener("click", () => { stopSos(); resetSosUi(); startSos(); });
   elements.sosDone.addEventListener("click", finishSos);
+  elements.sosPlanEdit.addEventListener("click", openPlanSheet);
+
+  document.querySelector("#planButton").addEventListener("click", openPlanSheet);
+  document.querySelector("#planSave").addEventListener("click", savePlan);
+  elements.planRemove.addEventListener("click", () => {
+    planDraft = [];
+    savePlan();
+  });
 
   elements.sheetBackdrop.addEventListener("click", () => closeSheet());
   document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeSheet(); });
-  [elements.goalSheet, elements.alertsSheet, elements.sosSheet].forEach(enableSwipeToClose);
+  [elements.goalSheet, elements.alertsSheet, elements.sosSheet, elements.planSheet].forEach(enableSwipeToClose);
 
   onAppResume(() => {
     if (isReceiptVisible()) updateReceipt(false);
@@ -1772,6 +1918,7 @@ function initMoreMenu() {
   enableSwipeToClose(moreSheet);
   syncBenefitsVisibility();
   syncLanguageButton();
+  syncPlanValue();
 }
 
 // ----------------------------------------------------------------- collapsed defaults (pack size, currency)

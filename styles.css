@@ -2867,3 +2867,62 @@ html,
 body {
   touch-action: pan-x pan-y;
 }
+
+/* If-then plan: trigger chips, then one "moment -> action" line each */
+.plan-triggers {
+  margin-bottom: 14px;
+}
+
+.plan-triggers .chip {
+  font-size: 0.8rem;
+}
+
+.plan-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plan-list li {
+  border-bottom: 1px dotted var(--line);
+  padding: 8px 0;
+}
+
+.plan-list__if {
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.plan-editor label {
+  margin: 0;
+  gap: 6px;
+}
+
+.sos-plan {
+  margin-top: 12px;
+  border-top: 1px dashed var(--line);
+  padding-top: 10px;
+}
+
+.sos-plan__title {
+  margin: 0 0 2px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.sos-plan .plan-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: baseline;
+}
+
+.sos-plan .plan-list strong {
+  font-size: 0.92rem;
+}
+
+.sos-plan .text-button {
+  margin-top: 6px;
+}

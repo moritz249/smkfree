@@ -36,6 +36,12 @@ Verloren gehen sie nur beim Löschen der App bzw. der Browserdaten.
 
 ## Funktionen
 
+Evidenz und Ideen aus Studien: [EVIDENZ.md](EVIDENZ.md).
+
+- [x] **Wenn-dann-Plan**: bis zu 3 Auslöser mit Ersatzhandlung („Mehr“-Menü und SOS), wird im SOS angezeigt.
+- [ ] **Rauchfrei-Coach**: lokale Push-Tipps, dichter in Woche 1, mit dem eigenen Wenn-dann-Plan.
+- [ ] SOS: Option „5 Min. bewegen“; „Mehr Hilfe“-Karte (Medikamente, Rauchfrei-Telefon).
+
 - [ ] **Widgets** (Home- und Sperrbildschirm): „Tage rauchfrei“ und „€ gespart“ im Bon-Stil. Braucht
       eine native WidgetKit-Erweiterung (Swift) auf dem Mac bzw. ein Android-App-Widget.
 - [ ] **Bon-Archiv**: monatlicher Bon zum Durchblättern und Sammeln.

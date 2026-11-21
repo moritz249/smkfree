@@ -31,7 +31,7 @@
     <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
     <link rel="icon" href="assets/favicon-32x32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="assets/icon-180.png">
-    <link rel="stylesheet" href="styles.css?v=20261120-5">
+    <link rel="stylesheet" href="styles.css?v=20261121-1">
     <script src="assets/html2canvas.min.js" defer></script>
   </head>
   <body>
@@ -61,7 +61,8 @@
         <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol>
         <symbol id="i-car" viewBox="0 0 24 24"><path d="M3 15l2-5h14l2 5v3H3z"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></symbol>
         <symbol id="i-house" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v10H3z"/><path d="M10 21v-6h4v6"/></symbol>
-        <symbol id="i-pause" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></symbol>
+        <symbol id="i-plan" viewBox="0 0 24 24"><path d="M4 6h6M4 12h6M4 18h6M14 6l6 6-6 6M14 12h6"/></symbol>
+        <symbol id="i-pause"viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></symbol>
       </defs>
     </svg>
     <main class="app-shell scan-frame" id="appShell">
@@ -394,6 +395,13 @@
         <div><dt data-i18n>Cravings resisted</dt><dd id="sosCount">0</dd></div>
         <div hidden><dt data-i18n>One craving is worth</dt><dd id="sosWorth">--</dd></div>
       </dl>
+      <div class="sos-plan">
+        <div id="sosPlanBox" class="is-hidden">
+          <p class="sos-plan__title" data-i18n>Your plan</p>
+          <ul class="plan-list" id="sosPlanList"></ul>
+        </div>
+        <button type="button" class="text-button" id="sosPlanEdit" data-i18n>Plan what you do instead</button>
+      </div>
       <div class="sheet__actions" id="sosActions">
         <button type="button" class="secondary-button" id="sosClose" data-i18n>Close</button>
         <button type="button" class="primary-button" id="sosStart" data-i18n>Start</button>
@@ -401,7 +409,20 @@
       <button type="button" class="primary-button primary-button--large sos-done is-hidden" id="sosDone" data-i18n>I made it +1</button>
     </section>
 
-    <section class="sheet" id="moreSheet" role="dialog" aria-modal="true" aria-labelledby="moreSheetTitle" hidden>
+    <section class="sheet" id="planSheet" role="dialog" aria-modal="true" aria-labelledby="planSheetTitle" hidden>
+      <div class="sheet__grip" aria-hidden="true"></div>
+      <p class="kicker" data-i18n>If-then plan</p>
+      <h2 id="planSheetTitle" data-i18n>When does the urge usually hit?</h2>
+      <p class="step-hint" data-i18n>Pick up to 3 moments and decide now what you do instead. People who plan this way quit more often.</p>
+      <div class="chip-row plan-triggers" id="planTriggers" role="group" aria-label="Moments" data-i18n-aria></div>
+      <ul class="plan-list plan-editor" id="planRows"></ul>
+      <div class="sheet__actions">
+        <button type="button" class="secondary-button" id="planRemove" data-i18n>Remove</button>
+        <button type="button" class="primary-button" id="planSave" data-i18n>Save plan</button>
+      </div>
+    </section>
+
+    <section class="sheet" id="moreSheet"role="dialog" aria-modal="true" aria-labelledby="moreSheetTitle" hidden>
       <div class="sheet__grip" aria-hidden="true"></div>
       <p class="kicker" data-i18n>Menu</p>
       <h2 id="moreSheetTitle" data-i18n>Your receipt</h2>
@@ -415,6 +436,7 @@
           <input id="showBenefits" name="showBenefits" type="checkbox">
           <svg class="icon" aria-hidden="true"><use href="#i-heart"></use></svg><span data-i18n>Health benefits</span><span class="menu-row__value" id="benefitsValue">--</span>
         </label>
+        <button type="button" class="menu-row" id="planButton"><svg class="icon" aria-hidden="true"><use href="#i-plan"></use></svg><span data-i18n>If-then plan</span><span class="menu-row__value" id="planValue">--</span></button>
         <button type="button" class="menu-row" id="alertsButton"><svg class="icon" aria-hidden="true"><use href="#i-bell"></use></svg><span data-i18n>Reminders</span><span class="menu-row__value" aria-hidden="true">›</span></button>
         <button type="button" class="menu-row" id="languageMenuButton"><svg class="icon" aria-hidden="true"><use href="#i-globe"></use></svg><span data-i18n>Language</span><span class="menu-row__value" id="languageValue">EN</span></button>
         <a class="menu-row is-hidden" id="receiptInstallRow" href="install.html"><svg class="icon" aria-hidden="true"><use href="#i-phone"></use></svg><span data-i18n>Install app</span><span class="menu-row__value" aria-hidden="true">›</span></a>
@@ -435,6 +457,6 @@
 
 
 
-<script type="module" src="app.js?v=20261120-5"></script>
+<script type="module" src="app.js?v=20261121-1"></script>
   </body>
 </html>

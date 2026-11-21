@@ -338,3 +338,23 @@ export function buildNotificationPlan(state, options = {}, now = new Date()) {
 
   return plan.sort((a, b) => a.at - b.at).slice(0, MAX_SCHEDULED);
 }
+
+// ---------------------------------------------------------------------------
+// If-then plan (implementation intentions): "If <trigger>, then I <action>."
+// ---------------------------------------------------------------------------
+
+export const PLAN_MAX_ITEMS = 3;
+
+/** Keeps known trigger/action ids only, one entry per trigger, at most PLAN_MAX_ITEMS. */
+export function normalizePlan(raw, triggerIds, actionIds) {
+  const items = Array.isArray(raw?.items) ? raw.items : [];
+  const seen = new Set();
+  const result = [];
+  for (const item of items) {
+    if (result.length === PLAN_MAX_ITEMS) break;
+    if (!triggerIds.includes(item?.trigger) || !actionIds.includes(item?.action) || seen.has(item.trigger)) continue;
+    seen.add(item.trigger);
+    result.push({ trigger: item.trigger, action: item.action });
+  }
+  return { items: result };
+}

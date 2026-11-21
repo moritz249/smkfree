@@ -61,7 +61,7 @@ export const haptics = {
 // mirror of every key in native Preferences (UserDefaults) and restores it on launch.
 export const MIRRORED_KEYS = [
   "smoke-free-progress", "smkfree-theme", "smkfree-custom-color",
-  "smkfree-goal", "smkfree-reminders", "smkfree-cravings",
+  "smkfree-goal", "smkfree-reminders", "smkfree-cravings", "smkfree-plan",
 ];
 
 export async function restoreMirroredStorage() {
