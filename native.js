@@ -157,7 +157,24 @@ export async function replaceScheduledNotifications(plan) {
   return plan.length;
 }
 
+/** Schedules one extra notification and leaves the others alone (developer test). */
+export async function scheduleTestNotification(item) {
+  const ln = plugin("LocalNotifications");
+  if (!ln) return false;
+  if ((await requestNotificationPermission()) !== "granted") return false;
+  const result = await safe(() => ln.schedule({
+    notifications: [{ id: item.id, title: item.title, body: item.body, schedule: { at: item.at, allowWhileIdle: true } }],
+  }), false);
+  return result !== false;
+}
+
 // ---------------------------------------------------------------- app lifecycle
+export async function appInfo() {
+  const app = plugin("App");
+  const info = app ? await safe(() => app.getInfo(), null) : null;
+  return info ? { version: info.version, build: info.build } : { version: "Web", build: "" };
+}
+
 export function onAppResume(callback) {
   const app = plugin("App");
   if (app) safe(() => app.addListener("resume", callback));

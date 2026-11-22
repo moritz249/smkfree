@@ -2926,3 +2926,184 @@ body {
 .sos-plan .text-button {
   margin-top: 6px;
 }
+
+/* Reset sheet and developer tools */
+.kicker--danger {
+  border-color: #b00000;
+  color: #b00000;
+}
+
+.reset-list {
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+  font-size: 0.86rem;
+  text-transform: uppercase;
+}
+
+.reset-list li {
+  border-bottom: 1px dotted var(--line);
+  padding: 7px 0;
+}
+
+.reset-list li::before {
+  content: "- ";
+}
+
+.primary-button.danger-button {
+  border-color: #b00000;
+  background: #b00000;
+  color: white;
+}
+
+.menu-row--meta {
+  color: var(--muted);
+}
+
+#devStatus {
+  min-height: 2.7em;
+}
+
+/* ===================================================================== */
+/* Less motion: stepped "printer" and slide animations felt janky       */
+/* ===================================================================== */
+.step.slide-in-right,
+.step.slide-in-left,
+.receipt-feed.is-printing .receipt,
+.tape__rows .is-new,
+.receipt-breakdown,
+.progress-bar span {
+  animation: none;
+}
+
+.sheet {
+  opacity: 0;
+  transform: none;
+  transition: opacity 120ms ease;
+}
+
+.sheet.is-open {
+  opacity: 1;
+  transform: none;
+}
+
+/* ===================================================================== */
+/* Tab bar: receipt, plan, SOS, diary, more                              */
+/* ===================================================================== */
+.tab-bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: end;
+  width: min(100%, 460px);
+  margin: 0 auto;
+  border-top: 1px solid var(--line);
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+  background: #fffef5;
+}
+
+.tab-button {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  border: 0;
+  padding: 4px 2px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+.tab-button .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.tab-button.is-active {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.tab-button--sos {
+  min-height: 60px;
+  margin: -16px 4px 0;
+  border: 1px solid var(--line);
+  background: var(--ink);
+  color: white;
+  font-weight: 700;
+}
+
+.tab-button--sos.is-active {
+  color: white;
+  box-shadow: 0 0 0 3px #fffef5, 0 0 0 4px var(--ink);
+}
+
+.receipt-wrap:not([data-tab="receipt"]) .receipt-feed,
+.receipt-wrap:not([data-tab="receipt"]) .receipt-quick {
+  display: none;
+}
+
+.tab-page {
+  width: 100%;
+  font-family: var(--mono);
+}
+
+.tab-page[hidden] {
+  display: none;
+}
+
+.tab-page h2 {
+  margin-top: 12px;
+}
+
+.receipt-quick {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+}
+
+.receipt-quick button {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-shell.is-receipt-view {
+  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+}
+
+@media print {
+  .tab-bar,
+  .receipt-quick {
+    display: none !important;
+  }
+}
+
+/* Pages look like a paper slip, like the receipt */
+.tab-page {
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  padding: 22px 18px 24px;
+  background:
+    linear-gradient(90deg, rgba(5, 5, 5, 0.025) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(5, 5, 5, 0.022) 1px, transparent 1px),
+    #fffef5;
+  background-size: 3px 3px, 3px 3px, auto;
+}
+
+.tab-page > h2:first-child {
+  margin-top: 0;
+}

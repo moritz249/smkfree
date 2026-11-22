@@ -97,7 +97,6 @@ const dictionaries = {
     "Show receipt": "Bon drucken",
     "Enter a start date before your quit date.": "Der Rauchbeginn muss vor dem Rauchstopp liegen.",
     "Enter a valid amount.": "Bitte gib einen gültigen Betrag ein.",
-    "Reset your saved receipt? Goal, plan, reminders and craving count are deleted too.": "Gespeicherten Bon zurücksetzen? Sparziel, Plan, Erinnerungen und Craving-Zähler werden ebenfalls gelöscht.",
     "Decrease": "Weniger",
     "Increase": "Mehr",
     "Language": "Sprache",
@@ -226,6 +225,9 @@ const dictionaries = {
     "Reminders": "Erinnerungen",
     "Get a slip when it counts": "Ein Zettel, wenn es zählt",
     "Notifications stay on this phone. Nothing is sent to a server.": "Mitteilungen bleiben auf diesem Gerät. Nichts wird an einen Server gesendet.",
+    "Quit coach": "Rauchfrei-Coach",
+    "Short tips that help, most in your first week. Uses your if-then plan.":
+      "Kurze Tipps, die helfen, die meisten in deiner ersten Woche. Nutzt deinen Wenn-dann-Plan.",
     "Milestones": "Meilensteine",
     "1 day, 1 week, 1 month … plus health small print.": "1 Tag, 1 Woche, 1 Monat … plus Gesundheits-Kleingedrucktes.",
     "Money milestones": "Geld-Meilensteine",
@@ -254,6 +256,76 @@ const dictionaries = {
     "Craving passed": "Verlangen vorbei",
     "I made it +1": "Geschafft +1",
     "Craving #{n} resisted": "Craving #{n} widerstanden",
+
+    // Quit coach notifications
+    "Cravings pass": "Verlangen geht vorbei",
+    "A craving peaks and fades within minutes. When it hits, open SOS and ride it out.":
+      "Verlangen steigt an und ist nach wenigen Minuten wieder weg. Wenn es kommt: SOS öffnen und durchhalten.",
+    "Make a plan": "Mach einen Plan",
+    "Pick the moments when the urge hits and decide now what you do instead. Find it in SOS.":
+      "Wähle die Momente, in denen das Verlangen kommt, und leg jetzt fest, was du stattdessen tust. Du findest es im SOS.",
+    "{trigger}? You know what to do: {action}.": "{trigger}? Du weißt, was zu tun ist: {action}.",
+    "Move it": "Beweg dich",
+    "5 minutes of walking or 10 squats can cut a craving fast, for up to half an hour.":
+      "5 Minuten gehen oder 10 Kniebeugen dämpfen Verlangen schnell, für bis zu eine halbe Stunde.",
+    "Not a single puff": "Kein einziger Zug",
+    "Most relapses happen in the first days. One puff often leads to the next, so keep it at zero.":
+      "Die meisten Rückfälle passieren in den ersten Tagen. Ein Zug führt oft zum nächsten, also bleib bei null.",
+    "Know your triggers": "Kenne deine Auslöser",
+    "Places and people linked to the habit are the strongest triggers. Plan for them or skip them for now.":
+      "Orte und Menschen, die mit der Gewohnheit verbunden sind, sind die stärksten Auslöser. Plane sie ein oder meide sie vorerst.",
+    "Get backup": "Hol dir Unterstützung",
+    "Nicotine patches, gum or prescribed medication can roughly double your chances. Ask a pharmacy or doctor.":
+      "Nikotinpflaster, -kaugummi oder verschriebene Medikamente können deine Chancen etwa verdoppeln. Frag in der Apotheke oder beim Arzt.",
+    "Slipped?": "Ausgerutscht?",
+    "One slip does not erase your progress. Do not let it turn into the next one. Start again right now.":
+      "Ein Ausrutscher löscht deinen Fortschritt nicht. Lass keinen zweiten daraus werden. Fang sofort wieder an.",
+    "{days} days strong": "{days} Tage stark",
+    "Every day without it proves you can do it. Keep going.": "Jeder Tag ohne zeigt, dass du es kannst. Weiter so.",
+    "Almost one week": "Fast eine Woche",
+    "Withdrawal is usually strongest in the first week and fades over the next few weeks.":
+      "Entzugserscheinungen sind meist in der ersten Woche am stärksten und lassen in den folgenden Wochen nach.",
+
+    // Reset sheet
+    "Delete everything?": "Alles löschen?",
+    "Cancel": "Abbrechen",
+    "This removes from this device:": "Das wird von diesem Gerät gelöscht:",
+    "Receipt and quit date": "Bon und Rauchstopp-Datum",
+    "Reminders and coach": "Erinnerungen und Coach",
+    "Craving count": "Craving-Zähler",
+    "This cannot be undone. There is no copy on a server.": "Das lässt sich nicht rückgängig machen. Es gibt keine Kopie auf einem Server.",
+    "Delete everything": "Alles löschen",
+    "All data deleted": "Alle Daten gelöscht",
+
+    // Developer mode
+    "Developer": "Entwickler",
+    "Version": "Version",
+    "Test notifications": "Test-Mitteilungen",
+    "Each test arrives in 10 seconds. Lock the phone or switch apps to see it.":
+      "Jeder Test kommt nach 10 Sekunden. Sperr das Handy oder wechsle die App, um ihn zu sehen.",
+    "Next coach tip": "Nächster Coach-Tipp",
+    "Turn off": "Ausschalten",
+    "Developer mode on": "Entwicklermodus an",
+    "Developer mode off": "Entwicklermodus aus",
+    "Developer mode is already on": "Entwicklermodus ist schon an",
+    "Developer mode in {n}": "Entwicklermodus in {n}",
+    "Needs a quit date in the past": "Braucht ein Rauchstopp-Datum in der Vergangenheit",
+    "Web: preview only": "Web: nur Vorschau",
+    "Arrives in 10 seconds": "Kommt in 10 Sekunden",
+
+    // Goal ideas
+    "Dinner out": "Essen gehen",
+    "Headphones": "Kopfhörer",
+
+    // Tab bar
+    "Main": "Hauptmenü",
+    "Receipt": "Bon",
+    "Plan": "Plan",
+    "Diary": "Tagebuch",
+    "Settings": "Einstellungen",
+    "Coming soon": "Kommt bald",
+    "Soon you can log every craving and slip here with one tap and see what triggers you most.":
+      "Bald hältst du hier jedes Verlangen und jeden Ausrutscher mit einem Tipp fest und siehst, was dich am meisten triggert.",
 
     // If-then plan
     "If-then plan": "Wenn-dann-Plan",

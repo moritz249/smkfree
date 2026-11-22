@@ -324,6 +324,10 @@ export function buildNotificationPlan(state, options = {}, now = new Date()) {
       tr("You saved {amount}. Treat yourself, you earned it.", { amount: format(goal.price) }));
   }
 
+  if (options.coach === true) {
+    buildCoachPlan(start, options.plan || [], tr, now).forEach((tip) => add(tip.id, tip.at, tip.title, tip.body));
+  }
+
   if (options.daily?.enabled) {
     const hour = Number(options.daily.hour ?? 9);
     const minute = Number(options.daily.minute ?? 0);
@@ -357,4 +361,98 @@ export function normalizePlan(raw, triggerIds, actionIds) {
     result.push({ trigger: item.trigger, action: item.action });
   }
   return { items: result };
+}
+
+// ---------------------------------------------------------------------------
+// Quit coach: short local tips, densest in the first week (most relapses happen
+// in the first days), then fewer. Reminders are re-planned on every app start,
+// so only the next COACH_WINDOW_DAYS are scheduled.
+// ---------------------------------------------------------------------------
+
+export const COACH_WINDOW_DAYS = 14;
+
+/** Days after the quit date and local hour of each coach tip. */
+export function coachSlots() {
+  const slots = [];
+  for (let day = 0; day < 7; day += 1) slots.push({ day, hour: 10 }, { day, hour: 18 });
+  for (let day = 7; day < 14; day += 1) slots.push({ day, hour: 18 });
+  for (let day = 14; day <= 28; day += 2) slots.push({ day, hour: 18 });
+  for (let day = 35; day <= 84; day += 7) slots.push({ day, hour: 18 });
+  return slots;
+}
+
+const COACH_FIRST_WEEK = [
+  "cravings", "plan", "move", "firstWeek", "plan", "triggers", "streak",
+  "help", "plan", "slip", "move", "streak", "plan", "weekEnd",
+];
+const COACH_LATER = ["plan", "streak", "move", "slip", "triggers", "plan", "streak", "help"];
+
+/**
+ * Coach tips due between now and now + COACH_WINDOW_DAYS.
+ * plan: [{ trigger, action }] with display labels, used for personal "if-then" tips.
+ */
+export function buildCoachPlan(start, plan, tr, now = new Date()) {
+  const until = now.getTime() + COACH_WINDOW_DAYS * DAY_MS;
+  let planTips = 0;
+  const tips = [];
+
+  coachSlots().forEach((slot, index) => {
+    const kind = index < COACH_FIRST_WEEK.length
+      ? COACH_FIRST_WEEK[index]
+      : COACH_LATER[(index - COACH_FIRST_WEEK.length) % COACH_LATER.length];
+    // Count plan tips for every slot, so the rotation does not depend on "now".
+    const planItem = kind === "plan" && plan.length ? plan[planTips % plan.length] : null;
+    if (kind === "plan") planTips += 1;
+
+    const at = new Date(start.getFullYear(), start.getMonth(), start.getDate() + slot.day, slot.hour);
+    if (at.getTime() > until) return;
+
+    let title;
+    let body;
+    switch (kind) {
+      case "cravings":
+        title = tr("Cravings pass");
+        body = tr("A craving peaks and fades within minutes. When it hits, open SOS and ride it out.");
+        break;
+      case "plan":
+        if (planItem) {
+          title = tr("Your plan");
+          body = tr("{trigger}? You know what to do: {action}.", { trigger: planItem.trigger, action: planItem.action });
+        } else {
+          title = tr("Make a plan");
+          body = tr("Pick the moments when the urge hits and decide now what you do instead. Find it in SOS.");
+        }
+        break;
+      case "move":
+        title = tr("Move it");
+        body = tr("5 minutes of walking or 10 squats can cut a craving fast, for up to half an hour.");
+        break;
+      case "firstWeek":
+        title = tr("Not a single puff");
+        body = tr("Most relapses happen in the first days. One puff often leads to the next, so keep it at zero.");
+        break;
+      case "triggers":
+        title = tr("Know your triggers");
+        body = tr("Places and people linked to the habit are the strongest triggers. Plan for them or skip them for now.");
+        break;
+      case "help":
+        title = tr("Get backup");
+        body = tr("Nicotine patches, gum or prescribed medication can roughly double your chances. Ask a pharmacy or doctor.");
+        break;
+      case "slip":
+        title = tr("Slipped?");
+        body = tr("One slip does not erase your progress. Do not let it turn into the next one. Start again right now.");
+        break;
+      case "streak":
+        title = tr("{days} days strong", { days: slot.day });
+        body = tr("Every day without it proves you can do it. Keep going.");
+        break;
+      default:
+        title = tr("Almost one week");
+        body = tr("Withdrawal is usually strongest in the first week and fades over the next few weeks.");
+    }
+    tips.push({ id: 6000 + index, at, title, body, kind });
+  });
+
+  return tips;
 }

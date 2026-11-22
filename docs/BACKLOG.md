@@ -7,10 +7,15 @@ Reihenfolge nach Priorität: Optik → Usability → Funktionen → Monetarisier
 - [x] Bon vereinfacht: große Tage-Zahl statt 5 Zeitzeilen, doppelte Zeilen raus, nur 1 Coupon, QR/Link nur im geteilten Bild.
 - [x] „Frühere Ausgaben“ (erweiterter Bon) entfernt. Rechenlogik bleibt in app-core.js, falls sie später wieder gebraucht wird.
 
-- [ ] **Zurücksetzen überdenken**: Ändern geht jederzeit über „Ändern“. Zurücksetzen in ein kleines
-      Einstellungs-Menü verschieben (zusammen mit Sprache, Export, Erinnerungen) statt im Assistenten-Kopf.
+- [x] Zurücksetzen mit eigenem Bestätigungs-Sheet (listet auf, was gelöscht wird) statt Browser-Dialog.
+- [ ] Optional: Rückgängig nach dem Zurücksetzen, Teil-Reset, eigenes Einstellungs-Sheet.
+- [x] **Entwicklermodus**: 7× auf „Version“ im Mehr-Menü tippen. Test-Mitteilungen (Coach, Meilenstein, Geld, Tagesbon) in 10 s.
 - [ ] **Rückfall-Modus**: Ausrutscher festhalten statt alles zu löschen (neues Startdatum mit Verlauf).
-- [x] **Navigation auf dem Bon**: Unten-Werkzeugleiste (SOS, Ziel, Teilen, Mehr) statt 7 Buttons oben; Ändern, Farbe, Gesundheit, Erinnern, Sprache, Zurücksetzen ins „Mehr“-Menü (Apple HIG: Aktionen in eine Toolbar unten).
+- [x] **Tab-Leiste** (Bon · Plan · SOS · Tagebuch · Mehr) statt Werkzeugleiste; SOS, Plan und Mehr als ganze Seiten,
+      Ziel und Teilen über dem Bon. Ruckelnde Druck-/Slide-Animationen entfernt. Siehe [KONKURRENZ.md](KONKURRENZ.md).
+- [ ] **Tagebuch**: Verlangen und Ausrutscher mit einem Tipp erfassen (Auslöser, Stärke, geschafft/ausgerutscht),
+      „Deine Auslöser“, Rückfall-Modus. Aktuell Platzhalter.
+- [x] ~~Navigation auf dem Bon~~ (ersetzt durch Tab-Leiste): Unten-Werkzeugleiste (SOS, Ziel, Teilen, Mehr) statt 7 Buttons oben; Ändern, Farbe, Gesundheit, Erinnern, Sprache, Zurücksetzen ins „Mehr“-Menü (Apple HIG: Aktionen in eine Toolbar unten).
 - [ ] Bon bei „noch nicht aufgehört“: oben statt Nullen „Verbrannt pro Jahr“ zeigen.
 - [ ] Erstes Öffnen nach dem Bon: kurzer einmaliger Hinweis auf den Craving-SOS-Knopf.
 - [ ] Datum-Eingabe: natives iOS-Datumsrad im Bottom-Sheet statt Browser-Datumsfeld prüfen.
@@ -39,7 +44,9 @@ Verloren gehen sie nur beim Löschen der App bzw. der Browserdaten.
 Evidenz und Ideen aus Studien: [EVIDENZ.md](EVIDENZ.md).
 
 - [x] **Wenn-dann-Plan**: bis zu 3 Auslöser mit Ersatzhandlung („Mehr“-Menü und SOS), wird im SOS angezeigt.
-- [ ] **Rauchfrei-Coach**: lokale Push-Tipps, dichter in Woche 1, mit dem eigenen Wenn-dann-Plan.
+- [x] **Rauchfrei-Coach**: lokale Push-Tipps (Woche 1 zweimal täglich, dann seltener bis Woche 12), nutzt den Wenn-dann-Plan.
+      Schalter unter „Erinnern“, standardmäßig an. Plant immer die nächsten 14 Tage, neu bei jedem App-Start.
+- [ ] Quellen für die Coach-Aussagen (Medikamente verdoppeln Chancen, Rückfälle in den ersten Tagen) in `legal.html` ergänzen.
 - [ ] SOS: Option „5 Min. bewegen“; „Mehr Hilfe“-Karte (Medikamente, Rauchfrei-Telefon).
 
 - [ ] **Widgets** (Home- und Sperrbildschirm): „Tage rauchfrei“ und „€ gespart“ im Bon-Stil. Braucht

@@ -6,6 +6,7 @@ import {
   parseDecimal,
   asciiBar,
   buildNotificationPlan,
+  buildCoachPlan,
   dailySaving,
   goalProgress,
   dayThresholds,
@@ -13,6 +14,7 @@ import {
   PLAN_MAX_ITEMS,
 } from "./app-core.js";
 import {
+  appInfo,
   configureChrome,
   haptics,
   isNativeApp,
@@ -24,6 +26,7 @@ import {
   replaceScheduledNotifications,
   requestNotificationPermission,
   restoreMirroredStorage,
+  scheduleTestNotification,
   shareImageNative,
 } from "./native.js";
 import { applyTranslations, getLanguage, intlLocale, languages, nextLanguage, setLanguage, t } from "./i18n.js";
@@ -43,6 +46,7 @@ const SOS_SECONDS = 180;
 const isTouchDevice = window.matchMedia("(pointer: coarse)").matches || "ontouchstart" in window;
 let reminderSyncTimer = null;
 let sosTimer = null;
+let activeTab = "receipt";
 const modeNames = { cigarettes: "Cigarettes", ryo: "Roll-your-own", vaping: "Vaping" };
 
 const tobaccoMilestones = [
@@ -124,13 +128,16 @@ const elements = {
   alertsSheet: document.querySelector("#alertsSheet"),
   alertsStatus: document.querySelector("#alertsStatus"),
   alertsOptions: document.querySelector("#alertsOptions"),
+  alertCoach: document.querySelector("#alertCoach"),
   alertMilestones: document.querySelector("#alertMilestones"),
   alertMoney: document.querySelector("#alertMoney"),
   alertDaily: document.querySelector("#alertDaily"),
   alertTime: document.querySelector("#alertTime"),
   alertTimeField: document.querySelector("#alertTimeField"),
   alertsSave: document.querySelector("#alertsSave"),
-  sosSheet: document.querySelector("#sosSheet"),
+  sosPage: document.querySelector("#sosPage"),
+  receiptWrap: document.querySelector("#receiptWrap"),
+  diaryCravings: document.querySelector("#diaryCravings"),
   sosStart: document.querySelector("#sosStart"),
   sosDone: document.querySelector("#sosDone"),
   sosActions: document.querySelector("#sosActions"),
@@ -142,11 +149,16 @@ const elements = {
   sosPlanBox: document.querySelector("#sosPlanBox"),
   sosPlanList: document.querySelector("#sosPlanList"),
   sosPlanEdit: document.querySelector("#sosPlanEdit"),
-  planSheet: document.querySelector("#planSheet"),
   planTriggers: document.querySelector("#planTriggers"),
   planRows: document.querySelector("#planRows"),
   planRemove: document.querySelector("#planRemove"),
   planValue: document.querySelector("#planValue"),
+  resetSheet: document.querySelector("#resetSheet"),
+  devSheet: document.querySelector("#devSheet"),
+  devButton: document.querySelector("#devButton"),
+  devStatus: document.querySelector("#devStatus"),
+  devCoachValue: document.querySelector("#devCoachValue"),
+  versionValue: document.querySelector("#versionValue"),
   toast: document.querySelector("#toast"),
 };
 
@@ -757,6 +769,7 @@ function showReceipt(event, { animate = true } = {}) {
   // Mark the receipt view first, so the save below records the setup as finished.
   elements.appShell.classList.add("is-receipt-view");
   elements.stage.classList.add("is-receipt-only");
+  setActiveTab("receipt");
   updateReceipt();
   setButtonLabel(elements.editButton, t("Edit details"));
   elements.siteFooter.classList.add("is-hidden");
@@ -818,7 +831,6 @@ function focusNextFieldInStep(target) {
 }
 
 function resetApp() {
-  if (!window.confirm(t("Reset your saved receipt? Goal, plan, reminders and craving count are deleted too."))) return;
   haptics.warning();
   closeSheet(false);
   [STORAGE_KEY, THEME_KEY, CUSTOM_COLOR_KEY, GOAL_KEY, REMINDERS_KEY, CRAVINGS_KEY, PLAN_KEY, SHARE_PROMPT_KEY]
@@ -841,6 +853,7 @@ function resetApp() {
   updateReceipt(false);
   showStep(0);
   elements.appShell.scrollIntoView({ behavior: "smooth", block: "start" });
+  showToast(t("All data deleted"));
 }
 
 // Mode radio change
@@ -901,7 +914,12 @@ elements.receiptButton.addEventListener("click", (event) => {
   if (!validateCurrentStep()) return;
   showReceipt(event);
 });
-elements.resetButton.addEventListener("click", resetApp);
+elements.resetButton.addEventListener("click", () => {
+  haptics.warning();
+  openSheet(elements.resetSheet);
+});
+document.querySelector("#resetCancel").addEventListener("click", () => closeSheet());
+document.querySelector("#resetConfirm").addEventListener("click", resetApp);
 elements.form.addEventListener("input", () => updateReceipt());
 elements.editButton.addEventListener("click", () => {
   elements.stage.classList.remove("is-receipt-only");
@@ -1066,6 +1084,7 @@ function switchLanguage() {
   updateReceipt(false);
   showStep(currentStep);
   syncBenefitsVisibility();
+  scheduleReminderSync(); // scheduled texts are stored in the language they were planned in
   haptics.select();
 }
 
@@ -1123,18 +1142,13 @@ function showToast(message, duration = 2200) {
 }
 
 function isReceiptVisible() {
-  return elements.stage.classList.contains("is-receipt-only");
+  return elements.stage.classList.contains("is-receipt-only") && activeTab === "receipt";
 }
 
 // ----------------------------------------------------------------- printing
+// The stepped "printer" animation felt janky on phones, so printing is now just a short haptic.
 function printReceipt() {
-  const feed = elements.receiptFeed;
-  if (!feed || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  feed.classList.remove("is-printing");
-  void feed.offsetWidth;
-  feed.classList.add("is-printing");
-  haptics.printer(18, 45);
-  feed.addEventListener("animationend", () => feed.classList.remove("is-printing"), { once: true });
+  haptics.tap();
 }
 
 // ----------------------------------------------------------------- cravings
@@ -1204,7 +1218,6 @@ function closeSheet(animate = true) {
   const sheet = openSheetEl;
   if (!sheet) return;
   openSheetEl = null;
-  if (sheet === elements.sosSheet) stopSos();
   sheet.classList.remove("is-open");
   elements.sheetBackdrop.classList.remove("is-open");
   unlockScroll();
@@ -1249,6 +1262,7 @@ function readReminders() {
   return {
     enabled: false,
     asked: false,
+    coach: true,
     milestones: true,
     money: true,
     daily: { enabled: false, hour: 9, minute: 0 },
@@ -1268,24 +1282,38 @@ async function syncReminders() {
   if (!reminders.enabled) return 0;
   const state = readState();
   const plan = hasCompleteSavedState(state)
-    ? buildNotificationPlan(state, {
-      milestones: reminders.milestones,
-      money: reminders.money,
-      daily: reminders.daily,
-      goal: readGoal(),
-      healthMilestones: (state.mode === "vaping" ? vapingMilestones : tobaccoMilestones)
-        .map((m) => ({ ...m, title: t(m.title), detail: t(m.detail) })),
-      format: (value) => formatCurrency(value, state.currencyCode),
-      t,
-    })
+    ? buildNotificationPlan(state, notificationOptions(state, reminders))
     : [];
   return replaceScheduledNotifications(plan);
+}
+
+function planForNotifications() {
+  return readPlan().items.map((item) => ({
+    trigger: planLabel(planTriggers, item.trigger),
+    action: planLabel(planActions, item.action),
+  }));
+}
+
+function notificationOptions(state, reminders) {
+  return {
+    milestones: reminders.milestones,
+    money: reminders.money,
+    coach: reminders.coach,
+    plan: planForNotifications(),
+    daily: reminders.daily,
+    goal: readGoal(),
+    healthMilestones: (state.mode === "vaping" ? vapingMilestones : tobaccoMilestones)
+      .map((m) => ({ ...m, title: t(m.title), detail: t(m.detail) })),
+    format: (value) => formatCurrency(value, state.currencyCode),
+    t,
+  };
 }
 
 const notificationsOffText = "Notifications are off for SMKFREE. Turn them on in your phone settings.";
 
 async function openAlertsSheet() {
   const reminders = readReminders();
+  elements.alertCoach.checked = reminders.coach;
   elements.alertMilestones.checked = reminders.milestones;
   elements.alertMoney.checked = reminders.money;
   elements.alertDaily.checked = reminders.daily.enabled;
@@ -1311,6 +1339,7 @@ async function saveAlerts() {
   const reminders = {
     ...readReminders(),
     asked: true,
+    coach: elements.alertCoach.checked,
     milestones: elements.alertMilestones.checked,
     money: elements.alertMoney.checked,
     daily: { enabled: elements.alertDaily.checked, hour, minute },
@@ -1353,14 +1382,14 @@ function formatClock(seconds) {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
-function openSos() {
+function enterSos() {
   const state = getFormState();
   const worth = cravingWorth(state);
   elements.sosCount.textContent = numberFormatter.format(readCravings());
   elements.sosWorth.textContent = worth ? formatCurrency(worth, state.currencyCode) : t("Your next step");
   resetSosUi();
   renderSosPlan();
-  openSheet(elements.sosSheet);
+  stopSos();
   startSos();
 }
 
@@ -1417,9 +1446,7 @@ function stopSos() {
 function finishSos() {
   addCraving();
   haptics.success();
-  closeSheet();
-  updateReceipt(false);
-  printReceipt();
+  showTab("receipt");
   showToast(t("Craving #{n} resisted", { n: readCravings() }));
 }
 
@@ -1466,11 +1493,10 @@ function syncPlanValue() {
   elements.planValue.textContent = count ? `${count}/${PLAN_MAX_ITEMS}` : "--";
 }
 
-function openPlanSheet() {
+function enterPlan() {
   planDraft = readPlan().items.map((item) => ({ ...item }));
   elements.planRemove.classList.toggle("is-hidden", planDraft.length === 0);
   renderPlanEditor();
-  openSheet(elements.planSheet);
 }
 
 function togglePlanTrigger(trigger) {
@@ -1527,7 +1553,8 @@ function renderPlanEditor() {
 function savePlan() {
   writeJSON(PLAN_KEY, planDraft.length ? { items: planDraft } : null);
   syncPlanValue();
-  closeSheet();
+  scheduleReminderSync();
+  elements.planRemove.classList.toggle("is-hidden", planDraft.length === 0);
   haptics.success();
   showToast(planDraft.length ? t("Plan saved. It shows up in SOS.") : t("Plan removed"));
 }
@@ -1547,6 +1574,120 @@ function renderSosPlan() {
   });
   elements.sosPlanBox.classList.toggle("is-hidden", items.length === 0);
   elements.sosPlanEdit.textContent = items.length ? t("Edit plan") : t("Plan what you do instead");
+}
+
+// ----------------------------------------------------------------- developer mode
+// Hidden until the version row is tapped 7 times. Not user data, so a reset keeps it.
+const DEV_KEY = "smkfree-dev";
+const DEV_TAPS = 7;
+const DEV_TEST_ID = 9000;
+let versionTaps = 0;
+let versionTapTimer = null;
+let devCoachIndex = 0;
+
+function isDevMode() {
+  return localStorage.getItem(DEV_KEY) === "1";
+}
+
+function syncDevMode() {
+  elements.devButton.classList.toggle("is-hidden", !isDevMode());
+}
+
+async function showVersion() {
+  const info = await appInfo();
+  elements.versionValue.textContent = info.build ? `${info.version} (${info.build})` : info.version;
+}
+
+function tapVersion() {
+  if (isDevMode()) {
+    showToast(t("Developer mode is already on"));
+    return;
+  }
+  versionTaps += 1;
+  window.clearTimeout(versionTapTimer);
+  versionTapTimer = window.setTimeout(() => { versionTaps = 0; }, 1500);
+  const left = DEV_TAPS - versionTaps;
+  if (left <= 0) {
+    versionTaps = 0;
+    localStorage.setItem(DEV_KEY, "1");
+    syncDevMode();
+    haptics.success();
+    showToast(t("Developer mode on"));
+  } else if (left <= 3) {
+    haptics.tap();
+    showToast(t("Developer mode in {n}", { n: left }));
+  }
+}
+
+/** Builds one test notification, due in 10 seconds. Coach tips cycle through the first two weeks. */
+function devTestNotification(kind) {
+  const at = new Date(Date.now() + 10_000);
+  if (kind === "coach") {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const tips = buildCoachPlan(start, planForNotifications(), t, new Date(start.getTime() - 1));
+    const tip = tips[devCoachIndex % tips.length];
+    devCoachIndex += 1;
+    elements.devCoachValue.textContent = String((devCoachIndex % tips.length) + 1);
+    return { id: DEV_TEST_ID, at, title: tip.title, body: tip.body };
+  }
+  const state = readState();
+  if (!hasCompleteSavedState(state)) return null;
+  const options = {
+    ...notificationOptions(state, readReminders()),
+    milestones: true,
+    money: true,
+    coach: false,
+    daily: { enabled: true, hour: 9, minute: 0 },
+  };
+  const ranges = { milestone: [1000, 3000], money: [3000, 4000], daily: [5000, 6000] };
+  const [low, high] = ranges[kind];
+  const next = buildNotificationPlan(state, options).find((item) => item.id >= low && item.id < high);
+  return next ? { id: DEV_TEST_ID, at, title: next.title, body: next.body } : null;
+}
+
+async function sendDevTest(kind) {
+  const item = devTestNotification(kind);
+  if (!item) {
+    haptics.warning();
+    showToast(t("Needs a quit date in the past"));
+    return;
+  }
+  elements.devStatus.textContent = `${item.title}: ${item.body}`;
+  if (!notificationsSupported) {
+    showToast(t("Web: preview only"));
+    return;
+  }
+  if (!(await scheduleTestNotification(item))) {
+    haptics.warning();
+    showToast(t(notificationsOffText));
+    return;
+  }
+  haptics.success();
+  showToast(t("Arrives in 10 seconds"));
+}
+
+function openDevSheet() {
+  elements.devStatus.textContent = t("Each test arrives in 10 seconds. Lock the phone or switch apps to see it.");
+  openSheet(elements.devSheet);
+}
+
+function initDevMode() {
+  document.querySelector("#versionRow").addEventListener("click", tapVersion);
+  elements.devButton.addEventListener("click", openDevSheet);
+  document.querySelector("#devClose").addEventListener("click", () => closeSheet());
+  document.querySelector("#devOff").addEventListener("click", () => {
+    localStorage.removeItem(DEV_KEY);
+    syncDevMode();
+    closeSheet();
+    showToast(t("Developer mode off"));
+  });
+  document.querySelectorAll("[data-dev-test]").forEach((button) => {
+    button.addEventListener("click", () => sendDevTest(button.dataset.devTest));
+  });
+  [elements.resetSheet, elements.devSheet].forEach(enableSwipeToClose);
+  syncDevMode();
+  showVersion();
 }
 
 // ----------------------------------------------------------------- touch
@@ -1682,13 +1823,11 @@ function initTools() {
     elements.alertTimeField.classList.toggle("is-hidden", !elements.alertDaily.checked);
   });
 
-  document.querySelector("#sosButton").addEventListener("click", openSos);
-  document.querySelector("#sosClose").addEventListener("click", () => closeSheet());
   elements.sosStart.addEventListener("click", () => { stopSos(); resetSosUi(); startSos(); });
   elements.sosDone.addEventListener("click", finishSos);
-  elements.sosPlanEdit.addEventListener("click", openPlanSheet);
+  elements.sosPlanEdit.addEventListener("click", () => showTab("plan"));
 
-  document.querySelector("#planButton").addEventListener("click", openPlanSheet);
+  document.querySelector("#planButton").addEventListener("click", () => showTab("plan"));
   document.querySelector("#planSave").addEventListener("click", savePlan);
   elements.planRemove.addEventListener("click", () => {
     planDraft = [];
@@ -1697,7 +1836,7 @@ function initTools() {
 
   elements.sheetBackdrop.addEventListener("click", () => closeSheet());
   document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeSheet(); });
-  [elements.goalSheet, elements.alertsSheet, elements.sosSheet, elements.planSheet].forEach(enableSwipeToClose);
+  [elements.goalSheet, elements.alertsSheet].forEach(enableSwipeToClose);
 
   onAppResume(() => {
     if (isReceiptVisible()) updateReceipt(false);
@@ -1904,18 +2043,49 @@ function bindRepeatingPress(button, action) {
   button.addEventListener("click", (event) => event.preventDefault());
 }
 
-// ----------------------------------------------------------------- bottom toolbar + More menu
+// ----------------------------------------------------------------- tab bar
+// Receipt, plan, SOS, diary and more are pages in the receipt view; small tasks stay in sheets.
+function setActiveTab(name) {
+  activeTab = name;
+  elements.receiptWrap.dataset.tab = name;
+  document.querySelectorAll(".tab-page").forEach((page) => { page.hidden = page.dataset.tab !== name; });
+  document.querySelectorAll(".tab-button").forEach((button) => {
+    const active = button.dataset.tab === name;
+    button.classList.toggle("is-active", active);
+    if (active) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  });
+}
+
+function showTab(name) {
+  if (activeTab === "sos" && name !== "sos") stopSos();
+  closeSheet(false);
+  setActiveTab(name);
+  window.scrollTo({ top: 0 });
+  if (name === "receipt") updateReceipt(false);
+  if (name === "sos") enterSos();
+  if (name === "plan") enterPlan();
+  if (name === "diary") elements.diaryCravings.textContent = numberFormatter.format(readCravings());
+}
+
+function initTabs() {
+  document.querySelectorAll(".tab-button").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (button.dataset.tab === activeTab && activeTab !== "sos") return;
+      haptics.select();
+      showTab(button.dataset.tab);
+    });
+  });
+}
+
+// ----------------------------------------------------------------- More page
 function initMoreMenu() {
-  const moreSheet = document.querySelector("#moreSheet");
-  document.querySelector("#moreButton").addEventListener("click", () => openSheet(moreSheet));
-  document.querySelector("#moreClose").addEventListener("click", () => closeSheet());
   document.querySelector("#languageMenuButton").addEventListener("click", switchLanguage);
   // Leaving the receipt (edit) should not leave the menu open behind the wizard.
   elements.editButton.addEventListener("click", () => {
     closeSheet(false);
     window.scrollTo({ top: 0 });
   });
-  enableSwipeToClose(moreSheet);
   syncBenefitsVisibility();
   syncLanguageButton();
   syncPlanValue();
@@ -2056,11 +2226,12 @@ function initInteractiveReceipt() {
 }
 
 // ----------------------------------------------------------------- goal ideas
+// Spread from a quick treat to a dream, so the ideas do not look alike.
 const goalIdeas = [
-  { name: "MacBook", price: 1499, icon: "laptop" },
+  { name: "Dinner out", price: 80, icon: "dinner" },
+  { name: "Headphones", price: 249, icon: "headphones" },
   { name: "Bicycle", price: 800, icon: "bike" },
   { name: "Vacation", price: 1500, icon: "sun" },
-  { name: "Instrument", price: 1000, icon: "music" },
   { name: "Porsche 911", price: 130000, icon: "car" },
   { name: "House", price: 1000000, icon: "house" },
 ];
@@ -2096,6 +2267,8 @@ initTools();
 initOnboarding();
 initReceiptEditing();
 initMoreMenu();
+initTabs();
+initDevMode();
 initExtras();
 initInteractiveReceipt();
 document.querySelector("#goalButton").addEventListener("click", renderGoalIdeas);

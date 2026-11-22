@@ -31,7 +31,7 @@
     <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
     <link rel="icon" href="assets/favicon-32x32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="assets/icon-180.png">
-    <link rel="stylesheet" href="styles.css?v=20261121-1">
+    <link rel="stylesheet" href="styles.css?v=20261122-3">
     <script src="assets/html2canvas.min.js" defer></script>
   </head>
   <body>
@@ -62,7 +62,10 @@
         <symbol id="i-car" viewBox="0 0 24 24"><path d="M3 15l2-5h14l2 5v3H3z"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></symbol>
         <symbol id="i-house" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v10H3z"/><path d="M10 21v-6h4v6"/></symbol>
         <symbol id="i-plan" viewBox="0 0 24 24"><path d="M4 6h6M4 12h6M4 18h6M14 6l6 6-6 6M14 12h6"/></symbol>
-        <symbol id="i-pause"viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></symbol>
+        <symbol id="i-headphones" viewBox="0 0 24 24"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="6"/><rect x="17" y="14" width="4" height="6"/></symbol>
+        <symbol id="i-dinner" viewBox="0 0 24 24"><path d="M5 3v5a2 2 0 0 0 4 0V3M7 3v18M17 3c-2.5 2-2.5 7 0 9v9"/></symbol>
+        <symbol id="i-code" viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></symbol>
+        <symbol id="i-pause" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></symbol>
       </defs>
     </svg>
     <main class="app-shell scan-frame" id="appShell">
@@ -80,13 +83,13 @@
             <strong id="progressPercent">17%</strong>
           </div>
 
-          <!-- Step 1: Welcome + habit (one tap starts) -->
-          <section class="step is-active" data-mode="all" data-autoadvance>
+          <!-- Step 1: Welcome + quit date with quick picks (one tap starts) -->
+          <section class="step is-active" data-mode="all">
             <div class="intro-step">
               <p class="intro-logo">smkfree</p>
               <details class="intro-info">
                 <summary class="intro-heading">
-                  <h2 data-i18n>What are you quitting?</h2>
+                  <h2 data-i18n>When did you stop?</h2>
                   <span class="info-button" aria-label="Info" data-i18n-aria>i</span>
                 </summary>
                 <ul class="intro-points">
@@ -96,6 +99,26 @@
                 </ul>
               </details>
             </div>
+            <div class="chip-row" role="group" aria-label="Quick pick" data-i18n-aria>
+              <button type="button" class="chip" data-days-ago="0" data-i18n>Today</button>
+              <button type="button" class="chip" data-days-ago="1" data-i18n>Yesterday</button>
+              <button type="button" class="chip" data-days-ago="7" data-i18n>1 week ago</button>
+              <button type="button" class="chip" data-days-ago="30" data-i18n>1 month ago</button>
+            </div>
+            <label>
+              <span class="label-with-icon"><svg class="icon" aria-hidden="true"><use href="#i-calendar"></use></svg><span data-i18n>Or pick a date</span></span>
+              <input id="quitDate" name="quitDate" type="date" aria-describedby="quitDateError" required>
+            </label>
+            <p class="field-error is-hidden" id="quitDateError" role="alert">Please enter a quit date.</p>
+            <label class="toggle-field field-action">
+              <input id="notStoppedYet" name="notStoppedYet" type="checkbox">
+              <span><span data-i18n>I did not stop yet</span></span>
+            </label>
+          </section>
+
+          <!-- Step 2: Habit (one tap moves on) -->
+          <section class="step" data-mode="all" data-autoadvance>
+            <h2 data-i18n>What are you quitting?</h2>
             <div class="mode-picker">
               <label class="mode-card mode-card--compact">
                 <input type="radio" name="mode" value="cigarettes" checked>
@@ -113,26 +136,6 @@
                 <strong data-i18n>Vaping</strong>
               </label>
             </div>
-          </section>
-
-          <!-- Step 2: Quit date with quick picks -->
-          <section class="step" data-mode="all">
-            <h2 data-i18n>When did you stop?</h2>
-            <div class="chip-row" role="group" aria-label="Quick pick" data-i18n-aria>
-              <button type="button" class="chip" data-days-ago="0" data-i18n>Today</button>
-              <button type="button" class="chip" data-days-ago="1" data-i18n>Yesterday</button>
-              <button type="button" class="chip" data-days-ago="7" data-i18n>1 week ago</button>
-              <button type="button" class="chip" data-days-ago="30" data-i18n>1 month ago</button>
-            </div>
-            <label>
-              <span class="label-with-icon"><svg class="icon" aria-hidden="true"><use href="#i-calendar"></use></svg><span data-i18n>Or pick a date</span></span>
-              <input id="quitDate" name="quitDate" type="date" aria-describedby="quitDateError" required>
-            </label>
-            <p class="field-error is-hidden" id="quitDateError" role="alert">Please enter a quit date.</p>
-            <label class="toggle-field field-action">
-              <input id="notStoppedYet" name="notStoppedYet" type="checkbox">
-              <span><span data-i18n>I did not stop yet</span></span>
-            </label>
           </section>
 
           <!-- Step 3 (cigarettes): everything about consumption on one screen -->
@@ -242,7 +245,11 @@
           </div>
         </form>
 
-        <section class="receipt-wrap" aria-label="SMKFREE receipt" data-i18n-aria>
+        <section class="receipt-wrap" id="receiptWrap" data-tab="receipt" aria-label="SMKFREE receipt" data-i18n-aria>
+          <div class="receipt-quick">
+            <button type="button" id="goalButton" class="secondary-button"><svg class="icon" aria-hidden="true"><use href="#i-target"></use></svg><span data-i18n>Goal</span></button>
+            <button type="button" id="downloadButton" class="primary-button"><svg class="icon" aria-hidden="true"><use href="#i-share"></use></svg><span data-i18n>Share</span></button>
+          </div>
           <div class="receipt-feed" id="receiptFeed">
           <article class="receipt receipt--market" id="receipt">
             <div class="receipt__edge" aria-hidden="true"></div>
@@ -317,11 +324,83 @@
             </footer>
           </article>
           </div>
-          <nav class="receipt-toolbar" aria-label="Receipt actions" data-i18n-aria>
-            <button type="button" id="sosButton" class="toolbar-button toolbar-button--primary"><svg class="icon" aria-hidden="true"><use href="#i-breath"></use></svg><span data-i18n>SOS</span></button>
-            <button type="button" id="goalButton" class="toolbar-button"><svg class="icon" aria-hidden="true"><use href="#i-target"></use></svg><span data-i18n>Goal</span></button>
-            <button type="button" id="downloadButton" class="toolbar-button"><svg class="icon" aria-hidden="true"><use href="#i-share"></use></svg><span data-i18n>Share</span></button>
-            <button type="button" id="moreButton" class="toolbar-button" aria-haspopup="dialog"><svg class="icon" aria-hidden="true"><use href="#i-more"></use></svg><span data-i18n>More</span></button>
+          <div class="tab-page" id="sosPage" data-tab="sos" hidden>
+      <h2 id="sosTitle" data-i18n>Ride it out. 3 minutes.</h2>
+      <div class="breath" aria-live="polite">
+        <div class="breath__bar"><span id="breathFill"></span></div>
+        <div class="breath__meta">
+          <strong id="breathPhase">Ready</strong>
+          <span id="sosTimer">3:00</span>
+        </div>
+      </div>
+      <dl class="summary-list sos-stats">
+        <div><dt data-i18n>Cravings resisted</dt><dd id="sosCount">0</dd></div>
+        <div hidden><dt data-i18n>One craving is worth</dt><dd id="sosWorth">--</dd></div>
+      </dl>
+      <div class="sos-plan">
+        <div id="sosPlanBox" class="is-hidden">
+          <p class="sos-plan__title" data-i18n>Your plan</p>
+          <ul class="plan-list" id="sosPlanList"></ul>
+        </div>
+        <button type="button" class="text-button" id="sosPlanEdit" data-i18n>Plan what you do instead</button>
+      </div>
+      <div class="sheet__actions" id="sosActions">
+        <button type="button" class="primary-button" id="sosStart" data-i18n>Start</button>
+      </div>
+      <button type="button" class="primary-button primary-button--large sos-done is-hidden" id="sosDone" data-i18n>I made it +1</button>
+    </div>
+
+          <div class="tab-page" id="planPage" data-tab="plan" hidden>
+      <p class="kicker" data-i18n>If-then plan</p>
+      <h2 id="planSheetTitle" data-i18n>When does the urge usually hit?</h2>
+      <p class="step-hint" data-i18n>Pick up to 3 moments and decide now what you do instead. People who plan this way quit more often.</p>
+      <div class="chip-row plan-triggers" id="planTriggers" role="group" aria-label="Moments" data-i18n-aria></div>
+      <ul class="plan-list plan-editor" id="planRows"></ul>
+      <div class="sheet__actions">
+        <button type="button" class="secondary-button" id="planRemove" data-i18n>Remove</button>
+        <button type="button" class="primary-button" id="planSave" data-i18n>Save plan</button>
+      </div>
+    </div>
+
+          <div class="tab-page" id="diaryPage" data-tab="diary" hidden>
+      <p class="kicker" data-i18n>Diary</p>
+      <h2 data-i18n>Coming soon</h2>
+      <p class="step-hint" data-i18n>Soon you can log every craving and slip here with one tap and see what triggers you most.</p>
+      <dl class="summary-list">
+        <div><dt data-i18n>Cravings resisted</dt><dd id="diaryCravings">0</dd></div>
+      </dl>
+    </div>
+
+          <div class="tab-page" id="morePage" data-tab="more" hidden>
+      <p class="kicker" data-i18n>More</p>
+      <h2 id="moreSheetTitle" data-i18n>Settings</h2>
+      <div class="menu-list">
+        <button type="button" class="menu-row" id="editButton"><svg class="icon" aria-hidden="true"><use href="#i-pencil"></use></svg><span data-i18n>Edit details</span><span class="menu-row__value" aria-hidden="true">›</span></button>
+        <label class="menu-row" id="customColorLabel">
+          <input type="color" id="customColor" value="#7c3aed">
+          <svg class="icon" aria-hidden="true"><use href="#i-drop"></use></svg><span data-i18n>Receipt color</span><span class="menu-row__swatch" id="colorSwatch" aria-hidden="true"></span>
+        </label>
+        <label class="menu-row" id="benefitsLabel">
+          <input id="showBenefits" name="showBenefits" type="checkbox">
+          <svg class="icon" aria-hidden="true"><use href="#i-heart"></use></svg><span data-i18n>Health benefits</span><span class="menu-row__value" id="benefitsValue">--</span>
+        </label>
+        <button type="button" class="menu-row" id="planButton"><svg class="icon" aria-hidden="true"><use href="#i-plan"></use></svg><span data-i18n>If-then plan</span><span class="menu-row__value" id="planValue">--</span></button>
+        <button type="button" class="menu-row" id="alertsButton"><svg class="icon" aria-hidden="true"><use href="#i-bell"></use></svg><span data-i18n>Reminders</span><span class="menu-row__value" aria-hidden="true">›</span></button>
+        <button type="button" class="menu-row" id="languageMenuButton"><svg class="icon" aria-hidden="true"><use href="#i-globe"></use></svg><span data-i18n>Language</span><span class="menu-row__value" id="languageValue">EN</span></button>
+        <a class="menu-row is-hidden" id="receiptInstallRow" href="install.html"><svg class="icon" aria-hidden="true"><use href="#i-phone"></use></svg><span data-i18n>Install app</span><span class="menu-row__value" aria-hidden="true">›</span></a>
+        <a class="menu-row" href="legal.html"><svg class="icon" aria-hidden="true"><use href="#i-lock"></use></svg><span data-i18n>Privacy / Legal</span><span class="menu-row__value" aria-hidden="true">›</span></a>
+        <button type="button" class="menu-row is-hidden" id="devButton"><svg class="icon" aria-hidden="true"><use href="#i-code"></use></svg><span data-i18n>Developer</span><span class="menu-row__value" aria-hidden="true">›</span></button>
+        <button type="button" class="menu-row menu-row--danger" id="resetButton"><svg class="icon" aria-hidden="true"><use href="#i-trash"></use></svg><span data-i18n>Reset all data</span></button>
+        <button type="button" class="menu-row menu-row--meta" id="versionRow"><svg class="icon" aria-hidden="true"><use href="#i-receipt"></use></svg><span data-i18n>Version</span><span class="menu-row__value" id="versionValue">--</span></button>
+      </div>
+    </div>
+
+          <nav class="tab-bar" aria-label="Main" data-i18n-aria>
+            <button type="button" class="tab-button is-active" data-tab="receipt" aria-current="page"><svg class="icon" aria-hidden="true"><use href="#i-receipt"></use></svg><span data-i18n>Receipt</span></button>
+            <button type="button" class="tab-button" data-tab="plan"><svg class="icon" aria-hidden="true"><use href="#i-plan"></use></svg><span data-i18n>Plan</span></button>
+            <button type="button" class="tab-button tab-button--sos" data-tab="sos" id="sosButton"><svg class="icon" aria-hidden="true"><use href="#i-breath"></use></svg><span data-i18n>SOS</span></button>
+            <button type="button" class="tab-button" data-tab="diary"><svg class="icon" aria-hidden="true"><use href="#i-calendar"></use></svg><span data-i18n>Diary</span></button>
+            <button type="button" class="tab-button" data-tab="more" id="moreButton"><svg class="icon" aria-hidden="true"><use href="#i-more"></use></svg><span data-i18n>More</span></button>
           </nav>
 
         </section>
@@ -359,6 +438,10 @@
       <p class="step-hint" id="alertsStatus">Notifications stay on this phone. Nothing is sent to a server.</p>
       <div id="alertsOptions">
         <label class="toggle-field">
+          <input id="alertCoach" type="checkbox" checked>
+          <span><span data-i18n>Quit coach</span><small data-i18n>Short tips that help, most in your first week. Uses your if-then plan.</small></span>
+        </label>
+        <label class="toggle-field">
           <input id="alertMilestones" type="checkbox" checked>
           <span><span data-i18n>Milestones</span><small data-i18n>1 day, 1 week, 1 month … plus health small print.</small></span>
         </label>
@@ -381,70 +464,43 @@
       </div>
     </section>
 
-    <section class="sheet sheet--sos" id="sosSheet" role="dialog" aria-modal="true" aria-labelledby="sosTitle" hidden>
-      <div class="sheet__grip" aria-hidden="true"></div>
-      <h2 id="sosTitle" data-i18n>Ride it out. 3 minutes.</h2>
-      <div class="breath" aria-live="polite">
-        <div class="breath__bar"><span id="breathFill"></span></div>
-        <div class="breath__meta">
-          <strong id="breathPhase">Ready</strong>
-          <span id="sosTimer">3:00</span>
-        </div>
-      </div>
-      <dl class="summary-list sos-stats">
-        <div><dt data-i18n>Cravings resisted</dt><dd id="sosCount">0</dd></div>
-        <div hidden><dt data-i18n>One craving is worth</dt><dd id="sosWorth">--</dd></div>
-      </dl>
-      <div class="sos-plan">
-        <div id="sosPlanBox" class="is-hidden">
-          <p class="sos-plan__title" data-i18n>Your plan</p>
-          <ul class="plan-list" id="sosPlanList"></ul>
-        </div>
-        <button type="button" class="text-button" id="sosPlanEdit" data-i18n>Plan what you do instead</button>
-      </div>
-      <div class="sheet__actions" id="sosActions">
-        <button type="button" class="secondary-button" id="sosClose" data-i18n>Close</button>
-        <button type="button" class="primary-button" id="sosStart" data-i18n>Start</button>
-      </div>
-      <button type="button" class="primary-button primary-button--large sos-done is-hidden" id="sosDone" data-i18n>I made it +1</button>
-    </section>
 
-    <section class="sheet" id="planSheet" role="dialog" aria-modal="true" aria-labelledby="planSheetTitle" hidden>
+
+
+    <section class="sheet" id="resetSheet" role="dialog" aria-modal="true" aria-labelledby="resetSheetTitle" hidden>
       <div class="sheet__grip" aria-hidden="true"></div>
-      <p class="kicker" data-i18n>If-then plan</p>
-      <h2 id="planSheetTitle" data-i18n>When does the urge usually hit?</h2>
-      <p class="step-hint" data-i18n>Pick up to 3 moments and decide now what you do instead. People who plan this way quit more often.</p>
-      <div class="chip-row plan-triggers" id="planTriggers" role="group" aria-label="Moments" data-i18n-aria></div>
-      <ul class="plan-list plan-editor" id="planRows"></ul>
+      <p class="kicker kicker--danger" data-i18n>Reset</p>
+      <h2 id="resetSheetTitle" data-i18n>Delete everything?</h2>
+      <p class="step-hint" data-i18n>This removes from this device:</p>
+      <ul class="reset-list">
+        <li data-i18n>Receipt and quit date</li>
+        <li data-i18n>Savings goal</li>
+        <li data-i18n>If-then plan</li>
+        <li data-i18n>Reminders and coach</li>
+        <li data-i18n>Craving count</li>
+        <li data-i18n>Receipt color</li>
+      </ul>
+      <p class="step-hint" data-i18n>This cannot be undone. There is no copy on a server.</p>
       <div class="sheet__actions">
-        <button type="button" class="secondary-button" id="planRemove" data-i18n>Remove</button>
-        <button type="button" class="primary-button" id="planSave" data-i18n>Save plan</button>
+        <button type="button" class="secondary-button" id="resetCancel" data-i18n>Cancel</button>
+        <button type="button" class="primary-button danger-button" id="resetConfirm" data-i18n>Delete everything</button>
       </div>
     </section>
 
-    <section class="sheet" id="moreSheet"role="dialog" aria-modal="true" aria-labelledby="moreSheetTitle" hidden>
+    <section class="sheet" id="devSheet" role="dialog" aria-modal="true" aria-labelledby="devSheetTitle" hidden>
       <div class="sheet__grip" aria-hidden="true"></div>
-      <p class="kicker" data-i18n>Menu</p>
-      <h2 id="moreSheetTitle" data-i18n>Your receipt</h2>
+      <p class="kicker" data-i18n>Developer</p>
+      <h2 id="devSheetTitle" data-i18n>Test notifications</h2>
+      <p class="step-hint" id="devStatus" data-i18n>Each test arrives in 10 seconds. Lock the phone or switch apps to see it.</p>
       <div class="menu-list">
-        <button type="button" class="menu-row" id="editButton"><svg class="icon" aria-hidden="true"><use href="#i-pencil"></use></svg><span data-i18n>Edit details</span><span class="menu-row__value" aria-hidden="true">›</span></button>
-        <label class="menu-row" id="customColorLabel">
-          <input type="color" id="customColor" value="#7c3aed">
-          <svg class="icon" aria-hidden="true"><use href="#i-drop"></use></svg><span data-i18n>Receipt color</span><span class="menu-row__swatch" id="colorSwatch" aria-hidden="true"></span>
-        </label>
-        <label class="menu-row" id="benefitsLabel">
-          <input id="showBenefits" name="showBenefits" type="checkbox">
-          <svg class="icon" aria-hidden="true"><use href="#i-heart"></use></svg><span data-i18n>Health benefits</span><span class="menu-row__value" id="benefitsValue">--</span>
-        </label>
-        <button type="button" class="menu-row" id="planButton"><svg class="icon" aria-hidden="true"><use href="#i-plan"></use></svg><span data-i18n>If-then plan</span><span class="menu-row__value" id="planValue">--</span></button>
-        <button type="button" class="menu-row" id="alertsButton"><svg class="icon" aria-hidden="true"><use href="#i-bell"></use></svg><span data-i18n>Reminders</span><span class="menu-row__value" aria-hidden="true">›</span></button>
-        <button type="button" class="menu-row" id="languageMenuButton"><svg class="icon" aria-hidden="true"><use href="#i-globe"></use></svg><span data-i18n>Language</span><span class="menu-row__value" id="languageValue">EN</span></button>
-        <a class="menu-row is-hidden" id="receiptInstallRow" href="install.html"><svg class="icon" aria-hidden="true"><use href="#i-phone"></use></svg><span data-i18n>Install app</span><span class="menu-row__value" aria-hidden="true">›</span></a>
-        <a class="menu-row" href="legal.html"><svg class="icon" aria-hidden="true"><use href="#i-lock"></use></svg><span data-i18n>Privacy / Legal</span><span class="menu-row__value" aria-hidden="true">›</span></a>
-        <button type="button" class="menu-row menu-row--danger" id="resetButton"><svg class="icon" aria-hidden="true"><use href="#i-trash"></use></svg><span data-i18n>Reset all data</span></button>
+        <button type="button" class="menu-row" data-dev-test="coach"><svg class="icon" aria-hidden="true"><use href="#i-breath"></use></svg><span data-i18n>Next coach tip</span><span class="menu-row__value" id="devCoachValue">1</span></button>
+        <button type="button" class="menu-row" data-dev-test="milestone"><svg class="icon" aria-hidden="true"><use href="#i-heart"></use></svg><span data-i18n>Milestones</span><span class="menu-row__value" aria-hidden="true">›</span></button>
+        <button type="button" class="menu-row" data-dev-test="money"><svg class="icon" aria-hidden="true"><use href="#i-target"></use></svg><span data-i18n>Money milestones</span><span class="menu-row__value" aria-hidden="true">›</span></button>
+        <button type="button" class="menu-row" data-dev-test="daily"><svg class="icon" aria-hidden="true"><use href="#i-receipt"></use></svg><span data-i18n>Daily receipt</span><span class="menu-row__value" aria-hidden="true">›</span></button>
       </div>
       <div class="sheet__actions">
-        <button type="button" class="secondary-button" id="moreClose" data-i18n>Close</button>
+        <button type="button" class="secondary-button" id="devOff" data-i18n>Turn off</button>
+        <button type="button" class="primary-button" id="devClose" data-i18n>Close</button>
       </div>
     </section>
 
@@ -457,6 +513,6 @@
 
 
 
-<script type="module" src="app.js?v=20261121-1"></script>
+<script type="module" src="app.js?v=20261122-3"></script>
   </body>
 </html>
