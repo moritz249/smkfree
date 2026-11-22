@@ -54,7 +54,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: clip;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--mono);
@@ -2475,11 +2475,12 @@ body {
 /* Fixed feel on iPhone + interactive receipt                            */
 /* ===================================================================== */
 
+/* "clip", not "hidden": hidden turns body into its own scroller, which together with
+   overscroll-behavior swallowed the mouse wheel on desktop. */
 html,
 body {
-  overflow-x: hidden;
+  overflow-x: clip;
   overscroll-behavior: none;
-  touch-action: pan-y;
 }
 
 /* iOS Safari ignores overflow:hidden on body, so the page is pinned instead. */
@@ -2741,4 +2742,128 @@ body.has-sheet {
   .benefits-close {
     display: none !important;
   }
+}
+
+/* Landing: heading with folded info, compact habit cards */
+.intro-info summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.intro-info summary::-webkit-details-marker {
+  display: none;
+}
+
+.intro-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.step .intro-step .intro-heading h2 {
+  margin: 0;
+}
+
+.info-button {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  font-size: 0.9rem;
+  font-style: italic;
+  font-weight: 700;
+}
+
+.intro-info[open] .info-button {
+  background: var(--ink);
+  color: var(--paper, #fff);
+}
+
+.intro-info .intro-points {
+  margin: 0 0 14px;
+}
+
+.mode-card--compact {
+  min-height: 52px;
+}
+
+.mode-card--compact .icon {
+  grid-row: auto;
+}
+
+/* Tap-to-edit values on the receipt */
+.receipt-edit {
+  margin: 0;
+  border: 0;
+  border-bottom: 1px dashed currentColor;
+  padding: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-align: right;
+  cursor: pointer;
+}
+
+.receipt-edit-input {
+  width: 9.5em;
+  max-width: 100%;
+  margin: 0;
+  border: 1px solid var(--line);
+  padding: 2px 6px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  text-align: right;
+}
+
+.receipt.is-capturing .receipt-edit {
+  border-bottom: 0;
+}
+
+/* Color dot on the receipt: opens the same picker as the menu */
+.receipt-color {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  cursor: pointer;
+}
+
+.receipt-color input[type="color"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.receipt-color__dot {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: conic-gradient(#e53935, #fdd835, #43a047, #1e88e5, #8e24aa, #e53935);
+  pointer-events: none;
+}
+
+.receipt.is-capturing .receipt-color {
+  display: none;
+}
+
+/* Phones: scroll yes, double-tap or pinch zoom no */
+html,
+body {
+  touch-action: pan-x pan-y;
 }
