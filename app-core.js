@@ -351,7 +351,7 @@ export function buildNotificationPlan(state, options = {}, now = new Date()) {
     }
   }
 
-  // Sunday evening: the week receipt is ready.
+  // Sunday evening: the week receipt is ready (no longer offered in the app, kept for old settings).
   if (options.weekly === true) {
     const daysToSunday = (7 - now.getDay()) % 7;
     for (let week = 0; week < 2; week += 1) {
@@ -500,7 +500,7 @@ export function buildCoachPlan(start, plan, tr, now = new Date()) {
 // ---------------------------------------------------------------------------
 
 export const DIARY_MAX_ENTRIES = 500;
-export const DIARY_NOTE_MAX = 80;
+export const DIARY_NOTE_MAX = 140;
 const DIARY_KINDS = ["craving", "slip"];
 
 /** Keeps valid entries only (newest first), so broken or old data never breaks the page. */
@@ -692,10 +692,16 @@ const LIFE_DAY_STEPS = [1, 2, 3, 7, 14, 30, 60, 90, 180, 365, 730];
 const COUNT_STEPS = [10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000];
 
 /** Next step above value and how far along the way from the previous step it is (0..1). */
-export function stepProgress(value, steps) {
+export function stepProgress(value, steps, repeat = 0) {
   const current = Math.max(0, Number(value) || 0);
   const nextIndex = steps.findIndex((step) => step > current);
-  if (nextIndex < 0) return { from: steps[steps.length - 1], target: steps[steps.length - 1], ratio: 1, left: 0, done: true };
+  const last = steps[steps.length - 1];
+  if (nextIndex < 0 && repeat > 0) {
+    // Past the last step: keep going in even steps (e.g. every year), so there is always a next goal.
+    const from = last + Math.floor((current - last) / repeat) * repeat;
+    return { from, target: from + repeat, ratio: (current - from) / repeat, left: from + repeat - current, done: false };
+  }
+  if (nextIndex < 0) return { from: last, target: last, ratio: 1, left: 0, done: true };
   const from = nextIndex > 0 ? steps[nextIndex - 1] : 0;
   const target = steps[nextIndex];
   return { from, target, ratio: (current - from) / (target - from), left: target - current, done: false };
@@ -708,17 +714,17 @@ export function stepProgress(value, steps) {
 export function boardGoals(state, progress, goal = null) {
   const started = !state.notStoppedYet && Boolean(state.quitDate);
   const days = started ? progress.elapsedHours / 24 : 0;
-  const time = stepProgress(days, dayThresholds);
+  const time = stepProgress(days, dayThresholds, 365.25);
   const money = started ? progress.moneySaved : 0;
   const price = Number(goal?.price) || 0;
   const moneyGoal = goal?.name && price > 0 && money < price
     ? { target: price, ratio: money / price, left: price - money, done: false, name: goal.name }
-    : { ...stepProgress(money, moneyThresholds), name: null };
+    : { ...stepProgress(money, moneyThresholds, 10000), name: null };
   const third = state.mode === "vaping"
-    ? stepProgress(started ? progress.mlNotVaped : 0, COUNT_STEPS)
+    ? stepProgress(started ? progress.mlNotVaped : 0, COUNT_STEPS, 10000)
     : state.mode === "ryo"
-    ? stepProgress(started ? progress.rollsAvoided : 0, COUNT_STEPS)
-    : stepProgress(started ? progress.estimatedLifeMinutes / 1440 : 0, LIFE_DAY_STEPS);
+    ? stepProgress(started ? progress.rollsAvoided : 0, COUNT_STEPS, 10000)
+    : stepProgress(started ? progress.estimatedLifeMinutes / 1440 : 0, LIFE_DAY_STEPS, 365.25);
   return {
     started,
     time: { ...time, hoursLeft: time.left * 24 },
@@ -731,14 +737,20 @@ export function boardGoals(state, progress, goal = null) {
 // A fixed palette instead of a free color picker. Three to start with, the rest are rewards.
 export const RECEIPT_COLORS = [
   { id: "black", hex: "#111111", day: 0 },
-  { id: "blue", hex: "#1d4ed8", day: 0 },
-  { id: "red", hex: "#c62828", day: 0 },
-  { id: "green", hex: "#1b7f3b", day: 1 },
-  { id: "purple", hex: "#6d28d9", day: 3 },
-  { id: "pink", hex: "#c2185b", day: 7 },
-  { id: "orange", hex: "#c2410c", day: 14 },
-  { id: "teal", hex: "#0f766e", day: 30 },
+  { id: "blue", hex: "#2563eb", day: 0 },
+  { id: "red", hex: "#e11d2a", day: 0 },
+  { id: "green", hex: "#16a34a", day: 1 },
+  { id: "purple", hex: "#7c3aed", day: 3 },
+  { id: "pink", hex: "#e11d74", day: 7 },
+  { id: "orange", hex: "#f05a0a", day: 14 },
+  { id: "teal", hex: "#0d9488", day: 30 },
 ];
+
+/** The earlier, darker preset colors, so a saved choice moves to its brighter version. */
+export const OLD_RECEIPT_COLORS = {
+  "#1d4ed8": "#2563eb", "#c62828": "#e11d2a", "#1b7f3b": "#16a34a", "#6d28d9": "#7c3aed",
+  "#c2185b": "#e11d74", "#c2410c": "#f05a0a", "#0f766e": "#0d9488",
+};
 
 /** Each preset color with whether it is unlocked after a number of smoke-free days. */
 export function receiptColorStatus(days) {

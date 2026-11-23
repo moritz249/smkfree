@@ -38,8 +38,8 @@
         if (appearance === "light" || appearance === "dark") document.documentElement.dataset.appearance = appearance;
       } catch (e) { /* storage blocked: follow the system */ }
     </script>
-    <link rel="stylesheet" href="styles.css?v=20261123-19">
-    <link rel="stylesheet" href="ios.css?v=20261123-40">
+    <link rel="stylesheet" href="styles.css?v=20261123-20">
+    <link rel="stylesheet" href="ios.css?v=20261123-43">
     <script src="assets/html2canvas.min.js" defer></script>
   </head>
   <body>
@@ -382,8 +382,11 @@
 
           <div class="tab-page start-page" id="startPage" data-tab="start" hidden>
             <header class="ios-head">
-              <p class="ios-eyebrow" id="startDate"></p>
-              <h1 class="ios-large-title" data-i18n>Home</h1>
+              <div class="ios-head__text">
+                <p class="ios-eyebrow" id="startDate"></p>
+                <h1 class="ios-large-title" data-i18n>Home</h1>
+              </div>
+              <button type="button" class="head-action" id="startShare" aria-label="Share receipt" data-i18n-aria><svg class="icon" aria-hidden="true"><use href="#i-share"></use></svg></button>
             </header>
             <!-- Gauge: smoke-free time towards the next milestone, one accent color. -->
             <section class="gauge" id="gauge" aria-live="polite">
@@ -406,12 +409,12 @@
                 <span class="stat-card__bar" aria-hidden="true"><i id="statMoneyBar"></i></span>
                 <span class="stat-card__sub" id="statMoneySub"></span>
               </button>
-              <div class="stat-card">
+              <button type="button" class="stat-card" id="boardLife">
                 <span class="stat-card__label" id="statThirdLabel"></span>
                 <strong class="stat-card__value" id="statThird">--</strong>
                 <span class="stat-card__bar" aria-hidden="true"><i id="statThirdBar"></i></span>
                 <span class="stat-card__sub" id="statThirdSub"></span>
-              </div>
+              </button>
             </div>
 
             <button type="button" class="body-card" data-go="health" id="bodyCard">
@@ -469,7 +472,6 @@
               <a class="text-button" href="https://rauchfrei-info.de/" target="_blank" rel="noopener" data-i18n>rauchfrei-info.de online program</a>
             </div>
             <p class="health-source"><span data-i18n>Source:</span> <a href="https://www.dkfz.de/forschung/translationale-zentren/ncpc/stabsstelle-krebspraevention/rauchstopp" target="_blank" rel="noopener" data-i18n>German Cancer Research Center (DKFZ)</a></p>
-            </section>
           </div>
 
           <div class="tab-page" id="morePage" data-tab="more" hidden>
@@ -557,10 +559,6 @@
           <span><span data-i18n>Evening check-in</span><small data-i18n>At 8 pm, only if you have not checked in yet.</small></span>
         </label>
         <label class="toggle-field">
-          <input id="alertWeekly" type="checkbox" checked>
-          <span><span data-i18n>Week receipt</span><small data-i18n>Sunday evening: your week at a glance.</small></span>
-        </label>
-        <label class="toggle-field">
           <input id="alertMilestones" type="checkbox" checked>
           <span><span data-i18n>Milestones</span><small data-i18n>1 day, 1 week, 1 month … plus health small print.</small></span>
         </label>
@@ -589,18 +587,23 @@
     <section class="sheet" id="diarySheet" role="dialog" aria-modal="true" aria-labelledby="diarySheetTitle" hidden>
       <div class="sheet__grip" aria-hidden="true"></div>
       <h2 id="diarySheetTitle" data-i18n>New entry</h2>
+      <p class="diary-when is-hidden" id="diaryWhen"></p>
       <label class="diary-field" id="diaryKindField">
         <span data-i18n>What happened?</span>
         <select id="diaryKindSelect">
-          <option value="craving" data-i18n>Craving resisted</option>
-          <option value="slip" data-i18n>Slipped</option>
+          <option value="craving" data-i18n>I got through a craving</option>
+          <option value="slip" data-i18n>I smoked</option>
         </select>
       </label>
       <label class="diary-field">
         <span data-i18n>Trigger</span>
         <select id="diaryTriggerSelect"></select>
       </label>
-      <p class="step-hint is-hidden" id="diarySlipHint" data-i18n>A slip erases nothing. Your receipt keeps counting.</p>
+      <label class="diary-field">
+        <span data-i18n>Note (optional)</span>
+        <textarea id="diaryNote" rows="2" maxlength="140" placeholder="Where were you, what helped?" data-i18n-placeholder enterkeyhint="done"></textarea>
+      </label>
+      <p class="step-hint is-hidden" id="diarySlipHint" data-i18n>One cigarette erases nothing. Your receipt keeps counting.</p>
       <div class="sheet__actions">
         <button type="button" class="secondary-button" id="diaryCancel" data-i18n>Cancel</button>
         <button type="button" class="primary-button" id="diarySave" data-i18n>Save</button>
@@ -628,11 +631,15 @@
       </div>
     </section>
 
-    <!-- Daily check-in: one tap, then feedback, this week and the tip of the day. -->
+    <!-- Daily check-in: one tap, then short feedback and this week. -->
     <section class="sheet today-sheet" id="todaySheet" role="dialog" aria-modal="true" aria-labelledby="todayQuestion" hidden>
       <div class="sheet__grip" aria-hidden="true"></div>
-      <p class="kicker" data-i18n>Today</p>
+      <div class="today-head">
+        <p class="kicker" data-i18n>Daily check-in</p>
+        <button type="button" class="info-button today-info" id="todayInfo" aria-expanded="false" aria-controls="todayInfoText" aria-label="What is the check-in?" data-i18n-aria>i</button>
+      </div>
       <h2 id="todayQuestion" data-i18n>How strong was the urge today?</h2>
+      <p class="today-info-text is-hidden" id="todayInfoText" data-i18n>Once a day, one tap: how strong was the urge to smoke today? Over the weeks you see it get easier. There is no streak, a missed day costs nothing. With reminders on, you get a nudge at 8 pm.</p>
       <div class="chip-row checkin-levels" id="checkinLevels" role="group" aria-labelledby="todayQuestion">
         <button type="button" class="chip" data-level="0" data-i18n>None</button>
         <button type="button" class="chip" data-level="1" data-i18n>Mild</button>
@@ -640,34 +647,24 @@
         <button type="button" class="chip" data-level="3" data-i18n>Strong</button>
       </div>
       <p class="checkin-feedback is-hidden" id="checkinFeedback" role="status"></p>
+      <p class="step-hint today-hint is-hidden" id="todayHint" data-i18n>Tap another answer to change it, until midnight.</p>
       <button type="button" class="secondary-button checkin-next is-hidden" id="checkinNext"></button>
       <ol class="checkin-week" id="checkinWeek" aria-label="This week" data-i18n-aria></ol>
-      <div class="today-tip">
-        <p class="sos-plan__title" data-i18n>Tip of the day</p>
-        <strong id="tipTitle"></strong>
-        <p id="tipBody"></p>
-      </div>
       <div class="sheet__actions">
-        <button type="button" class="secondary-button" id="weekOpen" data-i18n>Week receipt</button>
-        <button type="button" class="primary-button" id="todayClose" data-i18n>Close</button>
+        <button type="button" class="primary-button" id="todayClose" data-i18n>Done</button>
       </div>
     </section>
 
-    <section class="sheet week-sheet" id="weekSheet" role="dialog" aria-modal="true" aria-labelledby="weekTitle" hidden>
+    <!-- What the third start card means: life back (cigarettes) or what was not used (roll-ups, vaping). -->
+    <section class="sheet info-sheet" id="lifeSheet" role="dialog" aria-modal="true" aria-labelledby="lifeSheetValue" hidden>
       <div class="sheet__grip" aria-hidden="true"></div>
-      <div class="week-receipt">
-        <p class="week-receipt__brand">SMKFREE</p>
-        <h2 id="weekTitle" data-i18n>WEEK RECEIPT</h2>
-        <p class="week-receipt__range" id="weekRange"></p>
-        <div class="receipt__divider"></div>
-        <dl class="week-receipt__rows" id="weekRows"></dl>
-        <ol class="checkin-week" id="weekDays" aria-label="This week" data-i18n-aria></ol>
-        <div class="receipt__divider"></div>
-        <p class="week-receipt__message" id="weekMessage"></p>
-      </div>
+      <p class="kicker" id="lifeSheetKicker"></p>
+      <h2 class="info-sheet__value" id="lifeSheetValue">--</h2>
+      <p class="info-sheet__lead" id="lifeSheetLead"></p>
+      <dl class="info-rows" id="lifeSheetRows"></dl>
+      <p class="step-hint" id="lifeSheetNote"></p>
       <div class="sheet__actions">
-        <button type="button" class="secondary-button" id="weekClose" data-i18n>Close</button>
-        <button type="button" class="primary-button" id="weekShare" data-i18n>Share</button>
+        <button type="button" class="primary-button" id="lifeSheetClose" data-i18n>Close</button>
       </div>
     </section>
 
@@ -683,12 +680,20 @@
 
     <section class="sheet" id="actionSheet" role="dialog" aria-modal="true" aria-labelledby="actionSheetTitle" hidden>
       <div class="sheet__grip" aria-hidden="true"></div>
-      <h2 id="actionSheetTitle" data-i18n>What's up?</h2>
-      <button type="button" class="primary-button primary-button--large action-sos" data-action="sos"><svg class="icon" aria-hidden="true"><use href="#i-breath"></use></svg><span data-i18n>Craving now: SOS, 3 minutes</span></button>
-      <div class="menu-list">
-        <button type="button" class="menu-row" data-action="craving"><svg class="icon" aria-hidden="true"><use href="#i-heart"></use></svg><span data-i18n>I resisted a craving</span><span class="menu-row__value" aria-hidden="true">›</span></button>
-        <button type="button" class="menu-row" data-action="slip"><svg class="icon" aria-hidden="true"><use href="#i-pencil"></use></svg><span data-i18n>I slipped</span><span class="menu-row__value" aria-hidden="true">›</span></button>
-        <button type="button" class="menu-row" data-action="plan"><svg class="icon" aria-hidden="true"><use href="#i-plan"></use></svg><span data-i18n>If-then plan</span><span class="menu-row__value" aria-hidden="true">›</span></button>
+      <h2 id="actionSheetTitle" data-i18n>What's happening?</h2>
+      <div class="action-list">
+        <button type="button" class="action-card action-card--sos" data-action="sos">
+          <span class="action-card__icon"><svg class="icon" aria-hidden="true"><use href="#i-breath"></use></svg></span>
+          <span class="action-card__text"><strong data-i18n>I have a craving right now</strong><small data-i18n>Breathe along for 3 minutes. It passes.</small></span>
+        </button>
+        <button type="button" class="action-card" data-action="craving">
+          <span class="action-card__icon action-card__icon--green"><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg></span>
+          <span class="action-card__text"><strong data-i18n>I got through a craving</strong><small data-i18n>Note what set it off. It counts on your receipt.</small></span>
+        </button>
+        <button type="button" class="action-card" data-action="slip">
+          <span class="action-card__icon action-card__icon--muted"><svg class="icon" aria-hidden="true"><use href="#i-cigarette"></use></svg></span>
+          <span class="action-card__text"><strong data-i18n>I smoked</strong><small data-i18n>Happens. Note it honestly, your counter keeps running.</small></span>
+        </button>
       </div>
       <div class="sheet__actions">
         <button type="button" class="secondary-button" id="actionClose" data-i18n>Close</button>
@@ -710,7 +715,7 @@
       <label class="dev-field">
         <span data-i18n>Font</span>
         <select id="devFont">
-          <option value="" data-i18n>Standard (mono)</option>
+          <option value="" data-i18n>Standard (system)</option>
           <option value="system" data-i18n>System (sans-serif)</option>
           <option value="rounded" data-i18n>Rounded</option>
           <option value="serif" data-i18n>Serif</option>
@@ -737,6 +742,6 @@
 
 
 
-<script type="module" src="app.js?v=20261123-40"></script>
+<script type="module" src="app.js?v=20261123-42"></script>
   </body>
 </html>

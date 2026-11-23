@@ -36,3 +36,17 @@ test("boardGoals stays at zero before the quit day", () => {
   assert.equal(goals.time.ratio, 0);
   assert.equal(goals.money.ratio, 0);
 });
+
+test("stepProgress keeps going in even steps past the last one", () => {
+  assert.deepEqual(stepProgress(12, [1, 3, 7], 5), { from: 12, target: 17, ratio: 0, left: 5, done: false });
+  assert.equal(stepProgress(14.5, [1, 3, 7], 5).ratio, 0.5);
+});
+
+test("boardGoals never ends: after ten years the next goal is the next year", () => {
+  const longAgo = { ...cigarettes, quitDate: "2010-01-01" };
+  const goals = boardGoals(longAgo, calculateProgress(longAgo, now));
+  assert.equal(goals.time.done, false);
+  assert.ok(goals.time.target > goals.time.from);
+  assert.equal(goals.time.target - goals.time.from, 365.25);
+  assert.ok(Math.abs(goals.time.target / 365.25 - Math.round(goals.time.target / 365.25)) < 0.01);
+});

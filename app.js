@@ -16,13 +16,13 @@ import {
   recoveryProgress,
   boardData,
   checkinWeek,
-  dailyTip,
   dateKey,
   normalizeCheckins,
   boardThemeStatus,
-  weekSummary,
   boardGoals,
   receiptColorStatus,
+  OLD_RECEIPT_COLORS,
+  DIARY_NOTE_MAX,
   PLAN_MAX_ITEMS,
 } from "./app-core.js";
 import {
@@ -68,7 +68,6 @@ const BOARD_METRICS = ["time", "money", "third"];
 const SOS_SECONDS = 180;
 const isTouchDevice = window.matchMedia("(pointer: coarse)").matches || "ontouchstart" in window;
 let reminderSyncTimer = null;
-let sosTimer = null;
 let activeTab = "receipt";
 let appReady = false;
 const modeNames = { cigarettes: "Cigarettes", ryo: "Roll-your-own", vaping: "Vaping" };
@@ -706,7 +705,6 @@ function readCheckins() {
 }
 
 function renderToday() {
-  const progress = calculateProgress(getFormState());
   const checkins = readCheckins();
   const todayLevel = checkins[dateKey(new Date())];
   const hasToday = todayLevel !== undefined;
@@ -716,9 +714,11 @@ function renderToday() {
     chip.classList.toggle("is-active", active);
     chip.setAttribute("aria-pressed", String(active));
   });
+  // Before: the question. After: the answer in plain words, and how to change it.
   document.querySelector("#todayQuestion").textContent = hasToday
-    ? t("Checked in for today")
+    ? t("Your urge today: {level}", { level: t(checkinLevelLabels[todayLevel]) })
     : t("How strong was the urge today?");
+  document.querySelector("#todayHint").classList.toggle("is-hidden", !hasToday);
 
   const feedback = document.querySelector("#checkinFeedback");
   const next = document.querySelector("#checkinNext");
@@ -734,9 +734,6 @@ function renderToday() {
   const week = checkinWeek(checkins);
   renderWeekDays(document.querySelector("#checkinWeek"), week);
 
-  const tip = dailyTip(progress.wholeDays, planForNotifications(), t);
-  document.querySelector("#tipTitle").textContent = tip.title;
-  document.querySelector("#tipBody").textContent = tip.body;
 }
 
 /** Monday to Sunday as small boxes, filled by how strong the urge was. */
@@ -764,96 +761,11 @@ function renderWeekDays(list, week) {
   list.dataset.count = t("{n} of 7 days this week", { n: done });
 }
 
-// ----------------------------------------------------------------- week receipt
-function currentWeekSummary() {
-  return weekSummary({ checkins: readCheckins(), entries: readDiary().entries, state: getFormState() });
-}
-
-function weekMessage(summary) {
-  if (summary.slips > 0) return t("A slip this week, and you kept going. That counts.");
-  if (summary.strongDays > 0) return t("Tough days this week, and you came through them.");
-  if (summary.cravings > 0) return t("{n} cravings resisted. Each one gets easier.", { n: summary.cravings });
-  return t("A calm week. Keep it up.");
-}
-
-function renderWeekReceipt() {
-  const summary = currentWeekSummary();
-  const state = getFormState();
-  const dateFormat = new Intl.DateTimeFormat(intlLocale(), { day: "2-digit", month: "2-digit" });
-  const sunday = new Date(summary.weekStart.getTime() + 6 * 86_400_000);
-  document.querySelector("#weekRange").textContent = `${dateFormat.format(summary.weekStart)} – ${dateFormat.format(sunday)}`;
-  const dayValue = new Intl.NumberFormat(intlLocale(), { maximumFractionDigits: 1 }).format(summary.freeDays);
-  const rows = [
-    [t("Smoke-free this week"), t("{n} days", { n: dayValue })],
-    [t("Not burned"), formatCurrency(summary.moneySaved, state.currencyCode)],
-    [t("Cravings resisted"), String(summary.cravings)],
-    [t("Check-ins"), `${summary.checkinDays}/7`],
-  ];
-  if (summary.slips > 0) rows.push([t("Slips"), String(summary.slips)]);
-  const list = document.querySelector("#weekRows");
-  list.innerHTML = "";
-  rows.forEach(([label, value]) => {
-    const row = document.createElement("div");
-    const dt = document.createElement("dt");
-    dt.textContent = label;
-    const dd = document.createElement("dd");
-    dd.textContent = value;
-    row.append(dt, dd);
-    list.append(row);
-  });
-  renderWeekDays(document.querySelector("#weekDays"), summary.days);
-  document.querySelector("#weekMessage").textContent = weekMessage(summary);
-  return summary;
-}
-
-function openWeekReceipt() {
-  const summary = renderWeekReceipt();
-  localStorage.setItem(WEEK_SEEN_KEY, dateKey(summary.weekStart));
-  mirrorStorage(WEEK_SEEN_KEY);
-  openSheet(document.querySelector("#weekSheet"));
-}
-
-async function shareWeekReceipt() {
-  const summary = currentWeekSummary();
-  const state = getFormState();
-  const text = t("My SMKFREE week: {days} days smoke-free, {amount} not burned, {cravings} cravings resisted.", {
-    days: new Intl.NumberFormat(intlLocale(), { maximumFractionDigits: 1 }).format(summary.freeDays),
-    amount: formatCurrency(summary.moneySaved, state.currencyCode),
-    cravings: summary.cravings,
-  });
-  const url = "https://moritz249.github.io/smkfree/";
-  try {
-    if (navigator.share) {
-      await navigator.share({ title: t("WEEK RECEIPT"), text, url });
-      return;
-    }
-    await navigator.clipboard.writeText(`${text} ${url}`);
-    showToast(t("Copied. Paste it anywhere."));
-  } catch (error) {
-    if (error?.name !== "AbortError") showToast(t("Sharing is not available here."));
-  }
-}
-
-/** On Sunday evening the week receipt opens once by itself, the moment the notification promised. */
-function maybeShowWeekReceipt() {
-  const now = new Date();
-  if (now.getDay() !== 0 || now.getHours() < 18) return;
-  const state = getFormState();
-  if (!hasCompleteSavedState(state)) return;
-  const summary = currentWeekSummary();
-  if (localStorage.getItem(WEEK_SEEN_KEY) === dateKey(summary.weekStart)) return;
-  openWeekReceipt();
-}
-
-function initWeekReceipt() {
-  document.querySelector("#weekOpen").addEventListener("click", openWeekReceipt);
-  document.querySelector("#weekClose").addEventListener("click", () => closeSheet());
-  document.querySelector("#weekShare").addEventListener("click", shareWeekReceipt);
-  enableSwipeToClose(document.querySelector("#weekSheet"));
-  // Tapping a check-in or week notification opens the matching sheet.
+// Tapping a check-in notification opens the check-in. Old week-receipt notifications open the start page.
+function initNotificationTaps() {
   onNotificationTap((event) => {
     const id = Number(event?.notification?.id);
-    if (id >= 7100 && id < 7200) openWeekReceipt();
+    if (id >= 7100 && id < 7200) showTab("start");
     else if (id >= 7000 && id < 7100) {
       showTab("start");
       renderToday();
@@ -879,10 +791,17 @@ function initToday() {
     showTab(event.currentTarget.dataset.action);
   });
   document.querySelector("#todayClose").addEventListener("click", () => closeSheet());
+  const info = document.querySelector("#todayInfo");
+  info.addEventListener("click", () => {
+    const open = info.getAttribute("aria-expanded") !== "true";
+    info.setAttribute("aria-expanded", String(open));
+    document.querySelector("#todayInfoText").classList.toggle("is-hidden", !open);
+    haptics.select();
+  });
   enableSwipeToClose(document.querySelector("#todaySheet"));
   // "Back to start" links on pages without their own tab.
   document.querySelectorAll(".page-back[data-go]").forEach((link) => {
-    link.addEventListener("click", () => showTab(link.dataset.go));
+    link.addEventListener("click", () => { if (!goBack()) showTab(link.dataset.go); });
   });
 }
 
@@ -901,7 +820,7 @@ function initActions() {
       closeSheet(false);
       if (action === "sos") showTab("sos");
       if (action === "plan") showTab("plan");
-      if (action === "craving" || action === "slip") openDiarySheet(newDiaryEntry(action));
+      if (action === "craving" || action === "slip") openDiarySheet(newDiaryEntry(action), { fixedKind: true });
     });
   });
   enableSwipeToClose(sheet);
@@ -1069,6 +988,16 @@ function goalDays(days) {
   return days === 1 ? t("1 day") : t("{n} days", { n: days });
 }
 
+/** Goal names as people say them: "2 years" instead of "730 days", days below one year. */
+function goalLabel(days) {
+  const years = days / 365.25;
+  if (days >= 365 && Math.abs(years - Math.round(years)) < 0.01) {
+    const n = Math.round(years);
+    return n === 1 ? t("1 year") : t("{n} years", { n });
+  }
+  return goalDays(Math.round(days));
+}
+
 function renderBoard(state, progress) {
   const board = document.querySelector("#board");
   if (!board) return;
@@ -1212,9 +1141,12 @@ function startValues(data) {
     ? t("{y} yr {m} mo", { y: data.years, m: data.months })
     : data.days === 1 ? t("1 day") : t("{n} days", { n: data.days });
   const third = data.third;
+  // Short on the card (it is half a phone wide), the exact value is in the info sheet.
   const thirdValue = third.kind === "life"
-    ? third.days > 0 ? t("{d} d {h} h", { d: third.days, h: third.hours }) : t("{h} h {m} min", { h: third.hours, m: third.minutes })
-    : third.kind === "rolls" ? t("{n} roll-ups", { n: third.value }) : `${third.value} ml`;
+    ? third.days >= 365 ? t("{y} yr {m} mo", { y: Math.floor(third.days / 365), m: Math.floor((third.days % 365) / 30.4) })
+    : third.days >= 100 ? t("{n} days", { n: third.days })
+    : third.days > 0 ? t("{d} d {h} h", { d: third.days, h: third.hours }) : t("{h} h {m} min", { h: third.hours, m: third.minutes })
+    : third.kind === "rolls" ? t("{n} roll-ups", { n: numberFormatter.format(third.value) }) : `${numberFormatter.format(third.value)} ml`;
   return { time, thirdValue };
 }
 
@@ -1237,10 +1169,12 @@ function renderStart(state, progress) {
   document.querySelector("#gaugeFill").setAttribute("stroke-dasharray", `${pct > 0 ? Math.max(pct, 1.5) : 0} 100`);
   document.querySelector("#gaugeValue").textContent = values.time;
   document.querySelector("#gaugeSub").textContent = !goals.started ? notYet : time.done ? "" : t("{time} until {goal}", {
-    time: formatTimeLeft(time.hoursLeft), goal: goalDays(time.target),
+    time: formatTimeLeft(time.hoursLeft), goal: goalLabel(time.target),
   });
-  document.querySelector("#gaugeFrom").textContent = time.from === 0 ? t("Quit day") : goalDays(time.from);
-  document.querySelector("#gaugeTo").textContent = goalDays(time.target);
+  document.querySelector("#gaugeFrom").textContent = time.from === 0 ? t("Quit day") : goalLabel(time.from);
+  document.querySelector("#gaugeTo").textContent = goalLabel(time.target);
+  // Long values ("12 yr 11 mo") get a smaller size so they stay inside the arc.
+  document.querySelector("#gaugeValue").dataset.size = values.time.length > 10 ? "long" : values.time.length > 7 ? "mid" : "";
   document.querySelector("#gauge").setAttribute("aria-label", `${t("Smoke-free")}: ${values.time}. ${document.querySelector("#gaugeSub").textContent}`);
 
   // Money card (tap: savings goal) and life card.
@@ -1257,14 +1191,16 @@ function renderStart(state, progress) {
   document.querySelector("#statThird").classList.toggle("is-long", values.thirdValue.length > 9);
   document.querySelector("#statThirdBar").style.width = `${Math.round(Math.min(1, third.ratio) * 100)}%`;
   document.querySelector("#statThirdSub").textContent = !goals.started ? notYet : third.done ? ""
-    : data.third.kind === "life" ? t("{time} until {goal}", { time: formatTimeLeft(third.left * 24), goal: goalDays(third.target) })
+    : data.third.kind === "life" ? t("{time} until {goal}", { time: formatTimeLeft(third.left * 24), goal: goalLabel(third.target) })
     : t("{time} until {goal}", { time: `${Math.ceil(third.left)}`, goal: `${third.target}` });
 
   // Check-in row: status and this week as dots.
   const checkins = readCheckins();
   const checkedIn = dateKey(new Date()) in checkins;
   document.querySelector("#boardTodayKey").classList.toggle("needs-checkin", !checkedIn);
-  document.querySelector("#checkinRowTitle").textContent = checkedIn ? t("Checked in for today") : t("Check in for today");
+  document.querySelector("#checkinRowTitle").textContent = checkedIn
+    ? t("Check-in done · {level}", { level: t(checkinLevelLabels[checkins[dateKey(new Date())]]) })
+    : t("Check in for today");
   const dots = document.querySelector("#checkinRowDots");
   dots.innerHTML = "";
   checkinWeek(checkins).forEach((day) => {
@@ -1300,15 +1236,77 @@ function renderStart(state, progress) {
   const hasNew = colors.unlocked.length > prefs.seen;
   colorTile.classList.toggle("is-new", hasNew);
   colorTile.dataset.badge = t("NEW");
-  document.querySelector("#tileColorSub").textContent = hasNew
-    ? t("NEW")
-    : t("{n} of {total}", { n: colors.unlocked.length, total: colors.total });
+  // The badge already says NEW, the subtitle always shows the count.
+  document.querySelector("#tileColorSub").textContent = t("{n} of {total}", { n: colors.unlocked.length, total: colors.total });
+}
+
+// ----------------------------------------------------------------- life back info
+// What the third start card means and where the number comes from, in three short lines.
+function openLifeSheet() {
+  const state = getFormState();
+  const progress = calculateProgress(state);
+  const data = boardData(state, progress);
+  const goals = boardGoals(state, progress, readGoal());
+  const third = data.third;
+  const rows = [];
+  let kicker;
+  let value;
+  let lead;
+  let note;
+  if (third.kind === "life") {
+    kicker = t("Life back");
+    value = third.days > 0 ? t("{d} d {h} h", { d: numberFormatter.format(third.days), h: third.hours }) : t("{h} h {m} min", { h: third.hours, m: third.minutes });
+    lead = t("On average, every cigarette costs about 20 minutes of life. These are the minutes from the cigarettes you did not smoke.");
+    rows.push([t("Cigarettes not smoked"), numberFormatter.format(Math.floor(progress.cigarettesAvoided || 0))]);
+    rows.push([t("Per cigarette"), t("about 20 min")]);
+    note = t("*An average across many people (UCL study, 2025), not a forecast for you personally. Sources in the legal notes.");
+  } else if (third.kind === "rolls") {
+    kicker = t("Not rolled");
+    value = t("{n} roll-ups", { n: numberFormatter.format(third.value) });
+    lead = t("Roll-ups you did not smoke since your quit day, based on your daily amount.");
+    rows.push([t("Roll-ups per day"), numberFormatter.format(Number(state.rollsPerDay) || 0)]);
+    note = t("Health research on life expectancy exists for factory cigarettes only, so roll-ups show what you did not use.");
+  } else {
+    kicker = t("Not vaped");
+    value = `${numberFormatter.format(third.value)} ml`;
+    lead = t("Liquid you did not vape since your quit day, based on your weekly amount.");
+    rows.push([t("ml / week"), `${numberFormatter.format(Number(state.mlPerWeek) || 0)} ml`]);
+    note = t("For vaping there is too little long-term data for a life-expectancy estimate, so you see what you did not use.");
+  }
+  if (goals.started && !goals.third.done) {
+    const next = third.kind === "life" ? goalLabel(goals.third.target) : numberFormatter.format(goals.third.target);
+    rows.push([t("Next goal"), next]);
+  }
+  document.querySelector("#lifeSheetKicker").textContent = kicker;
+  document.querySelector("#lifeSheetValue").textContent = data.started ? value : "--";
+  document.querySelector("#lifeSheetLead").textContent = data.started ? lead : t("Starts on your quit day");
+  const list = document.querySelector("#lifeSheetRows");
+  list.innerHTML = "";
+  rows.forEach(([label, text]) => {
+    const row = document.createElement("div");
+    const dt = document.createElement("dt");
+    dt.textContent = label;
+    const dd = document.createElement("dd");
+    dd.textContent = text;
+    row.append(dt, dd);
+    list.append(row);
+  });
+  document.querySelector("#lifeSheetNote").textContent = note;
+  openSheet(document.querySelector("#lifeSheet"));
 }
 
 function initBoard() {
+  // Share from the start page: the receipt is what gets shared, so it opens and shares right away.
+  document.querySelector("#startShare").addEventListener("click", () => {
+    haptics.select();
+    showTab("receipt");
+    window.setTimeout(() => elements.downloadButton.click(), 60);
+  });
+  document.querySelector("#lifeSheetClose").addEventListener("click", () => closeSheet());
+  enableSwipeToClose(document.querySelector("#lifeSheet"));
   const board = document.querySelector("#board") || document.querySelector("#startPage");
   board.addEventListener("click", (event) => {
-    const target = event.target.closest("#boardLight, #boardMoney, [data-go]");
+    const target = event.target.closest("#boardLight, #boardMoney, #boardLife, [data-go]");
     if (!target) return;
     haptics.select();
     if (target.dataset.go) {
@@ -1341,6 +1339,9 @@ function initBoard() {
     } else if (target.id === "boardMoney") {
       // The money line opens the savings goal: set one, or change it.
       document.querySelector("#goalButton").click();
+      return;
+    } else if (target.id === "boardLife") {
+      openLifeSheet();
       return;
     }
     saveBoardPrefs(prefs);
@@ -1388,7 +1389,8 @@ function darkReceiptInk() {
   const raw = getComputedStyle(receipt).getPropertyValue("--ink").trim();
   if (!/^#[0-9a-f]{6}$/i.test(raw)) return "#ffffff";
   const { h, s } = hexToHsl(raw);
-  return hslToHex(h, Math.min(s, 0.9), 0.84);
+  if (s < 0.05) return "#ffffff";
+  return hslToHex(h, Math.min(1, s * 1.1), 0.72);
 }
 
 async function createReceiptImageBlob() {
@@ -1813,8 +1815,9 @@ function hslToHex(h, s, l) {
 
 function applyCustomThemeVars(hex) {
   const { h, s, l } = hexToHsl(hex);
-  const inkL = Math.min(l, 0.37);
-  const inkS = Math.max(s, 0.35);
+  // Strong ink: saturated and not too dark, still well readable on the light paper.
+  const inkL = Math.min(l, 0.43);
+  const inkS = s < 0.05 ? s : Math.max(s, 0.72);
   const inkHex    = hslToHex(h, inkS, inkL);
   const mutedHex  = hslToHex(h, inkS * 0.65, Math.min(inkL + 0.22, 0.65));
   const paperHex  = hslToHex(h, Math.min(s * 0.8 + 0.1, 0.55), 0.964);
@@ -1825,6 +1828,8 @@ function applyCustomThemeVars(hex) {
   const bi = parseInt(inkHex.slice(5, 7), 16);
 
   const el = elements.receipt;
+  // Black or grey ink turns white on the dark receipt, not grey.
+  el.dataset.ink = s < 0.05 ? "neutral" : "";
   el.style.setProperty("--custom-ink", inkHex);
   el.style.setProperty("--custom-muted", mutedHex);
   el.style.setProperty("--custom-paper", paperHex);
@@ -1911,7 +1916,12 @@ receiptColorInput.addEventListener("input", onColorChange);
 receiptColorInput.addEventListener("change", onColorChange);
 
 
-const savedCustomColor = localStorage.getItem(CUSTOM_COLOR_KEY) || "#7c3aed";
+const storedCustomColor = (localStorage.getItem(CUSTOM_COLOR_KEY) || "#7c3aed").toLowerCase();
+const savedCustomColor = OLD_RECEIPT_COLORS[storedCustomColor] || storedCustomColor;
+if (savedCustomColor !== storedCustomColor) {
+  localStorage.setItem(CUSTOM_COLOR_KEY, savedCustomColor);
+  mirrorStorage(CUSTOM_COLOR_KEY);
+}
 customColorInput.value = savedCustomColor;
 receiptColorInput.value = savedCustomColor;
 applyCustomThemeVars(savedCustomColor);
@@ -2147,7 +2157,7 @@ function readReminders() {
     milestones: true,
     money: true,
     checkin: true,
-    weekly: true,
+    weekly: false,
     daily: { enabled: false, hour: 9, minute: 0 },
     ...readJSON(REMINDERS_KEY, {}),
   };
@@ -2185,7 +2195,7 @@ function notificationOptions(state, reminders) {
     plan: planForNotifications(),
     daily: reminders.daily,
     checkin: { enabled: reminders.checkin, hour: 20, doneKeys: Object.keys(readCheckins()) },
-    weekly: reminders.weekly,
+    weekly: false,
     goal: readGoal(),
     healthMilestones: (state.mode === "vaping" ? vapingMilestones : tobaccoMilestones)
       .map((m) => ({ ...m, title: t(m.title), detail: t(m.detail) })),
@@ -2203,7 +2213,6 @@ async function openAlertsSheet() {
   elements.alertMoney.checked = reminders.money;
   elements.alertDaily.checked = reminders.daily.enabled;
   document.querySelector("#alertCheckin").checked = reminders.checkin;
-  document.querySelector("#alertWeekly").checked = reminders.weekly;
   elements.alertTime.value = `${String(reminders.daily.hour).padStart(2, "0")}:${String(reminders.daily.minute).padStart(2, "0")}`;
   elements.alertTimeField.classList.toggle("is-hidden", !reminders.daily.enabled);
 
@@ -2230,7 +2239,7 @@ async function saveAlerts() {
     milestones: elements.alertMilestones.checked,
     money: elements.alertMoney.checked,
     checkin: document.querySelector("#alertCheckin").checked,
-    weekly: document.querySelector("#alertWeekly").checked,
+    weekly: false,
     daily: { enabled: elements.alertDaily.checked, hour, minute },
   };
 
@@ -2273,10 +2282,36 @@ function formatClock(seconds) {
 
 // SOS: one calm task. A circle grows and shrinks with the breath, the phase word and a 4-3-2-1 count
 // say what to do, a thin line shows the 3 minutes. "Done" is there from the first second, "Stop" too.
+// Everything is computed from the time since start on every frame (no CSS transitions), so the circle
+// never gets stuck: not on the first breath after the page appears, not after locking the phone.
+const BREATH_MIN = 0.55;
+const BREATH_CYCLE = breathPattern.reduce((sum, phase) => sum + phase.seconds, 0);
+let sosStartedAt = 0;
+let sosPhaseIndex = -1;
+let sosFrame = 0;
+let sosWakeLock = null;
+
 function enterSos() {
   renderSosPlan();
   stopSos();
   startSos();
+}
+
+/** Where in the breath we are: phase, seconds left in it and the circle size. Pure, from elapsed seconds. */
+function breathAt(elapsed) {
+  let t0 = elapsed % BREATH_CYCLE;
+  let from = BREATH_MIN;
+  for (let index = 0; index < breathPattern.length; index += 1) {
+    const phase = breathPattern[index];
+    if (t0 < phase.seconds) {
+      const p = t0 / phase.seconds;
+      const eased = 0.5 - 0.5 * Math.cos(Math.PI * p);
+      return { index, phase, left: phase.seconds - t0, scale: from + (phase.scale - from) * eased };
+    }
+    t0 -= phase.seconds;
+    from = phase.scale;
+  }
+  return { index: 0, phase: breathPattern[0], left: breathPattern[0].seconds, scale: BREATH_MIN };
 }
 
 function resetSosUi() {
@@ -2284,59 +2319,64 @@ function resetSosUi() {
   elements.breathPhase.textContent = t("Breathe in");
   elements.breathCount.textContent = "";
   elements.breathDisc.style.transition = "none";
-  elements.breathDisc.style.transform = "scale(0.55)";
+  elements.breathDisc.style.transform = `scale(${BREATH_MIN})`;
   elements.sosFill.style.transition = "none";
   elements.sosFill.style.width = "0%";
   elements.sosDone.textContent = t("Done, the urge is gone");
 }
 
-function startSos() {
-  if (sosTimer) return;
-  resetSosUi();
-  const startedAt = Date.now();
-  let phaseIndex = -1;
-  let phaseEndsAt = startedAt;
-  // The 3-minute line runs on its own; reading it never needs counting.
-  requestAnimationFrame(() => {
-    elements.sosFill.style.transition = `width ${SOS_SECONDS}s linear`;
-    elements.sosFill.style.width = "100%";
-  });
+function sosStep() {
+  const elapsed = Math.max(0, (performance.now() - sosStartedAt) / 1000);
+  const remaining = Math.max(0, SOS_SECONDS - elapsed);
+  elements.sosTimer.textContent = t("{time} left", { time: formatClock(Math.ceil(remaining)) });
+  elements.sosFill.style.width = `${Math.min(100, (elapsed / SOS_SECONDS) * 100)}%`;
 
-  const tick = () => {
-    const now = Date.now();
-    const elapsed = Math.floor((now - startedAt) / 1000);
-    const remaining = Math.max(0, SOS_SECONDS - elapsed);
-    elements.sosTimer.textContent = t("{time} left", { time: formatClock(remaining) });
+  if (remaining <= 0) {
+    stopSos();
+    elements.breathDisc.style.transform = "scale(1)";
+    elements.breathPhase.textContent = t("You made it");
+    elements.breathCount.textContent = "";
+    elements.sosDone.textContent = t("Save it");
+    haptics.success();
+    return;
+  }
 
-    if (now >= phaseEndsAt && remaining > 0) {
-      phaseIndex = (phaseIndex + 1) % breathPattern.length;
-      const phase = breathPattern[phaseIndex];
-      phaseEndsAt = now + phase.seconds * 1000;
-      elements.breathPhase.textContent = t(phase.label);
-      elements.breathDisc.style.transition = `transform ${phase.seconds}s ease-in-out`;
-      elements.breathDisc.style.transform = `scale(${phase.scale})`;
-      if (phaseIndex === 0) haptics.press();
-      else haptics.tap();
-    }
-    if (remaining > 0) {
-      elements.breathCount.textContent = String(Math.max(1, Math.ceil((phaseEndsAt - now) / 1000)));
-    }
-
-    if (remaining === 0) {
-      stopSos();
-      elements.breathPhase.textContent = t("You made it");
-      elements.breathCount.textContent = "";
-      elements.sosDone.textContent = t("Save it");
-      haptics.success();
-    }
-  };
-  tick();
-  sosTimer = window.setInterval(tick, 250);
+  const breath = breathAt(elapsed);
+  elements.breathDisc.style.transform = `scale(${breath.scale.toFixed(4)})`;
+  if (breath.index !== sosPhaseIndex) {
+    sosPhaseIndex = breath.index;
+    elements.breathPhase.textContent = t(breath.phase.label);
+    if (breath.index === 0) haptics.press();
+    else haptics.tap();
+  }
+  const count = String(Math.max(1, Math.ceil(breath.left)));
+  if (elements.breathCount.textContent !== count) elements.breathCount.textContent = count;
+  sosFrame = requestAnimationFrame(sosStep);
 }
 
+function startSos() {
+  if (sosFrame) return;
+  resetSosUi();
+  sosStartedAt = performance.now();
+  sosPhaseIndex = -1;
+  sosStep();
+  keepScreenOn();
+}
+
+// Keep the screen on for the three minutes where the browser allows it (the lock drops when the app is hidden).
+function keepScreenOn() {
+  navigator.wakeLock?.request?.("screen").then((lock) => { sosWakeLock = lock; }).catch(() => {});
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && sosFrame) keepScreenOn();
+});
+
 function stopSos() {
-  window.clearInterval(sosTimer);
-  sosTimer = null;
+  cancelAnimationFrame(sosFrame);
+  sosFrame = 0;
+  sosWakeLock?.release?.().catch(() => {});
+  sosWakeLock = null;
 }
 
 function finishSos() {
@@ -2681,8 +2721,8 @@ function newDiaryEntry(kind) {
 }
 
 /** Opens the entry sheet. fromSos: the craving is already counted and saved, only details are added. */
-function openDiarySheet(entry, { isNew = true, fromSos = false } = {}) {
-  diaryDraft = { ...entry, isNew, fromSos };
+function openDiarySheet(entry, { isNew = true, fromSos = false, fixedKind = false } = {}) {
+  diaryDraft = { ...entry, isNew, fromSos, fixedKind };
   renderDiarySheet();
   openSheet(elements.diarySheet);
 }
@@ -2690,8 +2730,12 @@ function openDiarySheet(entry, { isNew = true, fromSos = false } = {}) {
 // Two dropdowns: what happened, and what triggered it. Strength and note stay on old entries but are no longer asked.
 function renderDiarySheet() {
   const draft = diaryDraft;
-  elements.diarySheetTitle.textContent = draft.fromSos ? t("Craving resisted") : draft.isNew ? t("New entry") : t("Edit entry");
-  document.querySelector("#diaryKindField").classList.toggle("is-hidden", draft.fromSos || !draft.isNew);
+  // Coming from "+" or SOS, the user already said what happened: only ask for the trigger.
+  const kindKnown = draft.fromSos || draft.fixedKind;
+  elements.diarySheetTitle.textContent = kindKnown
+    ? draft.kind === "slip" ? t("You smoked. What set it off?") : t("Well done. What set it off?")
+    : draft.isNew ? t("New entry") : t("Edit entry");
+  document.querySelector("#diaryKindField").classList.toggle("is-hidden", kindKnown || !draft.isNew);
   const kind = document.querySelector("#diaryKindSelect");
   kind.value = draft.kind;
   const trigger = document.querySelector("#diaryTriggerSelect");
@@ -2703,11 +2747,19 @@ function renderDiarySheet() {
     trigger.append(option);
   });
   trigger.value = draft.trigger || "";
+  document.querySelector("#diaryNote").value = draft.note || "";
+  // Opening an existing entry shows when it happened.
+  const when = document.querySelector("#diaryWhen");
+  when.classList.toggle("is-hidden", draft.isNew && !draft.fromSos);
+  when.textContent = new Intl.DateTimeFormat(intlLocale(), {
+    weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit",
+  }).format(new Date(draft.at));
   elements.diarySlipHint.classList.toggle("is-hidden", draft.kind !== "slip");
 }
 
 function saveDiaryEntry() {
-  const { isNew, fromSos, ...entry } = diaryDraft;
+  diaryDraft.note = document.querySelector("#diaryNote").value.trim().slice(0, DIARY_NOTE_MAX);
+  const { isNew, fromSos, fixedKind, ...entry } = diaryDraft;
   upsertDiaryEntry(entry);
   if (isNew && !fromSos && entry.kind === "craving") addCraving();
   diaryDraft = null;
@@ -2941,7 +2993,7 @@ function initTools() {
   });
 
   elements.sosDone.addEventListener("click", finishSos);
-  elements.sosStop.addEventListener("click", () => showTab("start"));
+  elements.sosStop.addEventListener("click", () => goBack());
 
   document.querySelector("#planButton").addEventListener("click", () => showTab("plan"));
   document.querySelector("#planSave").addEventListener("click", savePlan);
@@ -3095,8 +3147,17 @@ function setActiveTab(name) {
 
 let planReturnTab = "start";
 
-function showTab(name) {
+// Pages you go into (not tabs) and where "back" leads from them.
+const SUB_PAGES = new Set(["health", "plan", "sos"]);
+let subReturnTab = "start";
+
+function showTab(name, { fromHistory = false } = {}) {
   if (name === "plan" && activeTab !== "plan") planReturnTab = activeTab || "start";
+  if (SUB_PAGES.has(name) && !SUB_PAGES.has(activeTab)) subReturnTab = activeTab || "start";
+  // A history entry per sub page, so Safari's own swipe from the left edge goes back.
+  if (SUB_PAGES.has(name) && name !== activeTab && !fromHistory) history.pushState({ smkfreePage: name }, "");
+  // Leaving a sub page another way (tab bar, a link): drop its history entry again.
+  if (SUB_PAGES.has(activeTab) && !SUB_PAGES.has(name) && !fromHistory && history.state?.smkfreePage) history.back();
   if (activeTab === "sos" && name !== "sos") stopSos();
   closeSheet(false);
   setActiveTab(name);
@@ -3106,6 +3167,68 @@ function showTab(name) {
   if (name === "plan") enterPlan();
   if (name === "diary") renderDiary();
   if (name === "health") renderHealth();
+}
+
+// ----------------------------------------------------------------- back (swipe from the left edge)
+function canGoBack() {
+  return Boolean(openSheetEl) || SUB_PAGES.has(activeTab);
+}
+
+/** One step back: close the open sheet, or leave the sub page. */
+function goBack({ fromHistory = false } = {}) {
+  if (openSheetEl) {
+    closeSheet();
+    return true;
+  }
+  if (SUB_PAGES.has(activeTab)) {
+    const target = activeTab === "plan" ? planReturnTab : subReturnTab;
+    showTab(SUB_PAGES.has(target) ? "start" : target, { fromHistory: true });
+    if (!fromHistory && history.state?.smkfreePage) history.back();
+    return true;
+  }
+  return false;
+}
+
+function initBackNavigation() {
+  // Safari in the browser: its edge swipe goes back in history.
+  window.addEventListener("popstate", () => {
+    if (canGoBack()) goBack({ fromHistory: true });
+  });
+  // The app and the home-screen version have no browser swipe: follow the finger from the left edge.
+  if (!isNativeApp && !isStandalone) return;
+  let start = null;
+  let page = null;
+  document.addEventListener("touchstart", (event) => {
+    const touch = event.touches[0];
+    start = touch.clientX < 24 && canGoBack() ? { x: touch.clientX, y: touch.clientY, dx: 0 } : null;
+    page = start ? (openSheetEl || document.querySelector(`.tab-page[data-tab="${activeTab}"]`)) : null;
+  }, { passive: true });
+  document.addEventListener("touchmove", (event) => {
+    if (!start) return;
+    const touch = event.touches[0];
+    const dx = touch.clientX - start.x;
+    const dy = Math.abs(touch.clientY - start.y);
+    if (dy > 40 && dy > dx) { start = null; page?.style.removeProperty("transform"); return; }
+    start.dx = Math.max(0, dx);
+    if (page && !openSheetEl) {
+      page.style.transition = "none";
+      page.style.transform = `translateX(${start.dx * 0.6}px)`;
+    }
+  }, { passive: true });
+  document.addEventListener("touchend", () => {
+    if (!start) return;
+    const done = start.dx > 80;
+    if (page && !openSheetEl) {
+      page.style.transition = "transform 200ms ease";
+      page.style.transform = "";
+      window.setTimeout(() => page && page.style.removeProperty("transition"), 220);
+    }
+    start = null;
+    if (done) {
+      haptics.select();
+      goBack();
+    }
+  });
 }
 
 function initTabs() {
@@ -3337,8 +3460,8 @@ initInteractiveReceipt();
 initBoard();
 initToday();
 initActions();
-initWeekReceipt();
+initNotificationTaps();
+initBackNavigation();
 initAppearance();
 appReady = true;
-maybeShowWeekReceipt();
 document.querySelector("#goalButton").addEventListener("click", renderGoalIdeas);
