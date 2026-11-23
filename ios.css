@@ -39,8 +39,9 @@
   --action-soft: rgba(0, 122, 255, 0.12);
 }
 
+/* Dark: when the phone is dark and the app is on "Auto", or when the app is set to "Dark". */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-appearance="light"]) {
     --ios-bg: #000000;
     --ios-card: #1c1c1e;
     --ios-card-2: #2c2c2e;
@@ -61,7 +62,29 @@
     --action-pressed: #0060c0;
     --action-soft: rgba(10, 132, 255, 0.2);
   }
+
 }
+:root[data-appearance="dark"] {
+    --ios-bg: #000000;
+    --ios-card: #1c1c1e;
+    --ios-card-2: #2c2c2e;
+    --ios-fill: rgba(118, 118, 128, 0.24);
+    --ios-fill-2: rgba(118, 118, 128, 0.36);
+    --ios-label: #ffffff;
+    --ios-secondary: rgba(235, 235, 245, 0.6);
+    --ios-tertiary: rgba(235, 235, 245, 0.3);
+    --ios-separator: rgba(84, 84, 88, 0.65);
+    --ios-blue: #0a84ff;
+    --ios-red: #ff453a;
+    --ios-green: #30d158;
+    --ios-glass: rgba(37, 37, 40, 0.72);
+    --ios-glass-border: rgba(255, 255, 255, 0.08);
+    --ios-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    --ring-2: #a6ff00;
+    --ring-3: #1eeaef;
+    --action-pressed: #0060c0;
+    --action-soft: rgba(10, 132, 255, 0.2);
+  }
 
 /* ------------------------------------------------------------- base */
 body {
@@ -1201,4 +1224,548 @@ button.stat-card .stat-card__label::after {
   color: var(--ios-label);
   font-size: 1rem;
   font-weight: 400;
+}
+
+/* ===================================================================== */
+/* Receipt in dark mode: dark card, the receipt color lightened so it    */
+/* stays readable. The shared image follows the mode it is shared in.  */
+/* ===================================================================== */
+/* Dark: when the phone is dark and the app is on "Auto", or when the app is set to "Dark". */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-appearance="light"]) .receipt {
+    /* Read the receipt's own ink (theme or custom color) once, then lighten it. */
+    --receipt-ink-dark: color-mix(in srgb, var(--ink) 45%, #ffffff);
+    /* Same hue, fixed high lightness: black turns near-white, purple light purple. */
+    --receipt-ink-dark: oklch(from var(--ink) 0.86 c h);
+    background: var(--ios-card);
+    box-shadow: none;
+    color: var(--receipt-ink-dark);
+    color-scheme: dark;
+  }
+  :root:not([data-appearance="light"]) .receipt:not([data-theme]),
+  :root:not([data-appearance="light"]) .receipt[data-theme=""] {
+    --receipt-ink-dark: #ffffff;
+  }
+  :root:not([data-appearance="light"]) .receipt > * {
+    --ink: var(--receipt-ink-dark);
+    --line: rgba(235, 235, 245, 0.28);
+    --muted: rgba(235, 235, 245, 0.6);
+  }
+  :root:not([data-appearance="light"]) .receipt--market .receipt__header p {
+    border-bottom-color: var(--receipt-ink-dark);
+  }
+  :root:not([data-appearance="light"]) .receipt .receipt__divider {
+    border-color: rgba(235, 235, 245, 0.18);
+  }
+
+}
+:root[data-appearance="dark"] .receipt {
+    /* Read the receipt's own ink (theme or custom color) once, then lighten it. */
+    --receipt-ink-dark: color-mix(in srgb, var(--ink) 45%, #ffffff);
+    /* Same hue, fixed high lightness: black turns near-white, purple light purple. */
+    --receipt-ink-dark: oklch(from var(--ink) 0.86 c h);
+    background: var(--ios-card);
+    box-shadow: none;
+    color: var(--receipt-ink-dark);
+    color-scheme: dark;
+  }
+  :root[data-appearance="dark"] .receipt:not([data-theme]),
+  :root[data-appearance="dark"] .receipt[data-theme=""] {
+    --receipt-ink-dark: #ffffff;
+  }
+  :root[data-appearance="dark"] .receipt > * {
+    --ink: var(--receipt-ink-dark);
+    --line: rgba(235, 235, 245, 0.28);
+    --muted: rgba(235, 235, 245, 0.6);
+  }
+  :root[data-appearance="dark"] .receipt--market .receipt__header p {
+    border-bottom-color: var(--receipt-ink-dark);
+  }
+  :root[data-appearance="dark"] .receipt .receipt__divider {
+    border-color: rgba(235, 235, 245, 0.18);
+  }
+
+/* Appearance override from Settings: native form controls follow it too. */
+:root[data-appearance="light"] { color-scheme: light; }
+:root[data-appearance="dark"] { color-scheme: dark; }
+
+/* Segmented control (Auto · Light · Dark), like in iOS settings. */
+.menu-row--segmented {
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  cursor: default;
+}
+
+.segmented {
+  display: inline-grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 2px;
+  border-radius: 9px;
+  padding: 2px;
+  background: var(--ios-fill);
+}
+
+.segmented button {
+  min-width: 0;
+  white-space: nowrap;
+  min-height: 30px;
+  border: 0;
+  border-radius: 7px;
+  padding: 0 10px;
+  background: transparent;
+  color: var(--ios-label);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  touch-action: manipulation;
+}
+
+.segmented button[aria-checked="true"] {
+  background: var(--ios-card);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  font-weight: 600;
+}
+
+:root:not([data-appearance="light"]) .segmented button[aria-checked="true"] {
+  background: var(--ios-card-2);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-appearance="dark"]) .segmented button[aria-checked="true"] {
+    background: #ffffff;
+  }
+}
+
+:root[data-appearance="light"] .segmented button[aria-checked="true"] {
+  background: #ffffff;
+}
+
+/* ===================================================================== */
+/* Edit details: one page with every field                               */
+/* ===================================================================== */
+.edit-title {
+  display: none;
+  margin: 4px 0 18px;
+}
+
+.wizard.is-editing .edit-title {
+  display: block;
+}
+
+.wizard.is-editing :is(.wizard__top, .progress-bar, .intro-logo, .info-button, .intro-points, #backButton, #nextButton) {
+  display: none;
+}
+
+.wizard.is-editing .step[data-mode="all"],
+.wizard.is-editing[data-mode="cigarettes"] .step[data-mode="cigarettes"],
+.wizard.is-editing[data-mode="ryo"] .step[data-mode="ryo"],
+.wizard.is-editing[data-mode="vaping"] .step[data-mode="vaping"] {
+  display: block;
+  margin-bottom: 26px;
+  animation: none;
+}
+
+.wizard.is-editing .step h2 {
+  margin-bottom: 10px;
+  font-size: 1.15rem;
+}
+
+.wizard.is-editing .intro-step {
+  min-height: 0;
+}
+
+.wizard.is-editing #receiptButton {
+  display: inline-flex;
+}
+
+.wizard.is-editing #receiptButton .icon {
+  display: none;
+}
+
+/* ===================================================================== */
+/* Install and Privacy/Legal pages in the native look                    */
+/* ===================================================================== */
+.legal-shell {
+  width: min(100% - 32px, 560px);
+  margin: 0 auto;
+  padding: 24px 0 48px;
+}
+
+.legal-card {
+  --ink: var(--ios-label);
+  --line: var(--ios-separator);
+  --muted: var(--ios-secondary);
+  border: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+}
+
+.legal-card .intro-logo {
+  margin-bottom: 14px;
+  font-size: 2rem;
+}
+
+.legal-card .kicker {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.legal-card h1 {
+  margin: 0 0 20px;
+  font-family: var(--ios-display);
+  font-size: 2.125rem;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  line-height: 1.12;
+  text-transform: none;
+}
+
+.legal-card section {
+  margin: 0 0 14px;
+  border: 0;
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: var(--ios-card);
+}
+
+.legal-card h2 {
+  margin: 0 0 8px;
+  font-family: var(--ios-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.legal-card p,
+.legal-card li {
+  color: var(--ios-label);
+  font-size: 0.97rem;
+  line-height: 1.45;
+  letter-spacing: 0;
+}
+
+.legal-card ol {
+  margin: 0;
+  padding-left: 1.3em;
+}
+
+.legal-card li + li {
+  margin-top: 6px;
+}
+
+.legal-card a {
+  color: var(--action);
+  text-decoration: none;
+}
+
+.legal-note {
+  color: var(--ios-secondary);
+  font-size: 0.85rem;
+}
+
+.legal-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+  margin-top: 22px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--action);
+  color: #ffffff !important;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-decoration: none;
+  text-transform: none;
+}
+
+.legal-card ol {
+  list-style: decimal;
+}
+
+.legal-card ol li {
+  display: list-item;
+  padding: 0;
+}
+
+.legal-card ol li::marker {
+  color: var(--ios-secondary);
+  font-weight: 600;
+}
+
+.legal-back {
+  font-family: var(--ios-font);
+  font-size: 1.0625rem;
+}
+
+/* ===================================================================== */
+/* Health page: icon per item, more air                                  */
+/* ===================================================================== */
+.health-list {
+  gap: 14px;
+  margin: 16px 0 24px;
+}
+
+.health-item {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.health-item__icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--action-soft);
+  color: var(--action);
+}
+
+.health-item__icon .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.health-item.is-done .health-item__icon {
+  background: color-mix(in srgb, var(--ios-green) 18%, transparent);
+  color: var(--ios-green);
+}
+
+.health-item__body {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.health-item .health-bar {
+  height: 8px;
+  margin: 2px 0;
+}
+
+.health-item.is-done .health-bar span,
+.health-item.is-done .health-item__percent {
+  background-color: var(--ios-green);
+}
+
+.health-item.is-done .health-item__percent {
+  background: none;
+  color: var(--ios-green);
+}
+
+.health-item__detail {
+  color: var(--ios-label);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.health-item__status {
+  color: var(--ios-secondary);
+  font-size: 0.82rem;
+}
+
+.health-summary {
+  border-radius: 18px;
+  padding: 16px;
+}
+
+/* ===================================================================== */
+/* Start: body card with the current 1-3 health items                    */
+/* ===================================================================== */
+.body-card {
+  display: grid;
+  gap: 12px;
+  border: 0;
+  border-radius: 18px;
+  padding: 14px 16px 16px;
+  background: var(--ios-card);
+  color: var(--ios-label);
+  font: inherit;
+  text-align: left;
+}
+
+.body-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.body-card__head strong {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.body-card__count {
+  color: var(--ios-secondary);
+  font-size: 0.85rem;
+}
+
+.body-card__count::after {
+  margin-left: 6px;
+  color: var(--ios-tertiary);
+  content: "›";
+}
+
+.body-card__list {
+  display: grid;
+  gap: 12px;
+}
+
+.body-row {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.body-row__icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--action-soft);
+  color: var(--action);
+}
+
+.body-row.is-done .body-row__icon {
+  background: color-mix(in srgb, var(--ios-green) 18%, transparent);
+  color: var(--ios-green);
+}
+
+.body-row__icon .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.body-row__main {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.body-row__top {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  font-size: 0.92rem;
+}
+
+.body-row__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.body-row__pct {
+  color: var(--ios-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.body-row.is-done .body-row__pct {
+  color: var(--ios-green);
+  font-weight: 700;
+}
+
+.body-row__bar {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--ios-fill);
+  overflow: hidden;
+}
+
+.body-row__bar i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--gauge);
+}
+
+.body-row.is-done .body-row__bar i {
+  background: var(--ios-green);
+}
+
+/* Two tiles left after the body card moved up: receipt and colors. */
+.ios-tiles {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#planSave:disabled {
+  opacity: 1;
+}
+
+/* Share image in dark mode: the QR code keeps a white plate so it stays scannable. */
+.receipt.is-capturing-dark .receipt-qr img {
+  border-radius: 10px;
+  padding: 6px;
+  background: #ffffff;
+}
+
+/* ===================================================================== */
+/* Receipt color sheet: preset swatches, locked ones show their day      */
+/* ===================================================================== */
+.color-swatches {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px 8px;
+  margin: 8px 0 14px;
+}
+
+.color-swatch {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  border: 0;
+  padding: 4px 0;
+  background: none;
+  color: var(--ios-label);
+  font: inherit;
+  font-size: 0.78rem;
+  touch-action: manipulation;
+}
+
+.color-swatch__dot {
+  position: relative;
+  display: block;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.color-swatch[aria-checked="true"] .color-swatch__dot {
+  box-shadow: 0 0 0 3px var(--ios-card), 0 0 0 5px var(--action);
+}
+
+.color-swatch.is-locked .color-swatch__dot {
+  opacity: 0.3;
+}
+
+.color-swatch.is-locked .color-swatch__dot::after {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  content: "🔒";
+  font-size: 1rem;
+  opacity: 1;
+}
+
+.color-swatch.is-locked .color-swatch__name {
+  color: var(--ios-secondary);
+}
+
+button.receipt-color {
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
 }

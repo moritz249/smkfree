@@ -3,7 +3,8 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#111111">
+    <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
     <meta
       name="description"
       content="Privacy and legal notes for SMKFREE, a private non-commercial smoke-free receipt tracker."
@@ -13,7 +14,14 @@
     <link rel="apple-touch-icon" href="assets/icon-180.png">
     <link rel="icon" href="assets/favicon-32x32.png" sizes="32x32" type="image/png">
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="stylesheet" href="styles.css?v=20261021-1">
+    <script>
+      try {
+        var appearance = localStorage.getItem("smkfree-appearance");
+        if (appearance === "light" || appearance === "dark") document.documentElement.dataset.appearance = appearance;
+      } catch (e) { /* follow the system */ }
+    </script>
+    <link rel="stylesheet" href="styles.css?v=20261123-36">
+    <link rel="stylesheet" href="ios.css?v=20261123-40">
   </head>
   <body>
     <main class="legal-shell scan-frame">

@@ -31,8 +31,15 @@
     <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
     <link rel="icon" href="assets/favicon-32x32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="assets/icon-180.png">
+    <script>
+      // Apply the saved appearance before the page paints, so it never flashes the other mode.
+      try {
+        var appearance = localStorage.getItem("smkfree-appearance");
+        if (appearance === "light" || appearance === "dark") document.documentElement.dataset.appearance = appearance;
+      } catch (e) { /* storage blocked: follow the system */ }
+    </script>
     <link rel="stylesheet" href="styles.css?v=20261123-19">
-    <link rel="stylesheet" href="ios.css?v=20261123-29">
+    <link rel="stylesheet" href="ios.css?v=20261123-40">
     <script src="assets/html2canvas.min.js" defer></script>
   </head>
   <body>
@@ -68,6 +75,10 @@
         <symbol id="i-brush" viewBox="0 0 24 24"><path d="M20 3l-8.5 8.5"/><path d="M11.5 11.5c-2.5-.5-5 1-5.5 4-.3 2-1.3 3.5-3 4.5 4.5 1 9.5-.5 10-4.5.2-1.6-.3-3.2-1.5-4z"/></symbol>
         <symbol id="i-code" viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></symbol>
         <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+        <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l2-5 4 10 2-5h6"/></symbol>
+        <symbol id="i-lungs" viewBox="0 0 24 24"><path d="M12 4v8M12 12c-1 1-2 1.5-3 1.5M12 12c1 1 2 1.5 3 1.5"/><path d="M9 7.5C6 8 4 11 4 15c0 2.5 1 4 3 4 2.5 0 2.5-2 2.5-4V8.5M15 7.5c3 .5 5 3.5 5 7.5 0 2.5-1 4-3 4-2.5 0-2.5-2-2.5-4V8.5"/></symbol>
+        <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+        <symbol id="i-brain" viewBox="0 0 24 24"><path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1V5a2 2 0 0 0-3-1zM15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1"/></symbol>
         <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
         <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M3 17a9 9 0 0 1 18 0"/><path d="M12 17l5-6"/><circle cx="12" cy="17" r="1.5"/></symbol>
         <symbol id="i-pause" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></symbol>
@@ -82,6 +93,8 @@
               <button type="button" id="languageButton" class="text-button" aria-label="Language" data-i18n-aria>DE</button>
             </span>
           </div>
+
+          <h1 class="ios-large-title edit-title" data-i18n>Edit details</h1>
 
           <div class="progress-bar" aria-hidden="true">
             <span id="progressFill"></span>
@@ -256,10 +269,10 @@
             <div class="receipt__edge" aria-hidden="true"></div>
             <header class="receipt__header">
               <span class="receipt__top-gap" aria-hidden="true"></span>
-              <label class="receipt-color" aria-label="Receipt color" data-i18n-aria>
-                <input type="color" id="receiptColor" value="#7c3aed">
+              <button type="button" class="receipt-color" id="receiptColorButton" aria-label="Receipt color" data-i18n-aria>
                 <svg class="icon receipt-color__brush" aria-hidden="true"><use href="#i-brush"></use></svg>
-              </label>
+              </button>
+              <input type="color" id="receiptColor" value="#7c3aed" hidden>
               <p>SMKFREE</p>
               <h2 data-i18n>Quit Receipt</h2>
               <span id="receiptDate">--</span>
@@ -401,6 +414,14 @@
               </div>
             </div>
 
+            <button type="button" class="body-card" data-go="health" id="bodyCard">
+              <span class="body-card__head">
+                <strong data-i18n>Body</strong>
+                <span class="body-card__count" id="bodyCardCount"></span>
+              </span>
+              <span class="body-card__list" id="bodyCardList"></span>
+            </button>
+
             <button type="button" class="checkin-row" data-go="today" id="boardTodayKey">
               <span class="checkin-row__text">
                 <strong id="checkinRowTitle"></strong>
@@ -414,11 +435,6 @@
                 <span class="ios-tile__icon"><svg class="icon" aria-hidden="true"><use href="#i-breath"></use></svg></span>
                 <strong data-i18n>SOS</strong>
                 <small data-i18n>Craving? Breathe for 3 minutes.</small>
-              </button>
-              <button type="button" class="ios-tile ios-tile--small" data-go="health">
-                <span class="ios-tile__icon"><svg class="icon" aria-hidden="true"><use href="#i-heart"></use></svg></span>
-                <strong data-i18n>Body</strong>
-                <small id="tileHealthSub"></small>
               </button>
               <button type="button" class="ios-tile ios-tile--small" data-go="receipt">
                 <span class="ios-tile__icon"><svg class="icon" aria-hidden="true"><use href="#i-receipt"></use></svg></span>
@@ -461,16 +477,24 @@
       <h2 id="moreSheetTitle" data-i18n>Settings</h2>
       <div class="menu-list">
         <button type="button" class="menu-row" id="editButton"><svg class="icon" aria-hidden="true"><use href="#i-pencil"></use></svg><span data-i18n>Edit details</span><span class="menu-row__value" aria-hidden="true">›</span></button>
-        <label class="menu-row" id="customColorLabel">
-          <input type="color" id="customColor" value="#7c3aed">
+        <button type="button" class="menu-row" id="customColorLabel">
           <svg class="icon" aria-hidden="true"><use href="#i-brush"></use></svg><span data-i18n>Receipt color</span><span class="menu-row__swatch" id="colorSwatch" aria-hidden="true"></span>
-        </label>
+        </button>
+        <input type="color" id="customColor" value="#7c3aed" hidden>
         <label class="menu-row" id="benefitsLabel">
           <input id="showBenefits" name="showBenefits" type="checkbox">
           <svg class="icon" aria-hidden="true"><use href="#i-heart"></use></svg><span data-i18n>Health benefits</span><span class="menu-row__value" id="benefitsValue">--</span>
         </label>
         <button type="button" class="menu-row" id="planButton"><svg class="icon" aria-hidden="true"><use href="#i-plan"></use></svg><span data-i18n>If-then plan</span><span class="menu-row__value" id="planValue">--</span></button>
         <button type="button" class="menu-row" id="alertsButton"><svg class="icon" aria-hidden="true"><use href="#i-bell"></use></svg><span data-i18n>Reminders</span><span class="menu-row__value" aria-hidden="true">›</span></button>
+        <div class="menu-row menu-row--segmented" id="appearanceRow">
+          <svg class="icon" aria-hidden="true"><use href="#i-sun"></use></svg><span data-i18n>Appearance</span>
+          <span class="segmented" role="radiogroup" aria-label="Appearance" data-i18n-aria>
+            <button type="button" role="radio" data-appearance="auto" data-i18n>Auto</button>
+            <button type="button" role="radio" data-appearance="light" data-i18n>Light</button>
+            <button type="button" role="radio" data-appearance="dark" data-i18n>Dark</button>
+          </span>
+        </div>
         <button type="button" class="menu-row" id="languageMenuButton"><svg class="icon" aria-hidden="true"><use href="#i-globe"></use></svg><span data-i18n>Language</span><span class="menu-row__value" id="languageValue">EN</span></button>
         <a class="menu-row is-hidden" id="receiptInstallRow" href="install.html"><svg class="icon" aria-hidden="true"><use href="#i-phone"></use></svg><span data-i18n>Install app</span><span class="menu-row__value" aria-hidden="true">›</span></a>
         <a class="menu-row" href="legal.html"><svg class="icon" aria-hidden="true"><use href="#i-lock"></use></svg><span data-i18n>Privacy / Legal</span><span class="menu-row__value" aria-hidden="true">›</span></a>
@@ -647,6 +671,16 @@
       </div>
     </section>
 
+    <section class="sheet" id="colorSheet" role="dialog" aria-modal="true" aria-labelledby="colorSheetTitle" hidden>
+      <div class="sheet__grip" aria-hidden="true"></div>
+      <h2 id="colorSheetTitle" data-i18n>Receipt color</h2>
+      <div class="color-swatches" id="colorSwatches" role="radiogroup" aria-labelledby="colorSheetTitle"></div>
+      <p class="step-hint" data-i18n>More colors unlock on smoke-free days.</p>
+      <div class="sheet__actions">
+        <button type="button" class="primary-button" id="colorClose" data-i18n>Close</button>
+      </div>
+    </section>
+
     <section class="sheet" id="actionSheet" role="dialog" aria-modal="true" aria-labelledby="actionSheetTitle" hidden>
       <div class="sheet__grip" aria-hidden="true"></div>
       <h2 id="actionSheetTitle" data-i18n>What's up?</h2>
@@ -703,6 +737,6 @@
 
 
 
-<script type="module" src="app.js?v=20261123-27"></script>
+<script type="module" src="app.js?v=20261123-40"></script>
   </body>
 </html>

@@ -62,7 +62,7 @@ export const haptics = {
 export const MIRRORED_KEYS = [
   "smoke-free-progress", "smkfree-theme", "smkfree-custom-color",
   "smkfree-goal", "smkfree-reminders", "smkfree-cravings", "smkfree-plan",
-  "smkfree-hint-receipt", "smkfree-diary", "smkfree-dev-type", "smkfree-board", "smkfree-checkins", "smkfree-week-seen",
+  "smkfree-hint-receipt", "smkfree-diary", "smkfree-dev-type", "smkfree-board", "smkfree-checkins", "smkfree-week-seen", "smkfree-appearance",
 ];
 
 export async function restoreMirroredStorage() {
@@ -184,6 +184,13 @@ export function onAppResume(callback) {
 export function onNotificationTap(callback) {
   const ln = plugin("LocalNotifications");
   if (ln) safe(() => ln.addListener("localNotificationActionPerformed", callback));
+}
+
+/** Status bar text: light on dark screens, dark on light screens (Capacitor: DARK = light text). */
+export async function setStatusBarDark(isDark) {
+  if (!isNativeApp) return;
+  const statusBar = plugin("StatusBar");
+  if (statusBar) await safe(() => statusBar.setStyle({ style: isDark ? "DARK" : "LIGHT" }));
 }
 
 export async function configureChrome() {

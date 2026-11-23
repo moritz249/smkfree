@@ -22,6 +22,7 @@ import {
   boardThemeStatus,
   weekSummary,
   boardGoals,
+  receiptColorStatus,
   PLAN_MAX_ITEMS,
 } from "./app-core.js";
 import {
@@ -39,6 +40,7 @@ import {
   requestNotificationPermission,
   restoreMirroredStorage,
   scheduleTestNotification,
+  setStatusBarDark,
   shareImageNative,
 } from "./native.js";
 import { applyTranslations, getLanguage, intlLocale, languages, nextLanguage, setLanguage, t } from "./i18n.js";
@@ -75,24 +77,24 @@ const modeNames = { cigarettes: "Cigarettes", ryo: "Roll-your-own", vaping: "Vap
 // dkfz.de/forschung/translationale-zentren/ncpc/stabsstelle-krebspraevention/rauchstopp
 // "hours" is the end of the range the source names (e.g. 2–12 weeks -> 12 weeks).
 const tobaccoMilestones = [
-  { hours: 1 / 3, label: "Pulse & blood pressure", title: "Heart rate and blood pressure drop", detail: "After 20 minutes your pulse and blood pressure go down." },
-  { hours: 12, label: "Oxygen in the blood", title: "Carbon monoxide back to normal", detail: "After 12 hours the carbon monoxide level in your blood matches a nonsmoker's." },
-  { hours: 2016, label: "Circulation & lungs", title: "Circulation and lungs work better", detail: "Within 2–12 weeks your circulation and lung function improve." },
-  { hours: 6570, label: "Cough & breath", title: "Less coughing, easier breathing", detail: "Within 1–9 months coughing and shortness of breath get better." },
-  { hours: 17520, label: "Heart attack risk", title: "Heart attack risk clearly lower", detail: "After 1–2 years your risk of a heart attack is clearly reduced." },
-  { hours: 43800, label: "Heart disease & stroke", title: "Heart disease and stroke risk halved", detail: "After 5 years the risk of coronary heart disease and stroke is half that of a smoker." },
-  { hours: 87600, label: "Lung cancer risk", title: "Lung cancer risk halved", detail: "After 10 years the risk of lung cancer is about half that of a smoker." },
-  { hours: 131400, label: "COPD risk", title: "COPD risk halved", detail: "After 15 years the risk of COPD is half that of a smoker." },
+  { hours: 1 / 3, label: "Pulse & blood pressure", icon: "i-pulse", title: "Heart rate and blood pressure drop", detail: "After 20 minutes your pulse and blood pressure go down." },
+  { hours: 12, label: "Oxygen in the blood", icon: "i-drop", title: "Carbon monoxide back to normal", detail: "After 12 hours the carbon monoxide level in your blood matches a nonsmoker's." },
+  { hours: 2016, label: "Circulation & lungs", icon: "i-lungs", title: "Circulation and lungs work better", detail: "Within 2–12 weeks your circulation and lung function improve." },
+  { hours: 6570, label: "Cough & breath", icon: "i-breath", title: "Less coughing, easier breathing", detail: "Within 1–9 months coughing and shortness of breath get better." },
+  { hours: 17520, label: "Heart attack risk", icon: "i-heart", title: "Heart attack risk clearly lower", detail: "After 1–2 years your risk of a heart attack is clearly reduced." },
+  { hours: 43800, label: "Heart disease & stroke", icon: "i-brain", title: "Heart disease and stroke risk halved", detail: "After 5 years the risk of coronary heart disease and stroke is half that of a smoker." },
+  { hours: 87600, label: "Lung cancer risk", icon: "i-shield", title: "Lung cancer risk halved", detail: "After 10 years the risk of lung cancer is about half that of a smoker." },
+  { hours: 131400, label: "COPD risk", icon: "i-lungs", title: "COPD risk halved", detail: "After 15 years the risk of COPD is half that of a smoker." },
 ];
 
 const vapingMilestones = [
-  { hours: 24, label: "First day", title: "First vape-free day", detail: "One day of practicing a new routine." },
-  { hours: 72, label: "Old routine", title: "Break a routine", detail: "Notice a moment you would usually vape." },
-  { hours: 168, label: "One week", title: "One week of choices", detail: "A week of practicing your plan." },
-  { hours: 336, label: "Your triggers", title: "Notice your triggers", detail: "Recognize situations linked to vaping." },
-  { hours: 720, label: "One month", title: "One month of practice", detail: "Your new routine has had time to grow." },
-  { hours: 2160, label: "Three months", title: "Keep building", detail: "Each vape-free choice adds to your progress." },
-  { hours: 8760, label: "One year", title: "A year of progress", detail: "A year of choosing your own next step." },
+  { hours: 24, label: "First day", icon: "i-sun", title: "First vape-free day", detail: "One day of practicing a new routine." },
+  { hours: 72, label: "Old routine", icon: "i-clock", title: "Break a routine", detail: "Notice a moment you would usually vape." },
+  { hours: 168, label: "One week", icon: "i-calendar", title: "One week of choices", detail: "A week of practicing your plan." },
+  { hours: 336, label: "Your triggers", icon: "i-target", title: "Notice your triggers", detail: "Recognize situations linked to vaping." },
+  { hours: 720, label: "One month", icon: "i-calendar", title: "One month of practice", detail: "Your new routine has had time to grow." },
+  { hours: 2160, label: "Three months", icon: "i-target", title: "Keep building", detail: "Each vape-free choice adds to your progress." },
+  { hours: 8760, label: "One year", icon: "i-sun", title: "A year of progress", detail: "A year of choosing your own next step." },
 ];
 
 const elements = {
@@ -644,6 +646,10 @@ function renderHealth() {
     const row = document.createElement("li");
     row.className = `health-item${item.done ? " is-done" : ""}`;
 
+    const icon = document.createElement("span");
+    icon.className = "health-item__icon";
+    icon.innerHTML = `<svg class="icon" aria-hidden="true"><use href="#${item.icon || "i-heart"}"></use></svg>`;
+
     const head = document.createElement("div");
     head.className = "health-item__head";
     const label = document.createElement("strong");
@@ -676,7 +682,10 @@ function renderHealth() {
       ? t("After {time}", { time: formatMilestoneTime(item.hours) })
       : t("Still {time} to go", { time: formatTimeLeft(item.hoursLeft) });
 
-    row.append(head, bar, detail, status);
+    const body = document.createElement("div");
+    body.className = "health-item__body";
+    body.append(head, bar, detail, status);
+    row.append(icon, body);
     list.append(row);
   });
 }
@@ -952,7 +961,8 @@ function readBoardPrefs() {
     theme: typeof raw.theme === "string" ? raw.theme : "receipt",
     metric: BOARD_METRICS.includes(raw.metric) ? raw.metric : "time",
     // How many unlocked colors the user has already seen; more than that shows "NEW" on the light key.
-    seen: Number.isInteger(raw.seen) && raw.seen > 0 ? raw.seen : 1,
+    // Colors you start with count as seen, so "NEW" only appears for colors earned later.
+    seen: Number.isInteger(raw.seen) && raw.seen > 0 ? raw.seen : boardThemeStatus(0).unlocked.length,
   };
 }
 
@@ -1118,6 +1128,41 @@ function renderBoard(state, progress) {
   document.querySelector("#boardTodayKey").classList.toggle("needs-checkin", !(dateKey(new Date()) in readCheckins()));
 }
 
+// ----------------------------------------------------------------- appearance (Auto · Light · Dark)
+const APPEARANCE_KEY = "smkfree-appearance";
+const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
+
+function readAppearance() {
+  const value = localStorage.getItem(APPEARANCE_KEY);
+  return value === "light" || value === "dark" ? value : "auto";
+}
+
+function applyAppearance(value = readAppearance()) {
+  const root = document.documentElement;
+  if (value === "auto") delete root.dataset.appearance;
+  else root.dataset.appearance = value;
+  document.querySelectorAll("#appearanceRow [data-appearance]").forEach((button) => {
+    button.setAttribute("aria-checked", String(button.dataset.appearance === value));
+  });
+  setStatusBarDark(value === "dark" || (value === "auto" && systemDark.matches));
+}
+
+function initAppearance() {
+  document.querySelectorAll("#appearanceRow [data-appearance]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const value = button.dataset.appearance;
+      if (value === "auto") localStorage.removeItem(APPEARANCE_KEY);
+      else localStorage.setItem(APPEARANCE_KEY, value);
+      mirrorStorage(APPEARANCE_KEY);
+      haptics.select();
+      applyAppearance(value);
+    });
+  });
+  // On "Auto", follow the phone when it switches (e.g. at sunset).
+  systemDark.addEventListener?.("change", () => applyAppearance());
+  applyAppearance();
+}
+
 // ----------------------------------------------------------------- native start page
 const RING_RADII = [88, 64, 40];
 const RING_WIDTH = 20;
@@ -1228,10 +1273,24 @@ function renderStart(state, progress) {
     dots.append(dot);
   });
 
-  // Tiles
+  // Body card: the most recent reached milestone and the next ones, three at most.
   const milestones = state.mode === "vaping" ? vapingMilestones : tobaccoMilestones;
   const health = recoveryProgress(milestones, state.notStoppedYet ? 0 : progress.elapsedHours);
-  document.querySelector("#tileHealthSub").textContent = t("{n} of {total}", { n: health.reached, total: health.total });
+  document.querySelector("#bodyCardCount").textContent = t("{n} of {total} reached", { n: health.reached, total: health.total });
+  const lastDone = health.items.filter((item) => item.done).slice(-1);
+  const upcoming = health.items.filter((item) => !item.done).slice(0, 3 - lastDone.length);
+  const bodyList = document.querySelector("#bodyCardList");
+  bodyList.innerHTML = "";
+  [...lastDone, ...upcoming].forEach((item) => {
+    const row = document.createElement("span");
+    row.className = `body-row${item.done ? " is-done" : ""}`;
+    row.innerHTML = `<span class="body-row__icon"><svg class="icon" aria-hidden="true"><use href="#${item.icon || "i-heart"}"></use></svg></span>`
+      + `<span class="body-row__main"><span class="body-row__top"><span class="body-row__label"></span><span class="body-row__pct"></span></span>`
+      + `<span class="body-row__bar"><i style="width:${item.percent}%"></i></span></span>`;
+    row.querySelector(".body-row__label").textContent = t(item.label);
+    row.querySelector(".body-row__pct").textContent = item.done ? "✓" : `${item.percent} %`;
+    bodyList.append(row);
+  });
 
   // Colors: accent palettes unlock on smoke-free days.
   const prefs = readBoardPrefs();
@@ -1316,11 +1375,33 @@ function canvasToBlob(canvas) {
   });
 }
 
+/** True when the app currently shows dark mode (setting "Dark", or "Auto" on a dark phone). */
+function isDarkMode() {
+  const setting = document.documentElement.dataset.appearance;
+  return setting === "dark" || (setting !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+}
+
+/** The receipt ink lightened for dark mode as a plain hex color (same hue, high lightness). */
+function darkReceiptInk() {
+  const receipt = elements.receipt;
+  if (!receipt.dataset.theme) return "#ffffff";
+  const raw = getComputedStyle(receipt).getPropertyValue("--ink").trim();
+  if (!/^#[0-9a-f]{6}$/i.test(raw)) return "#ffffff";
+  const { h, s } = hexToHsl(raw);
+  return hslToHex(h, Math.min(s, 0.9), 0.84);
+}
+
 async function createReceiptImageBlob() {
+  const dark = isDarkMode();
   elements.receipt.classList.add("is-capturing");
+  // The image library cannot read modern color functions, so the dark ink is passed as plain hex.
+  if (dark) {
+    elements.receipt.classList.add("is-capturing-dark");
+    elements.receipt.style.setProperty("--receipt-ink-dark", darkReceiptInk());
+  }
   try {
     const canvas = await html2canvas(elements.receipt, {
-      backgroundColor: "#fffefa",
+      backgroundColor: dark ? "#1c1c1e" : "#ffffff",
       scale: 2,
       useCORS: true,
       logging: false,
@@ -1328,7 +1409,8 @@ async function createReceiptImageBlob() {
     });
     return canvasToBlob(canvas);
   } finally {
-    elements.receipt.classList.remove("is-capturing");
+    elements.receipt.classList.remove("is-capturing", "is-capturing-dark");
+    elements.receipt.style.removeProperty("--receipt-ink-dark");
   }
 }
 
@@ -1558,6 +1640,7 @@ function resetApp() {
   applyCustomThemeVars(customColorInput.value);
   applyTheme("default");
   updateReceipt(false);
+  leaveEditing();
   showStep(0);
   // Clear the quick-pick highlight too, or "1 month ago" stays ticked next to an empty date.
   syncDateChips();
@@ -1569,6 +1652,7 @@ function resetApp() {
 elements.modeRadios.forEach((radio) => {
   radio.addEventListener("input", () => {
     currentMode = radio.value;
+    elements.form.dataset.mode = currentMode;
     syncAdvancedFields();
     updateModeCards();
     updateReceipt();
@@ -1619,6 +1703,13 @@ elements.nextButton.addEventListener("click", () => {
 elements.notStoppedYet.addEventListener("input", handleNotStoppedYet);
 elements.backButton.addEventListener("click", () => showStep(currentStep - 1));
 elements.receiptButton.addEventListener("click", (event) => {
+  if (isEditing()) {
+    if (!validateAllSteps()) return;
+    leaveEditing();
+    showReceipt(event, { animate: false, tab: "start" });
+    showToast(t("Changes saved"));
+    return;
+  }
   // The last data step prints directly, so it still has to be valid.
   if (!validateCurrentStep()) return;
   showReceipt(event);
@@ -1635,7 +1726,35 @@ elements.editButton.addEventListener("click", () => {
   elements.appShell.classList.remove("is-receipt-view");
   setButtonLabel(elements.editButton, t("Edit details"));
   stopReceiptRefresh();
+  // Editing is one page with every field, not the step-by-step onboarding.
+  elements.form.classList.add("is-editing");
+  elements.form.dataset.mode = currentMode;
+  setButtonLabel(elements.receiptButton, t("Save"));
 });
+
+function isEditing() {
+  return elements.form.classList.contains("is-editing");
+}
+
+/** In edit mode every visible step is checked, not only the current one. */
+function validateAllSteps() {
+  const saved = currentStep;
+  const steps = getActiveSteps();
+  for (let index = 0; index < steps.length; index += 1) {
+    currentStep = index;
+    if (!validateCurrentStep()) {
+      currentStep = saved;
+      return false;
+    }
+  }
+  currentStep = saved;
+  return true;
+}
+
+function leaveEditing() {
+  elements.form.classList.remove("is-editing");
+  setButtonLabel(elements.receiptButton, t("Print my receipt"));
+}
 elements.downloadButton.addEventListener("click", async () => {
   setButtonLabel(elements.downloadButton, t("Preparing"));
   try {
@@ -1733,6 +1852,58 @@ function onColorChange(event) {
   mirrorStorage(THEME_KEY);
   applyTheme("custom");
 }
+
+// ----------------------------------------------------------------- receipt color sheet
+const receiptColorNames = [
+  { id: "black", label: "Black" },
+  { id: "blue", label: "Blue" },
+  { id: "red", label: "Red" },
+  { id: "green", label: "Green" },
+  { id: "purple", label: "Purple" },
+  { id: "pink", label: "Pink" },
+  { id: "orange", label: "Orange" },
+  { id: "teal", label: "Teal" },
+];
+
+function renderColorSheet() {
+  const state = getFormState();
+  const days = boardData(state, calculateProgress(state)).days;
+  const current = localStorage.getItem(THEME_KEY) === "custom" ? (localStorage.getItem(CUSTOM_COLOR_KEY) || "").toLowerCase() : "";
+  const wrap = document.querySelector("#colorSwatches");
+  wrap.innerHTML = "";
+  receiptColorStatus(days).colors.forEach((color) => {
+    const name = t(receiptColorNames.find((item) => item.id === color.id)?.label || "Color");
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `color-swatch${color.unlocked ? "" : " is-locked"}`;
+    button.setAttribute("role", "radio");
+    button.setAttribute("aria-checked", String(color.hex.toLowerCase() === current));
+    button.setAttribute("aria-label", color.unlocked ? name : `${name}: ${t("From day {day}", { day: color.day })}`);
+    button.innerHTML = `<span class="color-swatch__dot" style="background:${color.hex}"></span><span class="color-swatch__name"></span>`;
+    button.querySelector(".color-swatch__name").textContent = color.unlocked ? name : t("From day {day}", { day: color.day });
+    button.addEventListener("click", () => {
+      if (!color.unlocked) {
+        haptics.warning();
+        showToast(t("Unlocks on day {day}", { day: color.day }));
+        return;
+      }
+      customColorInput.value = color.hex;
+      onColorChange();
+      haptics.select();
+      renderColorSheet();
+    });
+    wrap.append(button);
+  });
+}
+
+function openColorSheet() {
+  renderColorSheet();
+  openSheet(document.querySelector("#colorSheet"));
+}
+
+document.querySelector("#customColorLabel").addEventListener("click", openColorSheet);
+document.querySelector("#receiptColorButton").addEventListener("click", openColorSheet);
+document.querySelector("#colorClose").addEventListener("click", () => closeSheet());
 
 customColorInput.addEventListener("input", onColorChange);
 customColorInput.addEventListener("change", onColorChange);
@@ -2284,7 +2455,16 @@ function savePlan() {
   scheduleReminderSync();
   elements.planRemove.classList.toggle("is-hidden", planDraft.length === 0);
   haptics.success();
+  const button = document.querySelector("#planSave");
+  setButtonLabel(button, planDraft.length ? t("✓ Saved") : t("Plan removed"));
+  button.disabled = true;
   showToast(planDraft.length ? t("Plan saved. It shows up in SOS.") : t("Plan removed"));
+  // Short confirmation on the button, then back to where the plan was opened from.
+  window.setTimeout(() => {
+    button.disabled = false;
+    setButtonLabel(button, t("Save plan"));
+    if (activeTab === "plan") showTab(planReturnTab === "plan" ? "start" : planReturnTab);
+  }, 900);
 }
 
 function renderSosPlan() {
@@ -2824,7 +3004,7 @@ function initOnboarding() {
   let advancing = false;
   elements.modeRadios.forEach((radio) => {
     radio.addEventListener("click", () => {
-      if (advancing || !radio.closest("[data-autoadvance]")?.classList.contains("is-active")) return;
+      if (isEditing() || advancing || !radio.closest("[data-autoadvance]")?.classList.contains("is-active")) return;
       advancing = true;
       window.setTimeout(() => { advancing = false; advanceWizard(); }, 240);
     });
@@ -2913,7 +3093,10 @@ function setActiveTab(name) {
   });
 }
 
+let planReturnTab = "start";
+
 function showTab(name) {
+  if (name === "plan" && activeTab !== "plan") planReturnTab = activeTab || "start";
   if (activeTab === "sos" && name !== "sos") stopSos();
   closeSheet(false);
   setActiveTab(name);
@@ -3155,6 +3338,7 @@ initBoard();
 initToday();
 initActions();
 initWeekReceipt();
+initAppearance();
 appReady = true;
 maybeShowWeekReceipt();
 document.querySelector("#goalButton").addEventListener("click", renderGoalIdeas);

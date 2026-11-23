@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { boardThemeStatus, buildNotificationPlan, weekSummary } from "../app-core.js";
+import { boardThemeStatus, buildNotificationPlan, receiptColorStatus, weekSummary } from "../app-core.js";
 
 const state = { mode: "cigarettes", quitDate: "2026-11-01", cigarettesPerDay: 20, cigarettesPerPack: 20, pricePerPack: 10 };
 const off = { milestones: false, money: false };
@@ -30,10 +30,10 @@ test("the week receipt arrives on Sunday evenings", () => {
 });
 
 test("board colors unlock with smoke-free days", () => {
-  assert.deepEqual(boardThemeStatus(0).unlocked, ["receipt"]);
-  assert.equal(boardThemeStatus(0).next.theme, "amber");
-  assert.deepEqual(boardThemeStatus(7).unlocked, ["receipt", "amber", "blue", "green"]);
-  assert.equal(boardThemeStatus(7).next.day, 14);
+  assert.deepEqual(boardThemeStatus(0).unlocked, ["receipt", "amber"]);
+  assert.equal(boardThemeStatus(0).next.theme, "blue");
+  assert.deepEqual(boardThemeStatus(3).unlocked, ["receipt", "amber", "blue", "green"]);
+  assert.equal(boardThemeStatus(7).next.day, 30);
   assert.equal(boardThemeStatus(400).next, null);
   assert.equal(boardThemeStatus(400).unlocked.length, boardThemeStatus(400).total);
 });
@@ -64,4 +64,12 @@ test("weekSummary counts money only from the quit day on", () => {
   const summary = weekSummary({ state: { ...state, quitDate: "2026-11-25" } }, now);
   assert.equal(summary.freeDays, 0.5);
   assert.equal(weekSummary({ state: { ...state, notStoppedYet: true } }, now).moneySaved, 0);
+});
+
+test("receipt colors: three to start with, the rest unlock with smoke-free days", () => {
+  assert.equal(receiptColorStatus(0).unlocked, 3);
+  assert.equal(receiptColorStatus(0).total, 8);
+  assert.equal(receiptColorStatus(7).unlocked, 6);
+  assert.equal(receiptColorStatus(400).unlocked, 8);
+  assert.ok(receiptColorStatus(0).colors.every((c) => /^#[0-9a-f]{6}$/.test(c.hex)));
 });

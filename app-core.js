@@ -648,10 +648,10 @@ export function checkinWeek(checkins, now = new Date()) {
 // New display colors unlock on smoke-free days. A small reward, nothing is ever taken away again.
 export const BOARD_THEME_UNLOCKS = [
   { theme: "receipt", day: 0 },
-  { theme: "amber", day: 1 },
-  { theme: "blue", day: 3 },
-  { theme: "green", day: 7 },
-  { theme: "lcd", day: 14 },
+  { theme: "amber", day: 0 },
+  { theme: "blue", day: 1 },
+  { theme: "green", day: 3 },
+  { theme: "lcd", day: 7 },
   { theme: "gold", day: 30 },
 ];
 
@@ -725,4 +725,24 @@ export function boardGoals(state, progress, goal = null) {
     money: moneyGoal,
     third,
   };
+}
+
+// ----------------------------------------------------------------- receipt colors
+// A fixed palette instead of a free color picker. Three to start with, the rest are rewards.
+export const RECEIPT_COLORS = [
+  { id: "black", hex: "#111111", day: 0 },
+  { id: "blue", hex: "#1d4ed8", day: 0 },
+  { id: "red", hex: "#c62828", day: 0 },
+  { id: "green", hex: "#1b7f3b", day: 1 },
+  { id: "purple", hex: "#6d28d9", day: 3 },
+  { id: "pink", hex: "#c2185b", day: 7 },
+  { id: "orange", hex: "#c2410c", day: 14 },
+  { id: "teal", hex: "#0f766e", day: 30 },
+];
+
+/** Each preset color with whether it is unlocked after a number of smoke-free days. */
+export function receiptColorStatus(days) {
+  const reached = Math.max(0, Math.floor(Number(days) || 0));
+  const colors = RECEIPT_COLORS.map((color) => ({ ...color, unlocked: color.day <= reached }));
+  return { colors, unlocked: colors.filter((color) => color.unlocked).length, total: colors.length };
 }

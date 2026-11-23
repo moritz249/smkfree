@@ -13,8 +13,26 @@ Reihenfolge nach Priorität: Optik → Usability → Funktionen → Monetarisier
       Onboarding sichtbar. Tagebuch, Plan, SOS, Sheets, Sparziel und Bon-Hinweis angeglichen; Ausrutscher orange statt rot.
 - [x] Schritt 1 vereinfacht: nur Rauchstopp-Datum (vorausgefüllt mit heute) statt vier Schnellwahl-Knöpfen.
 - [x] Bon im App-Look: weiße Karte, Systemschrift, keine Papierstruktur; Aufbau und Bon-Farbe bleiben.
+- [x] Mehr → Darstellung: Auto · Hell · Dunkel (Segment-Schalter), wird vor dem ersten Zeichnen angewendet, Statusleiste folgt.
+- [x] Bon im Dunkelmodus: dunkle Karte, Bon-Farbe per OKLCH aufgehellt; geteiltes Bild bleibt weiß.
+- [x] Farben: zwei ab Start (Blau, Orange), dann Tag 1, 3, 7, 30.
+- [x] „Angaben ändern“ als eine Seite (Datum, Art, Verbrauch, Speichern); erstes Onboarding bleibt schrittweise.
+- [x] Installations- und Rechtliches-Seite im iOS-Look (Karten, große Titel, Darstellung wird übernommen).
+- [x] Bon-Farbe: 8 feste Farben statt freier Farbwahl, 3 ab Start, dann Tag 1, 3, 7, 14, 30 (Sheet mit Farbkreisen).
+- [x] Teilen-Bild folgt der Darstellung: im Dunkelmodus dunkler Bon (aufgehellte Bon-Farbe als Hex, QR auf weißem Feld).
+- [x] Plan speichern: Knopf zeigt „✓ Gespeichert“, dann zurück zur Ausgangsseite.
+- [x] Gesundheit: Icon je Punkt (Puls, Tropfen, Lunge, Herz, Gehirn, Schild), mehr Abstand, erreichte Punkte grün.
+- [x] Start: Körper-Karte mit zuletzt erreichtem und den nächsten zwei Punkten, Tipp öffnet die Gesundheitsseite.
 - [ ] Icons im SF-Symbols-Stil; Bon-Tab (Ziel/Teilen) und Wochen-Bon im Dunkelmodus feinschleifen; Test auf echtem iPhone.
 - [ ] Entscheiden: alter Bordcomputer-Code (`.obc`, `renderBoard`) löschen, wenn der neue Start bleibt.
+
+## V2 (nach dem ersten Release)
+
+- [ ] **Startseite modular**: Karten (Tacho, Gespart, Leben, Körper, Check-in, SOS, Bon, Farben) ein- und ausblenden und
+      per Ziehen sortieren, wie die Widgets auf dem iPhone-Homescreen. Reihenfolge lokal speichern; sinnvolle
+      Voreinstellung für neue Nutzer. Vorlage für die späteren nativen Widgets.
+- [ ] **Bon mit Stickern gestalten**: Sticker (z. B. Meilenstein-Abzeichen, Emojis, Stempel) auf den Bon setzen, die ins
+      Teilen-Bild übernommen werden; manche Sticker als Belohnung freischaltbar.
 
 ## Usability
 
