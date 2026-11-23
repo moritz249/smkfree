@@ -2175,3 +2175,17 @@ button.stat-card:active,
 .tab-button {
   border-radius: 16px;
 }
+
+/* App only: a solid strip behind the status bar, so content scrolling up never runs under the clock.
+   Capacitor on Android passes the inset as --safe-area-inset-top when env() is not available. */
+.is-native body::before {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 150;
+  height: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
+  background: var(--ios-bg);
+  content: "";
+  pointer-events: none;
+}
