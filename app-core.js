@@ -686,3 +686,43 @@ export function weekSummary({ checkins = {}, entries = [], state = {} }, now = n
     moneySaved: freeDays * dailySaving(state),
   };
 }
+
+// ----------------------------------------------------------------- board goals
+const LIFE_DAY_STEPS = [1, 2, 3, 7, 14, 30, 60, 90, 180, 365, 730];
+const COUNT_STEPS = [10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000];
+
+/** Next step above value and how far along the way from the previous step it is (0..1). */
+export function stepProgress(value, steps) {
+  const current = Math.max(0, Number(value) || 0);
+  const nextIndex = steps.findIndex((step) => step > current);
+  if (nextIndex < 0) return { from: steps[steps.length - 1], target: steps[steps.length - 1], ratio: 1, left: 0, done: true };
+  const from = nextIndex > 0 ? steps[nextIndex - 1] : 0;
+  const target = steps[nextIndex];
+  return { from, target, ratio: (current - from) / (target - from), left: target - current, done: false };
+}
+
+/**
+ * The next goal for each board line, so every number comes with "how far to the next one".
+ * goal: the user's savings goal { name, price } or null.
+ */
+export function boardGoals(state, progress, goal = null) {
+  const started = !state.notStoppedYet && Boolean(state.quitDate);
+  const days = started ? progress.elapsedHours / 24 : 0;
+  const time = stepProgress(days, dayThresholds);
+  const money = started ? progress.moneySaved : 0;
+  const price = Number(goal?.price) || 0;
+  const moneyGoal = goal?.name && price > 0 && money < price
+    ? { target: price, ratio: money / price, left: price - money, done: false, name: goal.name }
+    : { ...stepProgress(money, moneyThresholds), name: null };
+  const third = state.mode === "vaping"
+    ? stepProgress(started ? progress.mlNotVaped : 0, COUNT_STEPS)
+    : state.mode === "ryo"
+    ? stepProgress(started ? progress.rollsAvoided : 0, COUNT_STEPS)
+    : stepProgress(started ? progress.estimatedLifeMinutes / 1440 : 0, LIFE_DAY_STEPS);
+  return {
+    started,
+    time: { ...time, hoursLeft: time.left * 24 },
+    money: moneyGoal,
+    third,
+  };
+}

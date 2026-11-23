@@ -1,0 +1,1204 @@
+/* =====================================================================
+   SMKFREE – native iOS look (branch ios-design)
+   Loaded after styles.css. System font, Apple system colors, light and
+   dark mode, rounded cards, floating glass tab bar. The receipt keeps its
+   own paper look: it is not inside .tab-page or .sheet.
+   ===================================================================== */
+
+:root {
+  color-scheme: light dark;
+  --ios-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --ios-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --ios-rounded: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Roboto, sans-serif;
+
+  /* Light (iOS system colors) */
+  --ios-bg: #f2f2f7;
+  --ios-card: #ffffff;
+  --ios-card-2: #f2f2f7;
+  --ios-fill: rgba(120, 120, 128, 0.12);
+  --ios-fill-2: rgba(120, 120, 128, 0.2);
+  --ios-label: #000000;
+  --ios-secondary: rgba(60, 60, 67, 0.6);
+  --ios-tertiary: rgba(60, 60, 67, 0.3);
+  --ios-separator: rgba(60, 60, 67, 0.18);
+  --ios-blue: #007aff;
+  --ios-red: #ff3b30;
+  --ios-green: #34c759;
+  --ios-glass: rgba(255, 255, 255, 0.72);
+  --ios-glass-border: rgba(0, 0, 0, 0.06);
+  --ios-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+
+  /* Ring colors (Fitness-like). Palettes below swap them. */
+  --ring-1: #fa114f;
+  --ring-2: #7ed321;
+  --ring-3: #00c7e6;
+
+  /* The existing app uses these for actions. */
+  --action: var(--ios-blue);
+  --action-pressed: #0062cc;
+  --action-soft: rgba(0, 122, 255, 0.12);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ios-bg: #000000;
+    --ios-card: #1c1c1e;
+    --ios-card-2: #2c2c2e;
+    --ios-fill: rgba(118, 118, 128, 0.24);
+    --ios-fill-2: rgba(118, 118, 128, 0.36);
+    --ios-label: #ffffff;
+    --ios-secondary: rgba(235, 235, 245, 0.6);
+    --ios-tertiary: rgba(235, 235, 245, 0.3);
+    --ios-separator: rgba(84, 84, 88, 0.65);
+    --ios-blue: #0a84ff;
+    --ios-red: #ff453a;
+    --ios-green: #30d158;
+    --ios-glass: rgba(37, 37, 40, 0.72);
+    --ios-glass-border: rgba(255, 255, 255, 0.08);
+    --ios-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    --ring-2: #a6ff00;
+    --ring-3: #1eeaef;
+    --action-pressed: #0060c0;
+    --action-soft: rgba(10, 132, 255, 0.2);
+  }
+}
+
+/* ------------------------------------------------------------- base */
+body {
+  background: var(--ios-bg);
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  display: none;
+}
+
+/* Pages and sheets use the system colors; the receipt and onboarding keep theirs for now. */
+.tab-page,
+.sheet,
+.toast {
+  --ink: var(--ios-label);
+  --line: var(--ios-separator);
+  --muted: var(--ios-secondary);
+  --paper: var(--ios-bg);
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+}
+
+.tab-page {
+  border: 0;
+  padding: 0 16px 24px;
+  background: none;
+  box-shadow: none;
+}
+
+.tab-page h2 {
+  font-family: var(--ios-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.kicker {
+  border: 0;
+  padding: 0;
+  color: var(--ios-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.step-hint {
+  color: var(--ios-secondary);
+}
+
+/* ------------------------------------------------------------- buttons */
+.primary-button,
+.secondary-button {
+  min-height: 50px;
+  border: 0;
+  border-radius: 999px;
+  font-family: var(--ios-font);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  background-image: none;
+}
+
+.primary-button:not(.danger-button) {
+  border: 0;
+  background: var(--action);
+  color: #ffffff;
+}
+
+.secondary-button {
+  background: var(--ios-fill);
+  color: var(--action);
+}
+
+.primary-button:active,
+.secondary-button:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+
+.text-button {
+  min-height: 44px;
+  background: none;
+  color: var(--action);
+  font-family: var(--ios-font);
+  font-weight: 500;
+  text-decoration: none;
+  text-transform: none;
+}
+
+:is(.tab-page, .sheet) .chip {
+  border: 0;
+  border-radius: 999px;
+  background: var(--ios-fill);
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-transform: none;
+}
+
+:is(.tab-page, .sheet) .chip.is-active {
+  background: var(--ios-label);
+  color: var(--ios-bg);
+}
+
+/* ------------------------------------------------------------- cards and lists */
+:is(.tab-page, .sheet) :is(.health-summary, .health-item, .help-card, .menu-list, .diary-list, .summary-list, .plan-list, .sos-plan) {
+  border: 0;
+  border-radius: 14px;
+  background: var(--ios-card);
+  background-image: none;
+}
+
+:is(.tab-page, .sheet) .summary-list div,
+:is(.tab-page, .sheet) .menu-row {
+  border-color: var(--ios-separator);
+  text-transform: none;
+}
+
+.menu-row {
+  background: transparent;
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+}
+
+.help-card {
+  border: 0;
+}
+
+.health-bar,
+.sos-progress__bar {
+  border: 0;
+  border-radius: 6px;
+  background: var(--ios-fill);
+  overflow: hidden;
+}
+
+.health-bar span {
+  border-radius: 6px;
+}
+
+.checkin-day i {
+  border: 0;
+  border-radius: 6px;
+  background: var(--ios-fill);
+}
+
+:is(.tab-page, .sheet) :is(input, select, textarea) {
+  border: 0;
+  border-radius: 10px;
+  background: var(--ios-fill);
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+}
+
+/* ------------------------------------------------------------- sheets */
+.sheet {
+  border: 0;
+  border-radius: 28px 28px 0 0;
+  background: var(--ios-card);
+  background-image: none;
+  box-shadow: var(--ios-shadow);
+}
+
+.sheet h2 {
+  font-family: var(--ios-display);
+  font-weight: 700;
+}
+
+.sheet__grip {
+  width: 36px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--ios-tertiary);
+}
+
+.toast {
+  border: 0;
+  border-radius: 999px;
+  background: var(--ios-glass);
+  box-shadow: var(--ios-shadow);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  text-transform: none;
+}
+
+/* ===================================================================== */
+/* Floating glass tab bar with a separate round "+"                      */
+/* ===================================================================== */
+.tab-bar {
+  right: 0;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  left: 0;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: min(100% - 24px, 440px);
+  border: 0;
+  padding: 0;
+  background: none;
+}
+
+.tab-bar__pill {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  height: 64px;
+  border: 1px solid var(--ios-glass-border);
+  border-radius: 32px;
+  padding: 4px;
+  background: var(--ios-glass);
+  box-shadow: var(--ios-shadow);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+}
+
+.tab-button {
+  min-height: 0;
+  height: 100%;
+  border-radius: 28px;
+  gap: 2px;
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.tab-button .icon {
+  width: 24px;
+  height: 24px;
+}
+
+.tab-button.is-active {
+  background: var(--ios-fill);
+  color: var(--action);
+}
+
+.tab-button.is-active::after {
+  display: none;
+}
+
+.tab-button--action {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  min-height: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--action);
+  box-shadow: var(--ios-shadow);
+  color: #ffffff;
+}
+
+.tab-button--action .icon {
+  width: 28px;
+  height: 28px;
+  stroke-width: 2.5;
+}
+
+.tab-button--action:active {
+  background: var(--action-pressed);
+  box-shadow: var(--ios-shadow);
+  transform: scale(0.94);
+}
+
+.app-shell.is-receipt-view {
+  padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ===================================================================== */
+/* Start: large title, week rings, activity rings, metrics, tiles        */
+/* ===================================================================== */
+.start-page {
+  display: grid;
+  gap: 20px;
+  padding-top: 0;
+}
+
+.start-page[hidden] {
+  display: none;
+}
+
+.ios-head {
+  display: grid;
+  gap: 2px;
+}
+
+.ios-eyebrow {
+  margin: 0;
+  color: var(--ios-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.ios-large-title {
+  margin: 0;
+  font-family: var(--ios-display);
+  font-size: 2.125rem;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  line-height: 1.1;
+}
+
+/* Gauge: one arc, one accent color. */
+.start-page {
+  --gauge: var(--ios-blue);
+}
+
+.gauge {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  margin: 4px 0 0;
+}
+
+.gauge__svg {
+  width: min(84vw, 330px);
+  height: auto;
+  overflow: visible;
+}
+
+.gauge__track,
+.gauge__fill {
+  fill: none;
+  stroke-linecap: round;
+  stroke-width: 16;
+}
+
+.gauge__track {
+  stroke: var(--ios-fill);
+}
+
+.gauge__fill {
+  stroke: var(--gauge);
+  transition: stroke-dasharray 900ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.gauge__center {
+  position: absolute;
+  bottom: 22px;
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  text-align: center;
+}
+
+.gauge__label {
+  color: var(--ios-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.gauge__value {
+  font-family: var(--ios-rounded);
+  font-size: clamp(2.4rem, 12vw, 3.2rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.gauge__sub {
+  color: var(--ios-secondary);
+  font-size: 0.85rem;
+}
+
+.gauge__ends {
+  display: flex;
+  justify-content: space-between;
+  width: min(84vw, 330px);
+  margin-top: 2px;
+  padding: 0 6px;
+  color: var(--ios-tertiary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Two calm cards: money and life back. */
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.stat-card {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  min-width: 0;
+  border: 0;
+  border-radius: 18px;
+  padding: 14px;
+  background: var(--ios-card);
+  color: var(--ios-label);
+  font: inherit;
+  text-align: left;
+}
+
+button.stat-card {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+button.stat-card .stat-card__label::after {
+  margin-left: 4px;
+  color: var(--ios-tertiary);
+  content: "›";
+}
+
+.stat-card__label {
+  color: var(--ios-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.stat-card__value {
+  overflow: hidden;
+  font-family: var(--ios-rounded);
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stat-card__bar {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--ios-fill);
+  overflow: hidden;
+}
+
+.stat-card__bar i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--gauge);
+}
+
+.stat-card__sub {
+  color: var(--ios-secondary);
+  font-size: 0.78rem;
+}
+
+/* Check-in row: like a settings row with this week as dots. */
+.checkin-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  border: 0;
+  border-radius: 18px;
+  padding: 14px 16px;
+  background: var(--ios-card);
+  color: var(--ios-label);
+  font: inherit;
+  text-align: left;
+}
+
+.checkin-row__text {
+  display: grid;
+  gap: 8px;
+}
+
+.checkin-row__text strong {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.checkin-row.needs-checkin strong::before {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin: 0 8px 1px 0;
+  border-radius: 50%;
+  background: var(--gauge);
+  content: "";
+}
+
+.checkin-row__dots {
+  display: flex;
+  gap: 6px;
+}
+
+.checkin-row__dots i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ios-fill-2);
+}
+
+.checkin-row__dots i.is-on {
+  background: var(--gauge);
+}
+
+.checkin-row__dots i.is-today {
+  outline: 2px solid var(--ios-tertiary);
+  outline-offset: 2px;
+}
+
+.checkin-row__chevron {
+  color: var(--ios-tertiary);
+  font-size: 1.4rem;
+}
+
+/* Tiles: Control Center style, round and glassy. */
+.ios-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ios-tile {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  align-content: end;
+  justify-items: start;
+  min-height: 104px;
+  border: 0;
+  border-radius: 26px;
+  padding: 14px 16px;
+  background: var(--ios-card);
+  color: var(--ios-label);
+  font: inherit;
+  text-align: left;
+  touch-action: manipulation;
+  transition: transform 120ms ease;
+}
+
+.ios-tile:active {
+  transform: scale(0.96);
+}
+
+.ios-tile__icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  margin-bottom: auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ios-fill);
+  color: var(--ios-label);
+}
+
+.ios-tile__icon .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.ios-tile strong {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.ios-tile small {
+  color: var(--ios-secondary);
+  font-size: 0.82rem;
+}
+
+.ios-tile--sos {
+  grid-column: 1 / -1;
+  min-height: 84px;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  align-content: center;
+  column-gap: 14px;
+  background: var(--ios-red);
+  color: #ffffff;
+}
+
+.ios-tile--sos .ios-tile__icon {
+  grid-row: span 2;
+  margin: 0;
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+.ios-tile--sos small {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Today tile: blue dot until today's check-in is done. */
+.ios-tile.needs-checkin::after,
+.ios-tile.is-new::after {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  content: "";
+}
+
+.ios-tile.needs-checkin::after {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--action);
+}
+
+.ios-tile.is-new::after {
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: var(--action);
+  color: #ffffff;
+  content: attr(data-badge);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+/* Accent palettes, unlocked as rewards (same ids as the old display colors). */
+.start-page[data-palette="amber"] { --gauge: #ff9f0a; }
+.start-page[data-palette="blue"] { --gauge: #5e5ce6; }
+.start-page[data-palette="green"] { --gauge: var(--ios-green); }
+.start-page[data-palette="lcd"] { --gauge: var(--ios-label); }
+.start-page[data-palette="gold"] { --gauge: #ffcc00; }
+
+/* Health page back link and pages without a title row */
+.page-back {
+  font-weight: 500;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring-fill { transition: none; }
+}
+
+/* The receipt stays a paper receipt in both modes: its own ink, never the page text color. */
+.receipt-feed,
+.receipt {
+  color: var(--ink);
+  color-scheme: light;
+}
+
+.menu-row--danger {
+  color: var(--ios-red);
+}
+
+/* Variant B tiles: SOS wide, then three small ones in a row. */
+.ios-tiles {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ios-tile--small {
+  min-height: 96px;
+  border-radius: 22px;
+  padding: 12px;
+}
+
+.ios-tile--small .ios-tile__icon {
+  width: 32px;
+  height: 32px;
+}
+
+.ios-tile--small strong {
+  font-size: 0.92rem;
+}
+
+.ios-tile--small small {
+  font-size: 0.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gauge__fill { transition: none; }
+}
+
+.stat-card__value.is-long {
+  font-size: 1.15rem;
+  line-height: 1.2;
+  white-space: normal;
+}
+
+/* ===================================================================== */
+/* Onboarding (wizard) in the native look                                */
+/* ===================================================================== */
+.wizard {
+  --ink: var(--ios-label);
+  --line: var(--ios-separator);
+  --muted: var(--ios-secondary);
+  --paper: var(--ios-bg);
+  position: static;
+  border: 0;
+  padding: 8px 16px 16px;
+  background: none;
+  box-shadow: none;
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+}
+
+.wizard__top {
+  margin-bottom: 10px;
+  border-bottom: 0;
+  padding-bottom: 0;
+  color: var(--ios-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.progress-bar {
+  height: 4px;
+  margin-bottom: 28px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--ios-fill);
+}
+
+.progress-bar span {
+  border-radius: 2px;
+  background: var(--action);
+  animation: none;
+}
+
+.progress-bar strong {
+  display: none;
+}
+
+.wizard .step h2 {
+  margin: 0 0 16px;
+  font-family: var(--ios-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  text-transform: none;
+}
+
+.intro-logo {
+  margin-bottom: 18px;
+  border-bottom-color: var(--action);
+  color: var(--ios-label);
+  font-family: var(--ios-display);
+}
+
+.info-button {
+  border: 0;
+  border-radius: 50%;
+  background: var(--ios-fill);
+  color: var(--action);
+  font-family: var(--ios-font);
+  font-weight: 600;
+}
+
+.intro-points {
+  border-top: 0;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: var(--ios-card);
+}
+
+.intro-points .icon {
+  color: var(--action);
+}
+
+.wizard label {
+  color: var(--ios-secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.wizard input,
+.wizard select {
+  min-height: 52px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--ios-card);
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+  font-size: 1.0625rem;
+}
+
+.wizard input:focus,
+.wizard select:focus {
+  box-shadow: 0 0 0 3px var(--action-soft);
+}
+
+.wizard .chip {
+  border: 0;
+  border-radius: 999px;
+  background: var(--ios-card);
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-transform: none;
+}
+
+.wizard .chip.is-active {
+  background: var(--action);
+  color: #ffffff;
+}
+
+.stepper {
+  grid-template-columns: 52px minmax(0, 1fr) 52px;
+  gap: 8px;
+}
+
+.stepper input {
+  border: 0;
+  border-radius: 12px;
+  font-family: var(--ios-rounded);
+  font-weight: 600;
+}
+
+.stepper__button {
+  min-height: 52px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ios-fill);
+  color: var(--action);
+  font-family: var(--ios-font);
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.stepper__button:active {
+  background: var(--ios-fill-2);
+  transform: scale(0.94);
+}
+
+.money-field span {
+  color: var(--ios-secondary);
+}
+
+.mode-card {
+  border: 0;
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: var(--ios-card);
+  color: var(--ios-label);
+}
+
+.mode-card strong {
+  font-family: var(--ios-font);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.mode-card.is-active {
+  box-shadow: inset 0 0 0 2px var(--action);
+  background: var(--action-soft);
+  color: var(--ios-label);
+}
+
+.mode-card.is-active span {
+  color: var(--ios-secondary);
+}
+
+.mode-card .icon {
+  color: var(--action);
+}
+
+.toggle-field {
+  border: 0;
+  border-radius: 14px;
+  background: var(--ios-card);
+  color: var(--ios-label);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.toggle-field input {
+  accent-color: var(--action);
+}
+
+.extras-toggle {
+  border-bottom: 0;
+  color: var(--action);
+  font-family: var(--ios-font);
+  font-size: 0.9rem;
+  text-transform: none;
+}
+
+.field-error {
+  color: var(--ios-red);
+}
+
+@media (max-width: 620px) {
+  .wizard__actions {
+    margin: 0 -16px -16px;
+    border-top: 0;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: var(--ios-bg);
+  }
+}
+
+.site-footer a {
+  color: var(--ios-secondary);
+  font-family: var(--ios-font);
+  text-transform: none;
+}
+
+/* First-run hint above the receipt: a native card, not a paper slip. */
+.receipt-hint {
+  border: 0;
+  border-radius: 14px;
+  background: var(--ios-card);
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+}
+
+/* While the onboarding is open (also via "Edit details"), it is the only thing on screen. */
+.stage:not(.is-receipt-only) :is(.receipt-wrap, .tab-page, .tab-bar) {
+  display: none;
+}
+
+.toggle-field {
+  align-items: center;
+}
+
+.toggle-field input {
+  margin: 0;
+}
+
+.toggle-field > span {
+  color: var(--ios-label);
+}
+
+/* ---------- details on the remaining pages ---------- */
+.sheet label,
+.tab-page label {
+  color: var(--ios-secondary);
+  text-transform: none;
+}
+
+/* Goal ideas: selected = blue ring, no check glyph squeezing the label. */
+.goal-ideas .chip.is-active {
+  box-shadow: inset 0 0 0 2px var(--action);
+  background: var(--action-soft);
+  color: var(--ios-label);
+}
+
+.goal-ideas .chip.is-active::before {
+  content: none;
+}
+
+/* Diary: a slip is just an entry, not a red warning. */
+.diary-entry--slip .diary-entry__text,
+.diary-entry--slip {
+  color: var(--ios-label);
+}
+
+.diary-entry--slip .diary-entry__text::before {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: #ff9f0a;
+  content: "";
+}
+
+.plan-list__if {
+  text-transform: none;
+}
+
+.sos-progress__bar span {
+  background: var(--action);
+}
+
+/* Week boxes in the check-in sheet: accent shades instead of greens. */
+.checkin-day.is-level-0 i { background: color-mix(in srgb, var(--action) 30%, transparent); }
+.checkin-day.is-level-1 i { background: color-mix(in srgb, var(--action) 50%, transparent); }
+.checkin-day.is-level-2 i { background: color-mix(in srgb, var(--action) 75%, transparent); }
+.checkin-day.is-level-3 i { background: var(--action); }
+
+.checkin-day.is-today i {
+  outline-color: var(--ios-label);
+}
+
+/* ===================================================================== */
+/* Receipt: white card in the app font, same layout as before            */
+/* ===================================================================== */
+.receipt,
+.receipt--market {
+  border: 0;
+  border-radius: 20px;
+  background: #ffffff;
+  background-image: none;
+  box-shadow: var(--ios-shadow);
+  font-family: var(--ios-font);
+  letter-spacing: 0;
+}
+
+.receipt::before {
+  display: none;
+}
+
+.receipt *,
+.receipt--market * {
+  font-family: var(--ios-font);
+  letter-spacing: 0;
+}
+
+.receipt--market .receipt__header p {
+  font-family: var(--ios-display);
+  font-weight: 800;
+  letter-spacing: -0.06em;
+  transform: none;
+}
+
+.receipt--market .receipt__header h2 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.receipt #daysFree,
+.receipt .receipt__total strong,
+.receipt dd {
+  font-variant-numeric: tabular-nums;
+}
+
+.receipt #daysFree {
+  font-family: var(--ios-rounded);
+  font-weight: 700;
+}
+
+.receipt__divider {
+  border-color: rgba(60, 60, 67, 0.18);
+}
+
+.receipt-feed::before,
+.receipt-feed::after {
+  display: none;
+}
+
+/* ===================================================================== */
+/* Card insets: content never touches the card edge (iOS: 16px inset)    */
+/* ===================================================================== */
+:is(.tab-page, .sheet) :is(.diary-list, .plan-list, .summary-list) {
+  overflow: hidden;
+  padding: 0;
+}
+
+.diary-day {
+  margin: 0;
+  padding: 12px 16px 4px;
+  color: var(--ios-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.diary-entry {
+  grid-template-columns: minmax(0, 1fr) 44px;
+  align-items: center;
+  margin-left: 16px;
+  border-bottom: 1px solid var(--ios-separator);
+}
+
+.diary-entry:last-child {
+  border-bottom: 0;
+}
+
+.diary-entry__main {
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  min-height: 48px;
+  padding: 12px 0;
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+  text-align: left;
+}
+
+.diary-entry__time {
+  color: var(--ios-secondary);
+  white-space: nowrap;
+}
+
+.diary-entry__delete {
+  min-height: 44px;
+  color: var(--ios-tertiary);
+}
+
+/* Settings-style rows: 16px inset, separators start after the icon. */
+.menu-list {
+  overflow: hidden;
+  border-top: 0;
+  padding: 0;
+}
+
+.menu-row {
+  min-height: 50px;
+  border-bottom: 0;
+  padding: 0 16px;
+  box-shadow: inset 0 -1px 0 var(--ios-separator);
+}
+
+.menu-row:last-child {
+  box-shadow: none;
+}
+
+.plan-list li {
+  border-bottom: 1px solid var(--ios-separator);
+  padding: 12px 16px;
+}
+
+.plan-list li:last-child {
+  border-bottom: 0;
+}
+
+.summary-list div {
+  border-bottom: 1px solid var(--ios-separator);
+  padding: 12px 16px;
+}
+
+.summary-list div:last-child {
+  border-bottom: 0;
+}
+
+.sos-page .sos-plan,
+:is(.tab-page, .sheet) .sos-plan {
+  margin-top: 0;
+  border-top: 0;
+  padding: 12px 16px;
+}
+
+.health-summary,
+.help-card {
+  padding: 14px 16px;
+}
+
+/* Rows that are <label> elements (color picker, toggles) keep the normal text color. */
+.tab-page label.menu-row,
+.sheet label.toggle-field,
+.tab-page label.toggle-field {
+  color: var(--ios-label);
+  font-size: 1rem;
+  font-weight: 400;
+}

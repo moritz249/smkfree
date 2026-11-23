@@ -21,6 +21,7 @@ import {
   normalizeCheckins,
   boardThemeStatus,
   weekSummary,
+  boardGoals,
   PLAN_MAX_ITEMS,
 } from "./app-core.js";
 import {
@@ -415,7 +416,8 @@ function setFormState(state) {
   if (radio) radio.checked = true;
   updateModeCards();
 
-  elements.quitDate.value = state.quitDate || "";
+  // Most people start today: the date is filled in, and can still be changed.
+  elements.quitDate.value = state.quitDate || (state.notStoppedYet ? "" : todayAsInputValue());
   elements.quitDate.max = todayAsInputValue();
   elements.notStoppedYet.checked = Boolean(state.notStoppedYet);
   elements.advancedMode.checked = currentAdvanced;
@@ -940,6 +942,7 @@ function updateReceipt(shouldSave = true) {
   renderExtrasToggles(state);
   renderInteractive(state, progress);
   renderBoard(state, progress);
+  renderStart(state, progress);
 }
 
 // ----------------------------------------------------------------- on-board computer
@@ -1010,12 +1013,60 @@ function boardTexts(data, state) {
   return { time, money, third: thirdText };
 }
 
+const BOARD_BAR_CELLS = 12;
+
+/** One display line: label and goal on top, the big value, a segment bar and what is left. */
+function renderBoardLine(el, line) {
+  el.innerHTML = "";
+  const head = document.createElement("span");
+  head.className = "obc__line-head";
+  const label = document.createElement("span");
+  label.className = "obc__label";
+  label.textContent = line.label;
+  const goal = document.createElement("span");
+  goal.className = "obc__goal";
+  goal.textContent = line.goal;
+  head.append(label, goal);
+
+  const value = document.createElement("strong");
+  value.className = "obc__value";
+  value.textContent = line.value;
+  value.dataset.size = line.value.length + (line.unit ? line.unit.length : 0) > 9 ? "long" : "short";
+  if (line.unit) {
+    const unit = document.createElement("small");
+    unit.textContent = ` ${line.unit}`;
+    value.append(unit);
+  }
+
+  const bar = document.createElement("span");
+  bar.className = "obc__bar";
+  bar.setAttribute("aria-hidden", "true");
+  const filled = Math.round(Math.min(1, Math.max(0, line.ratio)) * BOARD_BAR_CELLS);
+  for (let i = 0; i < BOARD_BAR_CELLS; i += 1) {
+    const cell = document.createElement("i");
+    if (i < filled) cell.className = "is-on";
+    bar.append(cell);
+  }
+
+  const left = document.createElement("span");
+  left.className = "obc__left";
+  left.textContent = line.left;
+  el.append(head, value, bar, left);
+  el.setAttribute("aria-label", [line.label, line.value, line.unit, line.goal, line.left].filter(Boolean).join(", "));
+}
+
+function goalDays(days) {
+  return days === 1 ? t("1 day") : t("{n} days", { n: days });
+}
+
 function renderBoard(state, progress) {
   const board = document.querySelector("#board");
   if (!board) return;
   const prefs = readBoardPrefs();
   const data = boardData(state, progress);
   const texts = boardTexts(data, state);
+  const goals = boardGoals(state, progress, readGoal());
+  const currency = state.currencyCode || "EUR";
   const colors = boardThemeStatus(data.days);
   board.dataset.obcTheme = colors.unlocked.includes(prefs.theme) ? prefs.theme : "receipt";
   const light = document.querySelector("#boardLight");
@@ -1023,44 +1074,182 @@ function renderBoard(state, progress) {
   light.classList.toggle("is-new", hasNew);
   light.dataset.badge = t("NEW");
   light.setAttribute("aria-label", hasNew ? t("New display color unlocked") : t("Change display color"));
-  board.dataset.obcMetric = prefs.metric;
 
-  const main = texts[prefs.metric];
-  document.querySelector("#boardMainLabel").textContent = main.label;
-  const value = document.querySelector("#boardMainValue");
-  value.textContent = main.value;
-  // Long values (money, "6T 08H") get a smaller size so they never run off the display.
-  value.dataset.size = main.value.length + (main.unit ? main.unit.length : 0) > 9 ? "long" : main.value.length > 4 ? "mid" : "short";
-  if (main.unit) {
-    const unit = document.createElement("small");
-    unit.textContent = ` ${main.unit}`;
-    value.append(unit);
-  }
-  document.querySelector("#boardMainSub").textContent = main.sub;
+  const notYet = t("Starts on your quit day");
+  renderBoardLine(document.querySelector("#boardTime"), {
+    label: texts.time.label,
+    value: texts.time.value,
+    unit: texts.time.unit,
+    goal: t("GOAL {x}", { x: goalDays(goals.time.target) }),
+    ratio: goals.time.ratio,
+    left: !goals.started ? notYet : goals.time.done ? "" : t("{time} left", { time: formatTimeLeft(goals.time.hoursLeft) }),
+  });
 
-  // The two small displays always show the other two values; tapping one swaps it in.
-  const others = ["time", "money", "third"].filter((key) => key !== prefs.metric);
-  [document.querySelector("#boardMiniA"), document.querySelector("#boardMiniB")].forEach((mini, index) => {
-    const key = others[index];
-    const text = texts[key];
-    mini.dataset.metric = key;
-    mini.querySelector(".obc__label").textContent = text.label;
-    mini.querySelector(".obc__value").textContent = text.unit ? `${text.value} ${text.unit}` : text.value;
-    mini.setAttribute("aria-label", `${text.label} ${text.value} ${text.unit}`.trim());
+  const money = goals.money;
+  const moneyLine = document.querySelector("#boardMoney");
+  renderBoardLine(moneyLine, {
+    label: texts.money.label,
+    value: texts.money.value,
+    unit: "",
+    goal: money.name ? t("GOAL {x}", { x: money.name }) : t("+ SAVINGS GOAL"),
+    ratio: money.ratio,
+    left: !goals.started ? notYet : money.done ? ""
+      : money.name
+      ? t("{amount} to go", { amount: formatCurrency(money.left, currency) })
+      : t("{amount} to go until {target}", { amount: formatCurrency(money.left, currency), target: formatCurrency(money.target, currency) }),
+  });
+
+  const third = goals.third;
+  const thirdGoal = data.third.kind === "life"
+    ? goalDays(third.target)
+    : `${third.target} ${data.third.kind === "rolls" ? t("PCS") : "ML"}`;
+  const thirdLeft = data.third.kind === "life"
+    ? t("{time} left", { time: formatTimeLeft(third.left * 24) })
+    : t("{time} left", { time: `${Math.ceil(third.left)} ${data.third.kind === "rolls" ? t("PCS") : "ML"}` });
+  renderBoardLine(document.querySelector("#boardThird"), {
+    label: texts.third.label,
+    value: texts.third.value,
+    unit: texts.third.unit,
+    goal: t("GOAL {x}", { x: thirdGoal }),
+    ratio: third.ratio,
+    left: !goals.started ? notYet : third.done ? "" : thirdLeft,
   });
 
   document.querySelector("#boardTodayKey").classList.toggle("needs-checkin", !(dateKey(new Date()) in readCheckins()));
+}
 
-  // Three small marks on the display key show which of the three values is up.
-  board.querySelectorAll(".obc__dots i").forEach((dot, index) => {
-    dot.classList.toggle("is-on", BOARD_METRICS[index] === prefs.metric);
+// ----------------------------------------------------------------- native start page
+const RING_RADII = [88, 64, 40];
+const RING_WIDTH = 20;
+
+function ringSvg(ratios) {
+  const parts = RING_RADII.map((radius, index) => {
+    const circumference = 2 * Math.PI * radius;
+    const ratio = Math.min(1, Math.max(0, ratios[index] || 0));
+    const visible = ratio > 0 ? Math.max(ratio, 0.02) : 0;
+    const offset = circumference * (1 - visible);
+    const cls = `ring--${index + 1}`;
+    return `<circle class="ring-track ${cls}" cx="100" cy="100" r="${radius}" stroke-width="${RING_WIDTH}"></circle>`
+      + `<circle class="ring-fill ${cls}" cx="100" cy="100" r="${radius}" stroke-width="${RING_WIDTH}" stroke-dasharray="${circumference.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}"></circle>`;
   });
+  return `<svg viewBox="0 0 200 200" aria-hidden="true">${parts.join("")}</svg>`;
+}
+
+function miniRingSvg(filled) {
+  const radius = 12;
+  const circumference = 2 * Math.PI * radius;
+  return `<svg viewBox="0 0 34 34" aria-hidden="true">`
+    + `<circle cx="17" cy="17" r="${radius}" fill="none" stroke="var(--ring-2)" stroke-width="5" opacity="0.22"></circle>`
+    + (filled ? `<circle cx="17" cy="17" r="${radius}" fill="none" stroke="var(--ring-2)" stroke-width="5" stroke-linecap="round" stroke-dasharray="${circumference}" stroke-dashoffset="0" transform="rotate(-90 17 17)"></circle>` : "")
+    + `</svg>`;
+}
+
+function renderMetric(el, { label, value, sub }) {
+  el.innerHTML = "";
+  const l = document.createElement("span");
+  l.className = "ios-metric__label";
+  l.textContent = label;
+  const v = document.createElement("span");
+  v.className = "ios-metric__value";
+  v.textContent = value;
+  const s2 = document.createElement("span");
+  s2.className = "ios-metric__sub";
+  s2.textContent = sub;
+  el.append(l, v, s2);
+  el.setAttribute("aria-label", `${label}: ${value}. ${sub}`);
+}
+
+function startValues(data) {
+  const firstDay = data.started && data.days === 0;
+  const time = firstDay
+    ? t("{n} h", { n: data.hours })
+    : data.years > 0
+    ? t("{y} yr {m} mo", { y: data.years, m: data.months })
+    : data.days === 1 ? t("1 day") : t("{n} days", { n: data.days });
+  const third = data.third;
+  const thirdValue = third.kind === "life"
+    ? third.days > 0 ? t("{d} d {h} h", { d: third.days, h: third.hours }) : t("{h} h {m} min", { h: third.hours, m: third.minutes })
+    : third.kind === "rolls" ? t("{n} roll-ups", { n: third.value }) : `${third.value} ml`;
+  return { time, thirdValue };
+}
+
+function renderStart(state, progress) {
+  const page = document.querySelector("#startPage");
+  if (!page || !document.querySelector("#gauge")) return;
+  const data = boardData(state, progress);
+  const goals = boardGoals(state, progress, readGoal());
+  const currency = state.currencyCode || "EUR";
+  const values = startValues(data);
+  const notYet = t("Starts on your quit day");
+
+  document.querySelector("#startDate").textContent = new Intl.DateTimeFormat(intlLocale(), {
+    weekday: "long", day: "numeric", month: "long",
+  }).format(new Date());
+
+  // Gauge: from the last milestone to the next one.
+  const time = goals.time;
+  const pct = Math.round(Math.min(1, Math.max(0, time.ratio)) * 100);
+  document.querySelector("#gaugeFill").setAttribute("stroke-dasharray", `${pct > 0 ? Math.max(pct, 1.5) : 0} 100`);
+  document.querySelector("#gaugeValue").textContent = values.time;
+  document.querySelector("#gaugeSub").textContent = !goals.started ? notYet : time.done ? "" : t("{time} until {goal}", {
+    time: formatTimeLeft(time.hoursLeft), goal: goalDays(time.target),
+  });
+  document.querySelector("#gaugeFrom").textContent = time.from === 0 ? t("Quit day") : goalDays(time.from);
+  document.querySelector("#gaugeTo").textContent = goalDays(time.target);
+  document.querySelector("#gauge").setAttribute("aria-label", `${t("Smoke-free")}: ${values.time}. ${document.querySelector("#gaugeSub").textContent}`);
+
+  // Money card (tap: savings goal) and life card.
+  const money = goals.money;
+  document.querySelector("#statMoney").textContent = formatCurrency(data.money, currency);
+  document.querySelector("#statMoney").classList.toggle("is-long", formatCurrency(data.money, currency).length > 9);
+  document.querySelector("#statMoneyBar").style.width = `${Math.round(Math.min(1, money.ratio) * 100)}%`;
+  document.querySelector("#statMoneySub").textContent = !goals.started ? notYet : money.done ? ""
+    : money.name ? t("{amount} to {goal}", { amount: formatCurrency(money.left, currency), goal: money.name })
+    : t("{amount} to {goal}", { amount: formatCurrency(money.left, currency), goal: formatCurrency(money.target, currency) });
+  const third = goals.third;
+  document.querySelector("#statThirdLabel").textContent = data.third.kind === "life" ? t("Life back*") : data.third.kind === "rolls" ? t("Not rolled") : t("Not vaped");
+  document.querySelector("#statThird").textContent = values.thirdValue;
+  document.querySelector("#statThird").classList.toggle("is-long", values.thirdValue.length > 9);
+  document.querySelector("#statThirdBar").style.width = `${Math.round(Math.min(1, third.ratio) * 100)}%`;
+  document.querySelector("#statThirdSub").textContent = !goals.started ? notYet : third.done ? ""
+    : data.third.kind === "life" ? t("{time} until {goal}", { time: formatTimeLeft(third.left * 24), goal: goalDays(third.target) })
+    : t("{time} until {goal}", { time: `${Math.ceil(third.left)}`, goal: `${third.target}` });
+
+  // Check-in row: status and this week as dots.
+  const checkins = readCheckins();
+  const checkedIn = dateKey(new Date()) in checkins;
+  document.querySelector("#boardTodayKey").classList.toggle("needs-checkin", !checkedIn);
+  document.querySelector("#checkinRowTitle").textContent = checkedIn ? t("Checked in for today") : t("Check in for today");
+  const dots = document.querySelector("#checkinRowDots");
+  dots.innerHTML = "";
+  checkinWeek(checkins).forEach((day) => {
+    const dot = document.createElement("i");
+    dot.className = [day.level !== null ? "is-on" : "", day.isToday ? "is-today" : ""].filter(Boolean).join(" ");
+    dots.append(dot);
+  });
+
+  // Tiles
+  const milestones = state.mode === "vaping" ? vapingMilestones : tobaccoMilestones;
+  const health = recoveryProgress(milestones, state.notStoppedYet ? 0 : progress.elapsedHours);
+  document.querySelector("#tileHealthSub").textContent = t("{n} of {total}", { n: health.reached, total: health.total });
+
+  // Colors: accent palettes unlock on smoke-free days.
+  const prefs = readBoardPrefs();
+  const colors = boardThemeStatus(data.days);
+  page.dataset.palette = colors.unlocked.includes(prefs.theme) ? prefs.theme : "receipt";
+  const colorTile = document.querySelector("#boardLight");
+  const hasNew = colors.unlocked.length > prefs.seen;
+  colorTile.classList.toggle("is-new", hasNew);
+  colorTile.dataset.badge = t("NEW");
+  document.querySelector("#tileColorSub").textContent = hasNew
+    ? t("NEW")
+    : t("{n} of {total}", { n: colors.unlocked.length, total: colors.total });
 }
 
 function initBoard() {
-  const board = document.querySelector("#board");
+  const board = document.querySelector("#board") || document.querySelector("#startPage");
   board.addEventListener("click", (event) => {
-    const target = event.target.closest("[data-metric], #boardLight, #boardMode, .obc__main, [data-go]");
+    const target = event.target.closest("#boardLight, #boardMoney, [data-go]");
     if (!target) return;
     haptics.select();
     if (target.dataset.go) {
@@ -1090,11 +1279,10 @@ function initBoard() {
         prefs.theme = colors.unlocked[index];
         if (index === 0 && colors.next) showToast(t("Next color on day {day}", { day: colors.next.day }));
       }
-    } else if (target.id === "boardMode" || target.classList.contains("obc__main")) {
-      // One key (or a tap on the display) steps through days, money and life back.
-      prefs.metric = BOARD_METRICS[(BOARD_METRICS.indexOf(prefs.metric) + 1) % BOARD_METRICS.length];
-    } else {
-      prefs.metric = target.dataset.metric;
+    } else if (target.id === "boardMoney") {
+      // The money line opens the savings goal: set one, or change it.
+      document.querySelector("#goalButton").click();
+      return;
     }
     saveBoardPrefs(prefs);
     updateReceipt(false);

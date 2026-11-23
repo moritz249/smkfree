@@ -2,6 +2,20 @@
 
 Reihenfolge nach Priorität: Optik → Usability → Funktionen → Monetarisierung.
 
+## Design: nativer iOS-Look (Branch `ios-design`)
+
+- [x] `ios.css` über `styles.css`: Systemschrift, Apple-Systemfarben hell/dunkel, runde Karten, Pillen-Knöpfe, Sheets mit Griff.
+- [x] Start Variante B (Feedback: Ringe zu nah an Apple Fitness, zu bunt): Tacho-Bogen in einer Akzentfarbe vom letzten
+      zum nächsten Meilenstein, Karten Gespart (→ Sparziel) und Leben zurück, Check-in-Zeile mit Wochenpunkten,
+      Kacheln SOS (breit), Körper, Bon, Farben. Belohnungen schalten Akzentfarben frei.
+- [x] Schwebende Glas-Tab-Leiste (Start · Tagebuch · Bon · Mehr), ＋ als eigener runder Knopf. Belohnungen = Akzentfarben.
+- [x] Onboarding nativ (große Titel, Pillen-Chips, runde Stepper, Auswahlkarten mit blauem Rahmen); beim Bearbeiten nur das
+      Onboarding sichtbar. Tagebuch, Plan, SOS, Sheets, Sparziel und Bon-Hinweis angeglichen; Ausrutscher orange statt rot.
+- [x] Schritt 1 vereinfacht: nur Rauchstopp-Datum (vorausgefüllt mit heute) statt vier Schnellwahl-Knöpfen.
+- [x] Bon im App-Look: weiße Karte, Systemschrift, keine Papierstruktur; Aufbau und Bon-Farbe bleiben.
+- [ ] Icons im SF-Symbols-Stil; Bon-Tab (Ziel/Teilen) und Wochen-Bon im Dunkelmodus feinschleifen; Test auf echtem iPhone.
+- [ ] Entscheiden: alter Bordcomputer-Code (`.obc`, `renderBoard`) löschen, wenn der neue Start bleibt.
+
 ## Usability
 
 - [x] Bon vereinfacht: große Tage-Zahl statt 5 Zeitzeilen, doppelte Zeilen raus, nur 1 Coupon, QR/Link nur im geteilten Bild.
@@ -42,7 +56,9 @@ Reihenfolge nach Priorität: Optik → Usability → Funktionen → Monetarisier
 - [x] **SOS vereinfacht** (UX-Faustregeln, W3C COGA): Atemkreis mit Phase und 4-3-2-1, dünne 3-Minuten-Linie, „Geschafft“
       ab Sekunde 1, „Abbrechen“ sichtbar; Zähler und Euro-Wert raus aus dem Moment des Verlangens.
 - [x] Neuer-Nutzer-Durchgang: Tag 0 zeigt Stunden statt „0 Tage“, Bon-Hinweis nennt + statt SOS-Tab, Reset hebt Datums-Chip auf.
-- [x] Board-Tasten 3+3: „Anzeige ▸“ (Tage/Geld/Leben in einer Taste, auch Tippen aufs Display), Licht, Bon drucken · SOS, Heute, Körper.
+- [x] Board-Display zeigt alle drei Werte gleichzeitig: je Zeile Wert, 12er-Segmentbalken und „noch …“ bis zum nächsten Ziel
+      (`boardGoals()`); Geld-Zeile öffnet das Sparziel. Anzeige-Taste und Mini-Displays entfernt, Tasten 2+3.
+- [x] ~~Board-Tasten 3+3:~~ „Anzeige ▸“ (Tage/Geld/Leben in einer Taste, auch Tippen aufs Display), Licht, Bon drucken · SOS, Heute, Körper.
 - **Entscheidungen 23.11.2026:** Zielgruppe junge Erwachsene (18–35). SOS bleibt nur Atmen. Bon bleibt wichtig, wird vom
   Bordcomputer aus gedruckt. Wiederkommen über: Abend-Erinnerung, Belohnungen, Wochenrückblick (nächste Schritte):
 - [x] Abend-Erinnerung „Kurz einchecken?“ um 20 Uhr, entfällt nach dem Check-in (Plan wird neu berechnet). Schalter unter Erinnerungen.

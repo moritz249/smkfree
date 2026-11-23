@@ -4444,3 +4444,114 @@ html[data-dev-font] body *:not(svg):not(use) {
   color: var(--ink);
   font-size: 1rem;
 }
+
+/* ===================================================================== */
+/* Board screen: three lines, each with a goal and a segment bar         */
+/* ===================================================================== */
+.start-page .obc {
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+}
+
+.obc__keys--top {
+  grid-template-columns: 1fr 1fr;
+}
+
+.obc__screen {
+  display: grid;
+  grid-template-rows: 1.35fr 1fr 1fr;
+  padding: 4px 14px;
+}
+
+.obc__line {
+  display: grid;
+  gap: 4px;
+  align-content: center;
+  min-width: 0;
+  border: 0;
+  border-bottom: 1px dashed currentColor;
+  padding: 10px 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-shadow: inherit;
+}
+
+.obc__line:last-child {
+  border-bottom: 0;
+}
+
+.obc__line--tap {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.obc__line-head {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.obc__goal {
+  overflow: hidden;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.obc__line .obc__value {
+  display: block;
+  overflow: hidden;
+  font-size: clamp(1.9rem, 10vw, 2.6rem);
+  font-style: italic;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.obc__line--hero .obc__value {
+  font-size: clamp(2.8rem, 16vw, 4.2rem);
+}
+
+.obc__line .obc__value[data-size="long"] {
+  font-size: clamp(1.7rem, 9vw, 2.3rem);
+}
+
+.obc__line .obc__value small {
+  font-size: 0.45em;
+  font-style: normal;
+  letter-spacing: 0.08em;
+}
+
+/* Segment bar, like the service-interval bar in a car cluster. */
+.obc__bar {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 3px;
+  height: 10px;
+}
+
+.obc__bar i {
+  border: 1px solid currentColor;
+  opacity: 0.25;
+}
+
+.obc__bar i.is-on {
+  background: currentColor;
+  opacity: 1;
+  box-shadow: 0 0 6px var(--obc-glow-soft);
+}
+
+.obc__left {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.obc__goal {
+  text-transform: uppercase;
+}
