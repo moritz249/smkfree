@@ -11,6 +11,16 @@ import {
   goalProgress,
   dayThresholds,
   normalizePlan,
+  normalizeDiary,
+  diaryStats,
+  recoveryProgress,
+  boardData,
+  checkinWeek,
+  dailyTip,
+  dateKey,
+  normalizeCheckins,
+  boardThemeStatus,
+  weekSummary,
   PLAN_MAX_ITEMS,
 } from "./app-core.js";
 import {
@@ -23,6 +33,7 @@ import {
   notificationPermission,
   notificationsSupported,
   onAppResume,
+  onNotificationTap,
   replaceScheduledNotifications,
   requestNotificationPermission,
   restoreMirroredStorage,
@@ -34,6 +45,8 @@ import { applyTranslations, getLanguage, intlLocale, languages, nextLanguage, se
 // Restore data that iOS may have evicted from WebView storage before anything reads it.
 await restoreMirroredStorage();
 configureChrome();
+// Always open at the top of the on-board computer, not where the last session scrolled to.
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 
 const STORAGE_KEY = "smoke-free-progress";
 const STORAGE_VERSION = 4;
@@ -41,32 +54,44 @@ const GOAL_KEY = "smkfree-goal";
 const REMINDERS_KEY = "smkfree-reminders";
 const CRAVINGS_KEY = "smkfree-cravings";
 const PLAN_KEY = "smkfree-plan";
+const HINT_KEY = "smkfree-hint-receipt";
+const DIARY_KEY = "smkfree-diary";
 const SHARE_PROMPT_KEY = "smkfree-share-milestone";
+const BOARD_KEY = "smkfree-board";
+const CHECKIN_KEY = "smkfree-checkins";
+const WEEK_SEEN_KEY = "smkfree-week-seen";
+// Display colors of the on-board computer; "LIGHT" cycles through them. Add a theme in styles.css (.obc[data-obc-theme]).
+const BOARD_METRICS = ["time", "money", "third"];
 const SOS_SECONDS = 180;
 const isTouchDevice = window.matchMedia("(pointer: coarse)").matches || "ontouchstart" in window;
 let reminderSyncTimer = null;
 let sosTimer = null;
 let activeTab = "receipt";
+let appReady = false;
 const modeNames = { cigarettes: "Cigarettes", ryo: "Roll-your-own", vaping: "Vaping" };
 
+// Health timeline after quitting tobacco, following the DKFZ (German Cancer Research Center):
+// dkfz.de/forschung/translationale-zentren/ncpc/stabsstelle-krebspraevention/rauchstopp
+// "hours" is the end of the range the source names (e.g. 2–12 weeks -> 12 weeks).
 const tobaccoMilestones = [
-  { hours: 1 / 3, title: "Heart rate drops", detail: "A benefit that can begin within minutes." },
-  { hours: 24, title: "Nicotine clears", detail: "Nicotine levels in the blood drop to zero." },
-  { hours: 72, title: "Carbon monoxide falls", detail: "Within several days, levels can reach those of a nonsmoker." },
-  { hours: 720, title: "Breathing may ease", detail: "Coughing and shortness of breath can decrease over 1–12 months." },
-  { hours: 8760, title: "Heart attack risk falls", detail: "Risk drops sharply over 1–2 years after quitting." },
-  { hours: 26280, title: "Heart health improves", detail: "Added coronary heart disease risk drops over 3–6 years." },
-  { hours: 43800, title: "Stroke risk decreases", detail: "The added risk of stroke continues to fall over time." },
+  { hours: 1 / 3, label: "Pulse & blood pressure", title: "Heart rate and blood pressure drop", detail: "After 20 minutes your pulse and blood pressure go down." },
+  { hours: 12, label: "Oxygen in the blood", title: "Carbon monoxide back to normal", detail: "After 12 hours the carbon monoxide level in your blood matches a nonsmoker's." },
+  { hours: 2016, label: "Circulation & lungs", title: "Circulation and lungs work better", detail: "Within 2–12 weeks your circulation and lung function improve." },
+  { hours: 6570, label: "Cough & breath", title: "Less coughing, easier breathing", detail: "Within 1–9 months coughing and shortness of breath get better." },
+  { hours: 17520, label: "Heart attack risk", title: "Heart attack risk clearly lower", detail: "After 1–2 years your risk of a heart attack is clearly reduced." },
+  { hours: 43800, label: "Heart disease & stroke", title: "Heart disease and stroke risk halved", detail: "After 5 years the risk of coronary heart disease and stroke is half that of a smoker." },
+  { hours: 87600, label: "Lung cancer risk", title: "Lung cancer risk halved", detail: "After 10 years the risk of lung cancer is about half that of a smoker." },
+  { hours: 131400, label: "COPD risk", title: "COPD risk halved", detail: "After 15 years the risk of COPD is half that of a smoker." },
 ];
 
 const vapingMilestones = [
-  { hours: 24, title: "First vape-free day", detail: "One day of practicing a new routine." },
-  { hours: 72, title: "Break a routine", detail: "Notice a moment you would usually vape." },
-  { hours: 168, title: "One week of choices", detail: "A week of practicing your plan." },
-  { hours: 336, title: "Notice your triggers", detail: "Recognize situations linked to vaping." },
-  { hours: 720, title: "One month of practice", detail: "Your new routine has had time to grow." },
-  { hours: 2160, title: "Keep building", detail: "Each vape-free choice adds to your progress." },
-  { hours: 8760, title: "A year of progress", detail: "A year of choosing your own next step." },
+  { hours: 24, label: "First day", title: "First vape-free day", detail: "One day of practicing a new routine." },
+  { hours: 72, label: "Old routine", title: "Break a routine", detail: "Notice a moment you would usually vape." },
+  { hours: 168, label: "One week", title: "One week of choices", detail: "A week of practicing your plan." },
+  { hours: 336, label: "Your triggers", title: "Notice your triggers", detail: "Recognize situations linked to vaping." },
+  { hours: 720, label: "One month", title: "One month of practice", detail: "Your new routine has had time to grow." },
+  { hours: 2160, label: "Three months", title: "Keep building", detail: "Each vape-free choice adds to your progress." },
+  { hours: 8760, label: "One year", title: "A year of progress", detail: "A year of choosing your own next step." },
 ];
 
 const elements = {
@@ -138,17 +163,29 @@ const elements = {
   sosPage: document.querySelector("#sosPage"),
   receiptWrap: document.querySelector("#receiptWrap"),
   diaryCravings: document.querySelector("#diaryCravings"),
-  sosStart: document.querySelector("#sosStart"),
+  diarySlips: document.querySelector("#diarySlips"),
+  diaryWeek: document.querySelector("#diaryWeek"),
+  diaryTriggersBox: document.querySelector("#diaryTriggersBox"),
+  diaryTriggers: document.querySelector("#diaryTriggers"),
+  diaryTime: document.querySelector("#diaryTime"),
+  diaryList: document.querySelector("#diaryList"),
+  diaryEmpty: document.querySelector("#diaryEmpty"),
+  diarySheet: document.querySelector("#diarySheet"),
+  diarySheetTitle: document.querySelector("#diarySheetTitle"),
+  diaryKind: document.querySelector("#diaryKind"),
+  diaryStrength: document.querySelector("#diaryStrength"),
+  diaryTriggerChips: document.querySelector("#diaryTriggerChips"),
+  diaryNote: document.querySelector("#diaryNote"),
+  diarySlipHint: document.querySelector("#diarySlipHint"),
   sosDone: document.querySelector("#sosDone"),
-  sosActions: document.querySelector("#sosActions"),
+  sosStop: document.querySelector("#sosStop"),
   sosTimer: document.querySelector("#sosTimer"),
-  sosCount: document.querySelector("#sosCount"),
-  sosWorth: document.querySelector("#sosWorth"),
-  breathFill: document.querySelector("#breathFill"),
+  sosFill: document.querySelector("#sosFill"),
+  breathDisc: document.querySelector("#breathDisc"),
+  breathCount: document.querySelector("#breathCount"),
   breathPhase: document.querySelector("#breathPhase"),
   sosPlanBox: document.querySelector("#sosPlanBox"),
   sosPlanList: document.querySelector("#sosPlanList"),
-  sosPlanEdit: document.querySelector("#sosPlanEdit"),
   planTriggers: document.querySelector("#planTriggers"),
   planRows: document.querySelector("#planRows"),
   planRemove: document.querySelector("#planRemove"),
@@ -402,12 +439,9 @@ function setFormState(state) {
 
 function renderReceiptRows(rows) {
   elements.receiptRows.innerHTML = rows
-    .map(([label, value, edit]) => {
+    .map(([label, value]) => {
       const noteClass = label.startsWith("*") ? " class=\"receipt__note\"" : "";
-      const cell = edit
-        ? `<button type="button" class="receipt-edit" data-edit="${edit}" aria-label="${t("Edit")}: ${label}">${value}</button>`
-        : value;
-      return `<div${noteClass}><dt>${label}</dt><dd>${cell}</dd></div>`;
+      return `<div${noteClass}><dt>${label}</dt><dd>${value}</dd></div>`;
     })
     .join("");
 }
@@ -471,7 +505,7 @@ function renderReceipt(progress, state) {
       [t("Pack price"), formatCurrency(state.pricePerPack || 0, state.currencyCode), "pricePerPack"],
     );
     if (!state.notStoppedYet) {
-      rows.push([t("Packs not bought"), decimalFormatter.format(progress.packsAvoided)]);
+      rows.push([t("Packs not bought"), numberFormatter.format(Math.floor(progress.packsAvoided))]);
     }
   }
 
@@ -560,6 +594,308 @@ function renderSummary(state) {
     .join("");
 }
 
+/** Short point in time for a milestone: "20 min", "12 h", "12 wk", "9 mo", "2 yr". */
+function formatMilestoneTime(hours) {
+  if (hours < 1) return t("{n} min", { n: Math.round(hours * 60) });
+  if (hours < 48) return t("{n} h", { n: Math.round(hours) });
+  if (hours < 24 * 14) return t("{n} d", { n: Math.round(hours / 24) });
+  if (hours < 24 * 7 * 13) return t("{n} wk", { n: Math.round(hours / 168) });
+  if (hours < 24 * 365) return t("{n} mo", { n: Math.round(hours / 730) });
+  return t("{n} yr", { n: Math.round(hours / 8760) });
+}
+
+/** Time left until a milestone, rounded up so it never says "0". */
+function formatTimeLeft(hours) {
+  if (hours < 1) return t("{n} min", { n: Math.max(1, Math.ceil(hours * 60)) });
+  if (hours < 48) return t("{n} h", { n: Math.ceil(hours) });
+  const days = Math.ceil(hours / 24);
+  if (days < 60) return t("{n} days", { n: days });
+  if (days < 730) return t("{n} months", { n: Math.round(days / 30.4) });
+  const years = Math.round((days / 365) * 10) / 10;
+  return t("{n} years", { n: years.toLocaleString(intlLocale(), { maximumFractionDigits: 1 }) });
+}
+
+// ----------------------------------------------------------------- health tab
+function renderHealth() {
+  const state = getFormState();
+  const progress = calculateProgress(state);
+  const isVaping = state.mode === "vaping";
+  const milestones = isVaping ? vapingMilestones : tobaccoMilestones;
+  const elapsed = state.notStoppedYet ? 0 : progress.elapsedHours;
+  const result = recoveryProgress(milestones, elapsed);
+
+  document.querySelector("#healthTitle").textContent = isVaping
+    ? t("Your vape-free progress")
+    : t("Your body is recovering");
+  document.querySelector("#healthReached").textContent = t("{n} of {total} reached", { n: result.reached, total: result.total });
+  const next = document.querySelector("#healthNext");
+  next.textContent = state.notStoppedYet
+    ? t("Starts counting on your quit day.")
+    : result.next
+    ? t("Next: {label}, still {time}", { label: t(result.next.label), time: formatTimeLeft(result.next.hoursLeft) })
+    : t("All milestones reached. Amazing.");
+  document.querySelector("#healthVapingNote").classList.toggle("is-hidden", !isVaping);
+
+  const list = document.querySelector("#healthList");
+  list.innerHTML = "";
+  result.items.forEach((item) => {
+    const row = document.createElement("li");
+    row.className = `health-item${item.done ? " is-done" : ""}`;
+
+    const head = document.createElement("div");
+    head.className = "health-item__head";
+    const label = document.createElement("strong");
+    label.textContent = t(item.label);
+    const percent = document.createElement("span");
+    percent.className = "health-item__percent";
+    percent.textContent = `${item.percent} %`;
+    head.append(label, percent);
+
+    const bar = document.createElement("div");
+    bar.className = "health-bar";
+    bar.setAttribute("role", "progressbar");
+    bar.setAttribute("aria-valuemin", "0");
+    bar.setAttribute("aria-valuemax", "100");
+    bar.setAttribute("aria-valuenow", String(item.percent));
+    bar.setAttribute("aria-label", t(item.label));
+    const fill = document.createElement("span");
+    fill.style.width = `${Math.max(item.percent, item.percent > 0 ? 2 : 0)}%`;
+    bar.append(fill);
+
+    const detail = document.createElement("p");
+    detail.className = "health-item__detail";
+    detail.textContent = t(item.detail);
+
+    const status = document.createElement("p");
+    status.className = "health-item__status";
+    status.textContent = item.done
+      ? t("Reached after {time}", { time: formatMilestoneTime(item.hours) })
+      : state.notStoppedYet
+      ? t("After {time}", { time: formatMilestoneTime(item.hours) })
+      : t("Still {time} to go", { time: formatTimeLeft(item.hoursLeft) });
+
+    row.append(head, bar, detail, status);
+    list.append(row);
+  });
+}
+
+// ----------------------------------------------------------------- today: check-in and tip
+// A daily reason to open the app: one tap on how the day went, this week at a glance, a fresh tip.
+// No streak that breaks: a missed day simply stays empty.
+const checkinFeedback = [
+  { text: "Clean day. That is what free feels like.", next: null },
+  { text: "Well done. A light urge passes on its own.", next: null },
+  { text: "You held on. A plan makes the next one easier.", next: { action: "plan", label: "Plan what you do instead" } },
+  { text: "Tough day, and you are still smoke-free. Next time tap SOS right away.", next: { action: "sos", label: "Start SOS" } },
+];
+const checkinLevelLabels = ["None", "Mild", "Medium", "Strong"];
+
+function readCheckins() {
+  return normalizeCheckins(readJSON(CHECKIN_KEY, null));
+}
+
+function renderToday() {
+  const progress = calculateProgress(getFormState());
+  const checkins = readCheckins();
+  const todayLevel = checkins[dateKey(new Date())];
+  const hasToday = todayLevel !== undefined;
+
+  document.querySelectorAll("#checkinLevels .chip").forEach((chip) => {
+    const active = hasToday && Number(chip.dataset.level) === todayLevel;
+    chip.classList.toggle("is-active", active);
+    chip.setAttribute("aria-pressed", String(active));
+  });
+  document.querySelector("#todayQuestion").textContent = hasToday
+    ? t("Checked in for today")
+    : t("How strong was the urge today?");
+
+  const feedback = document.querySelector("#checkinFeedback");
+  const next = document.querySelector("#checkinNext");
+  const entry = hasToday ? checkinFeedback[todayLevel] : null;
+  feedback.classList.toggle("is-hidden", !entry);
+  feedback.textContent = entry ? t(entry.text) : "";
+  next.classList.toggle("is-hidden", !entry?.next);
+  if (entry?.next) {
+    next.textContent = t(entry.next.label);
+    next.dataset.action = entry.next.action;
+  }
+
+  const week = checkinWeek(checkins);
+  renderWeekDays(document.querySelector("#checkinWeek"), week);
+
+  const tip = dailyTip(progress.wholeDays, planForNotifications(), t);
+  document.querySelector("#tipTitle").textContent = tip.title;
+  document.querySelector("#tipBody").textContent = tip.body;
+}
+
+/** Monday to Sunday as small boxes, filled by how strong the urge was. */
+function renderWeekDays(list, week) {
+  const dayFormat = new Intl.DateTimeFormat(intlLocale(), { weekday: "short" });
+  list.innerHTML = "";
+  week.forEach((day) => {
+    const item = document.createElement("li");
+    const date = new Date(`${day.key}T12:00:00`);
+    item.className = [
+      "checkin-day",
+      day.level !== null ? `is-level-${day.level}` : "",
+      day.isToday ? "is-today" : "",
+      day.isFuture ? "is-future" : "",
+    ].filter(Boolean).join(" ");
+    const name = document.createElement("span");
+    name.textContent = dayFormat.format(date).replace(".", "");
+    const box = document.createElement("i");
+    box.setAttribute("aria-hidden", "true");
+    item.append(name, box);
+    item.setAttribute("aria-label", `${dayFormat.format(date)}: ${day.level !== null ? t(checkinLevelLabels[day.level]) : "–"}`);
+    list.append(item);
+  });
+  const done = week.filter((day) => day.level !== null).length;
+  list.dataset.count = t("{n} of 7 days this week", { n: done });
+}
+
+// ----------------------------------------------------------------- week receipt
+function currentWeekSummary() {
+  return weekSummary({ checkins: readCheckins(), entries: readDiary().entries, state: getFormState() });
+}
+
+function weekMessage(summary) {
+  if (summary.slips > 0) return t("A slip this week, and you kept going. That counts.");
+  if (summary.strongDays > 0) return t("Tough days this week, and you came through them.");
+  if (summary.cravings > 0) return t("{n} cravings resisted. Each one gets easier.", { n: summary.cravings });
+  return t("A calm week. Keep it up.");
+}
+
+function renderWeekReceipt() {
+  const summary = currentWeekSummary();
+  const state = getFormState();
+  const dateFormat = new Intl.DateTimeFormat(intlLocale(), { day: "2-digit", month: "2-digit" });
+  const sunday = new Date(summary.weekStart.getTime() + 6 * 86_400_000);
+  document.querySelector("#weekRange").textContent = `${dateFormat.format(summary.weekStart)} – ${dateFormat.format(sunday)}`;
+  const dayValue = new Intl.NumberFormat(intlLocale(), { maximumFractionDigits: 1 }).format(summary.freeDays);
+  const rows = [
+    [t("Smoke-free this week"), t("{n} days", { n: dayValue })],
+    [t("Not burned"), formatCurrency(summary.moneySaved, state.currencyCode)],
+    [t("Cravings resisted"), String(summary.cravings)],
+    [t("Check-ins"), `${summary.checkinDays}/7`],
+  ];
+  if (summary.slips > 0) rows.push([t("Slips"), String(summary.slips)]);
+  const list = document.querySelector("#weekRows");
+  list.innerHTML = "";
+  rows.forEach(([label, value]) => {
+    const row = document.createElement("div");
+    const dt = document.createElement("dt");
+    dt.textContent = label;
+    const dd = document.createElement("dd");
+    dd.textContent = value;
+    row.append(dt, dd);
+    list.append(row);
+  });
+  renderWeekDays(document.querySelector("#weekDays"), summary.days);
+  document.querySelector("#weekMessage").textContent = weekMessage(summary);
+  return summary;
+}
+
+function openWeekReceipt() {
+  const summary = renderWeekReceipt();
+  localStorage.setItem(WEEK_SEEN_KEY, dateKey(summary.weekStart));
+  mirrorStorage(WEEK_SEEN_KEY);
+  openSheet(document.querySelector("#weekSheet"));
+}
+
+async function shareWeekReceipt() {
+  const summary = currentWeekSummary();
+  const state = getFormState();
+  const text = t("My SMKFREE week: {days} days smoke-free, {amount} not burned, {cravings} cravings resisted.", {
+    days: new Intl.NumberFormat(intlLocale(), { maximumFractionDigits: 1 }).format(summary.freeDays),
+    amount: formatCurrency(summary.moneySaved, state.currencyCode),
+    cravings: summary.cravings,
+  });
+  const url = "https://moritz249.github.io/smkfree/";
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: t("WEEK RECEIPT"), text, url });
+      return;
+    }
+    await navigator.clipboard.writeText(`${text} ${url}`);
+    showToast(t("Copied. Paste it anywhere."));
+  } catch (error) {
+    if (error?.name !== "AbortError") showToast(t("Sharing is not available here."));
+  }
+}
+
+/** On Sunday evening the week receipt opens once by itself, the moment the notification promised. */
+function maybeShowWeekReceipt() {
+  const now = new Date();
+  if (now.getDay() !== 0 || now.getHours() < 18) return;
+  const state = getFormState();
+  if (!hasCompleteSavedState(state)) return;
+  const summary = currentWeekSummary();
+  if (localStorage.getItem(WEEK_SEEN_KEY) === dateKey(summary.weekStart)) return;
+  openWeekReceipt();
+}
+
+function initWeekReceipt() {
+  document.querySelector("#weekOpen").addEventListener("click", openWeekReceipt);
+  document.querySelector("#weekClose").addEventListener("click", () => closeSheet());
+  document.querySelector("#weekShare").addEventListener("click", shareWeekReceipt);
+  enableSwipeToClose(document.querySelector("#weekSheet"));
+  // Tapping a check-in or week notification opens the matching sheet.
+  onNotificationTap((event) => {
+    const id = Number(event?.notification?.id);
+    if (id >= 7100 && id < 7200) openWeekReceipt();
+    else if (id >= 7000 && id < 7100) {
+      showTab("start");
+      renderToday();
+      openSheet(document.querySelector("#todaySheet"));
+    }
+  });
+}
+
+function initToday() {
+  document.querySelectorAll("#checkinLevels .chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      const checkins = readCheckins();
+      checkins[dateKey(new Date())] = Number(chip.dataset.level);
+      localStorage.setItem(CHECKIN_KEY, JSON.stringify(normalizeCheckins(checkins)));
+      mirrorStorage(CHECKIN_KEY);
+      haptics.success();
+      renderToday();
+      updateReceipt(false);
+      scheduleReminderSync();
+    });
+  });
+  document.querySelector("#checkinNext").addEventListener("click", (event) => {
+    showTab(event.currentTarget.dataset.action);
+  });
+  document.querySelector("#todayClose").addEventListener("click", () => closeSheet());
+  enableSwipeToClose(document.querySelector("#todaySheet"));
+  // "Back to start" links on pages without their own tab.
+  document.querySelectorAll(".page-back[data-go]").forEach((link) => {
+    link.addEventListener("click", () => showTab(link.dataset.go));
+  });
+}
+
+// ----------------------------------------------------------------- "+" action sheet
+// Like the create button in social apps: everything you do in the moment, one tap from every page.
+function initActions() {
+  const sheet = document.querySelector("#actionSheet");
+  document.querySelector("#actionButton").addEventListener("click", () => {
+    haptics.select();
+    openSheet(sheet);
+  });
+  document.querySelector("#actionClose").addEventListener("click", () => closeSheet());
+  sheet.querySelectorAll("[data-action]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const action = button.dataset.action;
+      closeSheet(false);
+      if (action === "sos") showTab("sos");
+      if (action === "plan") showTab("plan");
+      if (action === "craving" || action === "slip") openDiarySheet(newDiaryEntry(action));
+    });
+  });
+  enableSwipeToClose(sheet);
+}
+
 function renderMilestones(elapsedHours, mode) {
   const milestones = mode === "vaping" ? vapingMilestones : tobaccoMilestones;
   const next = milestones.find((m) => m.hours > elapsedHours);
@@ -582,11 +918,7 @@ function renderMilestones(elapsedHours, mode) {
     copy.append(title, detail);
 
     const time = document.createElement("span");
-    time.textContent = milestone.hours < 1
-      ? `${Math.round(milestone.hours * 60)}m`
-      : milestone.hours < 48
-      ? `${milestone.hours}h`
-      : `${Math.round(milestone.hours / 24)}d`;
+    time.textContent = formatMilestoneTime(milestone.hours);
     time.className = "milestone__time";
 
     const marker = document.createElement("span");
@@ -607,6 +939,171 @@ function updateReceipt(shouldSave = true) {
   renderMilestones(progress.elapsedHours, state.mode);
   renderExtrasToggles(state);
   renderInteractive(state, progress);
+  renderBoard(state, progress);
+}
+
+// ----------------------------------------------------------------- on-board computer
+function readBoardPrefs() {
+  const raw = readJSON(BOARD_KEY, null) || {};
+  return {
+    theme: typeof raw.theme === "string" ? raw.theme : "receipt",
+    metric: BOARD_METRICS.includes(raw.metric) ? raw.metric : "time",
+    // How many unlocked colors the user has already seen; more than that shows "NEW" on the light key.
+    seen: Number.isInteger(raw.seen) && raw.seen > 0 ? raw.seen : 1,
+  };
+}
+
+/** Smoke-free days for the color rewards. */
+function boardDays() {
+  const state = getFormState();
+  return boardData(state, calculateProgress(state)).days;
+}
+
+function saveBoardPrefs(prefs) {
+  localStorage.setItem(BOARD_KEY, JSON.stringify(prefs));
+  mirrorStorage(BOARD_KEY);
+}
+
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+/** Each metric as label, big value and an optional sub line, in the active language. */
+function boardTexts(data, state) {
+  const currency = state.currencyCode || "EUR";
+  const third = data.third;
+  const firstDay = data.started && data.days === 0;
+  const time = {
+    label: t("SMOKE-FREE"),
+    value: firstDay ? String(data.hours) : data.years > 0
+      ? t("{y}Y {m}M", { y: data.years, m: data.months })
+      : String(data.days),
+    unit: firstDay ? (data.hours === 1 ? t("HOUR") : t("HOURS")) : data.years > 0 ? "" : (data.days === 1 ? t("DAY") : t("DAYS")),
+    sub: !data.started
+      ? t("Not quit yet")
+      : firstDay
+      ? t("Day 1 is running. The first hours count most.")
+      : data.years > 0
+      ? t("{d} days in total", { d: data.days })
+      : data.months > 0
+      ? t("{m} MON {d} D {h} H", { m: data.months, d: pad2(data.restDays), h: pad2(data.hours) })
+      : t("+{h} H", { h: data.hours }),
+  };
+  const money = {
+    label: t("SAVED"),
+    value: formatCurrency(data.money, currency),
+    unit: "",
+    sub: t("Money not burned"),
+  };
+  const thirdText = third.kind === "life"
+    ? {
+      label: t("LIFE BACK*"),
+      value: third.days > 0
+        ? t("{d}D {h}H", { d: third.days, h: pad2(third.hours) })
+        : t("{h}H {m}M", { h: third.hours, m: pad2(third.minutes) }),
+      unit: "",
+      sub: t("*Estimate: 20 min per cigarette"),
+    }
+    : third.kind === "rolls"
+    ? { label: t("NOT ROLLED"), value: String(third.value), unit: t("PCS"), sub: t("Roll-ups you did not smoke") }
+    : { label: t("NOT VAPED"), value: String(third.value), unit: "ML", sub: t("Liquid you did not vape") };
+  return { time, money, third: thirdText };
+}
+
+function renderBoard(state, progress) {
+  const board = document.querySelector("#board");
+  if (!board) return;
+  const prefs = readBoardPrefs();
+  const data = boardData(state, progress);
+  const texts = boardTexts(data, state);
+  const colors = boardThemeStatus(data.days);
+  board.dataset.obcTheme = colors.unlocked.includes(prefs.theme) ? prefs.theme : "receipt";
+  const light = document.querySelector("#boardLight");
+  const hasNew = colors.unlocked.length > prefs.seen;
+  light.classList.toggle("is-new", hasNew);
+  light.dataset.badge = t("NEW");
+  light.setAttribute("aria-label", hasNew ? t("New display color unlocked") : t("Change display color"));
+  board.dataset.obcMetric = prefs.metric;
+
+  const main = texts[prefs.metric];
+  document.querySelector("#boardMainLabel").textContent = main.label;
+  const value = document.querySelector("#boardMainValue");
+  value.textContent = main.value;
+  // Long values (money, "6T 08H") get a smaller size so they never run off the display.
+  value.dataset.size = main.value.length + (main.unit ? main.unit.length : 0) > 9 ? "long" : main.value.length > 4 ? "mid" : "short";
+  if (main.unit) {
+    const unit = document.createElement("small");
+    unit.textContent = ` ${main.unit}`;
+    value.append(unit);
+  }
+  document.querySelector("#boardMainSub").textContent = main.sub;
+
+  // The two small displays always show the other two values; tapping one swaps it in.
+  const others = ["time", "money", "third"].filter((key) => key !== prefs.metric);
+  [document.querySelector("#boardMiniA"), document.querySelector("#boardMiniB")].forEach((mini, index) => {
+    const key = others[index];
+    const text = texts[key];
+    mini.dataset.metric = key;
+    mini.querySelector(".obc__label").textContent = text.label;
+    mini.querySelector(".obc__value").textContent = text.unit ? `${text.value} ${text.unit}` : text.value;
+    mini.setAttribute("aria-label", `${text.label} ${text.value} ${text.unit}`.trim());
+  });
+
+  document.querySelector("#boardTodayKey").classList.toggle("needs-checkin", !(dateKey(new Date()) in readCheckins()));
+
+  // Three small marks on the display key show which of the three values is up.
+  board.querySelectorAll(".obc__dots i").forEach((dot, index) => {
+    dot.classList.toggle("is-on", BOARD_METRICS[index] === prefs.metric);
+  });
+}
+
+function initBoard() {
+  const board = document.querySelector("#board");
+  board.addEventListener("click", (event) => {
+    const target = event.target.closest("[data-metric], #boardLight, #boardMode, .obc__main, [data-go]");
+    if (!target) return;
+    haptics.select();
+    if (target.dataset.go) {
+      if (target.dataset.go === "today") {
+        renderToday();
+        openSheet(document.querySelector("#todaySheet"));
+      } else if (target.dataset.go === "receipt") {
+        // "Receipt" prints a fresh one, like the till: the receipt tab with the print animation.
+        showTab("receipt");
+        printReceipt();
+      } else {
+        showTab(target.dataset.go);
+      }
+      return;
+    }
+    const prefs = readBoardPrefs();
+    if (target.id === "boardLight") {
+      const colors = boardThemeStatus(boardDays());
+      if (colors.unlocked.length > prefs.seen) {
+        // Reward first: jump straight to the newest color.
+        prefs.theme = colors.unlocked[colors.unlocked.length - 1];
+        prefs.seen = colors.unlocked.length;
+        haptics.success();
+        showToast(t("New display color unlocked"));
+      } else {
+        const index = (colors.unlocked.indexOf(prefs.theme) + 1) % colors.unlocked.length;
+        prefs.theme = colors.unlocked[index];
+        if (index === 0 && colors.next) showToast(t("Next color on day {day}", { day: colors.next.day }));
+      }
+    } else if (target.id === "boardMode" || target.classList.contains("obc__main")) {
+      // One key (or a tap on the display) steps through days, money and life back.
+      prefs.metric = BOARD_METRICS[(BOARD_METRICS.indexOf(prefs.metric) + 1) % BOARD_METRICS.length];
+    } else {
+      prefs.metric = target.dataset.metric;
+    }
+    saveBoardPrefs(prefs);
+    updateReceipt(false);
+  });
+  // A short display test when the app opens, like a car's dashboard at ignition.
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    board.classList.add("is-booting");
+    window.setTimeout(() => board.classList.remove("is-booting"), 900);
+  }
 }
 
 function downloadUrl(url, filename) {
@@ -687,6 +1184,7 @@ function showStep(index, direction = 0) {
   currentStep = Math.min(Math.max(index, 0), activeSteps.length - 1);
   elements.steps.forEach((step) => step.classList.remove("is-active", "slide-in-left", "slide-in-right"));
   activeSteps[currentStep].classList.add("is-active");
+  prefillStepDefaults(activeSteps[currentStep]);
   const slide = direction || Math.sign(currentStep - previousStep);
   if (slide) {
     activeSteps[currentStep].classList.add(slide > 0 ? "slide-in-right" : "slide-in-left");
@@ -712,6 +1210,23 @@ function showStep(index, direction = 0) {
   elements.siteFooter.classList.toggle("is-hidden", currentStep !== 0);
   // On touch devices, auto-focusing pops the keyboard over the step; only do it with a mouse.
   if (!isTouchDevice) window.setTimeout(focusCurrentStepField, 0);
+}
+
+/**
+ * Grey example numbers looked like real values, yet "Print my receipt" still asked to fill them in.
+ * Empty consumption fields now start with the typical value, so one tap is enough and +/- works from there.
+ */
+function prefillStepDefaults(stepEl) {
+  stepEl.querySelectorAll("input[placeholder]").forEach((input) => {
+    if (input.value !== "" || input.type === "date") return;
+    if (decimalInputIds.has(input.id)) {
+      const value = parseDecimal(input.placeholder);
+      if (value !== null) input.value = formatMoneyInput(value);
+    } else if (input.type === "number") {
+      const value = Number(input.placeholder);
+      if (Number.isFinite(value)) input.value = String(value);
+    }
+  });
 }
 
 function focusCurrentStepField() {
@@ -762,14 +1277,15 @@ function validateCurrentStep() {
   });
 }
 
-function showReceipt(event, { animate = true } = {}) {
+function showReceipt(event, { animate = true, tab = "receipt" } = {}) {
   event?.preventDefault();
   event?.stopPropagation();
   document.activeElement?.blur?.();
   // Mark the receipt view first, so the save below records the setup as finished.
   elements.appShell.classList.add("is-receipt-view");
   elements.stage.classList.add("is-receipt-only");
-  setActiveTab("receipt");
+  setActiveTab(tab);
+  syncReceiptHint();
   updateReceipt();
   setButtonLabel(elements.editButton, t("Edit details"));
   elements.siteFooter.classList.add("is-hidden");
@@ -782,7 +1298,9 @@ function showReceipt(event, { animate = true } = {}) {
 function startReceiptRefresh() {
   if (receiptRefreshTimer) return;
   receiptRefreshTimer = window.setInterval(() => {
-    if (elements.stage.classList.contains("is-receipt-only") && !receiptEditing) updateReceipt(false);
+    if (!elements.stage.classList.contains("is-receipt-only")) return;
+    updateReceipt(false);
+    if (activeTab === "health") renderHealth();
   }, 60_000);
 }
 
@@ -833,9 +1351,10 @@ function focusNextFieldInStep(target) {
 function resetApp() {
   haptics.warning();
   closeSheet(false);
-  [STORAGE_KEY, THEME_KEY, CUSTOM_COLOR_KEY, GOAL_KEY, REMINDERS_KEY, CRAVINGS_KEY, PLAN_KEY, SHARE_PROMPT_KEY]
+  [STORAGE_KEY, THEME_KEY, CUSTOM_COLOR_KEY, GOAL_KEY, REMINDERS_KEY, CRAVINGS_KEY, PLAN_KEY, HINT_KEY, DIARY_KEY, SHARE_PROMPT_KEY, DEV_TYPE_KEY, BOARD_KEY, CHECKIN_KEY, WEEK_SEEN_KEY]
     .forEach((key) => localStorage.removeItem(key));
   mirrorAllStorage();
+  applyDevType(readDevType());
   replaceScheduledNotifications([]);
 
   stopReceiptRefresh();
@@ -852,6 +1371,8 @@ function resetApp() {
   applyTheme("default");
   updateReceipt(false);
   showStep(0);
+  // Clear the quick-pick highlight too, or "1 month ago" stays ticked next to an empty date.
+  syncDateChips();
   elements.appShell.scrollIntoView({ behavior: "smooth", block: "start" });
   showToast(t("All data deleted"));
 }
@@ -941,7 +1462,7 @@ elements.downloadButton.addEventListener("click", async () => {
 window.addEventListener("pagehide", saveCurrentState);
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState !== "visible") return;
-  if (elements.stage.classList.contains("is-receipt-only") && !receiptEditing) updateReceipt(false);
+  if (elements.stage.classList.contains("is-receipt-only")) updateReceipt(false);
 });
 
 // Theme
@@ -1003,7 +1524,7 @@ function applyCustomThemeVars(hex) {
   el.style.setProperty("--custom-receipt", receiptHex);
   el.style.setProperty("--custom-shadow", `8px 10px 0 rgba(${ri}, ${gi}, ${bi}, 0.35)`);
 
-  [document.querySelector("#colorSwatch"), document.querySelector("#receiptColorDot")].forEach((swatch) => {
+  [document.querySelector("#colorSwatch")].forEach((swatch) => {
     if (!swatch) return;
     swatch.style.background = dotBgHex;
     swatch.style.borderColor = inkHex;
@@ -1098,7 +1619,8 @@ updateReceipt(false);
 
 if (hasCompleteSavedState(initialState) && initialState.wizardDone !== false) {
   showStep(getActiveSteps().length - 1);
-  showReceipt(null, { animate: true });
+  // Returning users land on the on-board computer: days, money and life back at a glance.
+  showReceipt(null, { animate: false, tab: "start" });
 } else if (initialState.wizardDone === false && Number(initialState.wizardStep) > 0) {
   // Came back half-way: continue exactly where they left off.
   showStep(Number(initialState.wizardStep));
@@ -1265,6 +1787,8 @@ function readReminders() {
     coach: true,
     milestones: true,
     money: true,
+    checkin: true,
+    weekly: true,
     daily: { enabled: false, hour: 9, minute: 0 },
     ...readJSON(REMINDERS_KEY, {}),
   };
@@ -1301,6 +1825,8 @@ function notificationOptions(state, reminders) {
     coach: reminders.coach,
     plan: planForNotifications(),
     daily: reminders.daily,
+    checkin: { enabled: reminders.checkin, hour: 20, doneKeys: Object.keys(readCheckins()) },
+    weekly: reminders.weekly,
     goal: readGoal(),
     healthMilestones: (state.mode === "vaping" ? vapingMilestones : tobaccoMilestones)
       .map((m) => ({ ...m, title: t(m.title), detail: t(m.detail) })),
@@ -1317,6 +1843,8 @@ async function openAlertsSheet() {
   elements.alertMilestones.checked = reminders.milestones;
   elements.alertMoney.checked = reminders.money;
   elements.alertDaily.checked = reminders.daily.enabled;
+  document.querySelector("#alertCheckin").checked = reminders.checkin;
+  document.querySelector("#alertWeekly").checked = reminders.weekly;
   elements.alertTime.value = `${String(reminders.daily.hour).padStart(2, "0")}:${String(reminders.daily.minute).padStart(2, "0")}`;
   elements.alertTimeField.classList.toggle("is-hidden", !reminders.daily.enabled);
 
@@ -1342,6 +1870,8 @@ async function saveAlerts() {
     coach: elements.alertCoach.checked,
     milestones: elements.alertMilestones.checked,
     money: elements.alertMoney.checked,
+    checkin: document.querySelector("#alertCheckin").checked,
+    weekly: document.querySelector("#alertWeekly").checked,
     daily: { enabled: elements.alertDaily.checked, hour, minute },
   };
 
@@ -1373,64 +1903,71 @@ function maybeOfferReminders() {
 
 // ----------------------------------------------------------------- craving SOS
 const breathPattern = [
-  { label: "Breathe in", seconds: 4, fill: 100 },
-  { label: "Hold", seconds: 4, fill: 100 },
-  { label: "Breathe out", seconds: 6, fill: 0 },
+  { label: "Breathe in", seconds: 4, scale: 1 },
+  { label: "Hold", seconds: 4, scale: 1 },
+  { label: "Breathe out", seconds: 6, scale: 0.55 },
 ];
 
 function formatClock(seconds) {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
+// SOS: one calm task. A circle grows and shrinks with the breath, the phase word and a 4-3-2-1 count
+// say what to do, a thin line shows the 3 minutes. "Done" is there from the first second, "Stop" too.
 function enterSos() {
-  const state = getFormState();
-  const worth = cravingWorth(state);
-  elements.sosCount.textContent = numberFormatter.format(readCravings());
-  elements.sosWorth.textContent = worth ? formatCurrency(worth, state.currencyCode) : t("Your next step");
-  resetSosUi();
   renderSosPlan();
   stopSos();
   startSos();
 }
 
 function resetSosUi() {
-  elements.sosTimer.textContent = formatClock(SOS_SECONDS);
-  elements.breathPhase.textContent = t("Ready");
-  elements.breathFill.style.transition = "none";
-  elements.breathFill.style.width = "0%";
-  elements.sosStart.textContent = t("Start");
-  elements.sosDone.classList.add("is-hidden");
+  elements.sosTimer.textContent = t("{time} left", { time: formatClock(SOS_SECONDS) });
+  elements.breathPhase.textContent = t("Breathe in");
+  elements.breathCount.textContent = "";
+  elements.breathDisc.style.transition = "none";
+  elements.breathDisc.style.transform = "scale(0.55)";
+  elements.sosFill.style.transition = "none";
+  elements.sosFill.style.width = "0%";
+  elements.sosDone.textContent = t("Done, the urge is gone");
 }
 
 function startSos() {
   if (sosTimer) return;
+  resetSosUi();
   const startedAt = Date.now();
   let phaseIndex = -1;
   let phaseEndsAt = startedAt;
-  elements.sosStart.textContent = t("Restart");
+  // The 3-minute line runs on its own; reading it never needs counting.
+  requestAnimationFrame(() => {
+    elements.sosFill.style.transition = `width ${SOS_SECONDS}s linear`;
+    elements.sosFill.style.width = "100%";
+  });
 
   const tick = () => {
     const now = Date.now();
     const elapsed = Math.floor((now - startedAt) / 1000);
     const remaining = Math.max(0, SOS_SECONDS - elapsed);
-    elements.sosTimer.textContent = formatClock(remaining);
+    elements.sosTimer.textContent = t("{time} left", { time: formatClock(remaining) });
 
     if (now >= phaseEndsAt && remaining > 0) {
       phaseIndex = (phaseIndex + 1) % breathPattern.length;
       const phase = breathPattern[phaseIndex];
       phaseEndsAt = now + phase.seconds * 1000;
       elements.breathPhase.textContent = t(phase.label);
-      elements.breathFill.style.transition = `width ${phase.seconds}s linear`;
-      elements.breathFill.style.width = `${phase.fill}%`;
+      elements.breathDisc.style.transition = `transform ${phase.seconds}s ease-in-out`;
+      elements.breathDisc.style.transform = `scale(${phase.scale})`;
       if (phaseIndex === 0) haptics.press();
       else haptics.tap();
     }
+    if (remaining > 0) {
+      elements.breathCount.textContent = String(Math.max(1, Math.ceil((phaseEndsAt - now) / 1000)));
+    }
 
-    if (elapsed >= 45) elements.sosDone.classList.remove("is-hidden");
     if (remaining === 0) {
       stopSos();
-      elements.breathPhase.textContent = t("Craving passed");
-      elements.sosDone.classList.remove("is-hidden");
+      elements.breathPhase.textContent = t("You made it");
+      elements.breathCount.textContent = "";
+      elements.sosDone.textContent = t("Save it");
       haptics.success();
     }
   };
@@ -1446,7 +1983,10 @@ function stopSos() {
 function finishSos() {
   addCraving();
   haptics.success();
-  showTab("receipt");
+  const entry = newDiaryEntry("craving");
+  upsertDiaryEntry(entry);
+  showTab("diary");
+  openDiarySheet(entry, { isNew: false, fromSos: true });
   showToast(t("Craving #{n} resisted", { n: readCravings() }));
 }
 
@@ -1573,7 +2113,6 @@ function renderSosPlan() {
     elements.sosPlanList.append(row);
   });
   elements.sosPlanBox.classList.toggle("is-hidden", items.length === 0);
-  elements.sosPlanEdit.textContent = items.length ? t("Edit plan") : t("Plan what you do instead");
 }
 
 // ----------------------------------------------------------------- developer mode
@@ -1678,6 +2217,7 @@ function initDevMode() {
   document.querySelector("#devClose").addEventListener("click", () => closeSheet());
   document.querySelector("#devOff").addEventListener("click", () => {
     localStorage.removeItem(DEV_KEY);
+    saveDevType({ font: "", size: 100 });
     syncDevMode();
     closeSheet();
     showToast(t("Developer mode off"));
@@ -1686,8 +2226,217 @@ function initDevMode() {
     button.addEventListener("click", () => sendDevTest(button.dataset.devTest));
   });
   [elements.resetSheet, elements.devSheet].forEach(enableSwipeToClose);
+  initDevTypography();
   syncDevMode();
   showVersion();
+}
+
+// Developer: try other fonts and text sizes on a real phone. Size uses zoom because most sizes are in px.
+const DEV_TYPE_KEY = "smkfree-dev-type";
+const devFonts = {
+  system: "system-ui, -apple-system, \"Segoe UI\", Roboto, Arial, sans-serif",
+  rounded: "ui-rounded, \"SF Pro Rounded\", \"Nunito\", \"Varela Round\", system-ui, sans-serif",
+  serif: "ui-serif, Georgia, \"Times New Roman\", serif",
+  courier: "\"Courier New\", Courier, monospace",
+};
+
+function readDevType() {
+  const raw = readJSON(DEV_TYPE_KEY, null) || {};
+  const size = Math.min(140, Math.max(80, Number(raw.size) || 100));
+  return { font: devFonts[raw.font] ? raw.font : "", size };
+}
+
+function applyDevType({ font, size }) {
+  const root = document.documentElement;
+  if (font) {
+    root.dataset.devFont = font;
+    root.style.setProperty("--dev-font", devFonts[font]);
+  } else {
+    delete root.dataset.devFont;
+    root.style.removeProperty("--dev-font");
+  }
+  document.body.style.zoom = size === 100 ? "" : String(size / 100);
+  const fontSelect = document.querySelector("#devFont");
+  const sizeInput = document.querySelector("#devSize");
+  fontSelect.value = font;
+  sizeInput.value = String(size);
+  document.querySelector("#devSizeValue").textContent = `${size} %`;
+}
+
+function saveDevType(value) {
+  if (!value.font && value.size === 100) localStorage.removeItem(DEV_TYPE_KEY);
+  else localStorage.setItem(DEV_TYPE_KEY, JSON.stringify(value));
+  mirrorStorage(DEV_TYPE_KEY);
+  applyDevType(value);
+}
+
+function initDevTypography() {
+  const fontSelect = document.querySelector("#devFont");
+  const sizeInput = document.querySelector("#devSize");
+  fontSelect.addEventListener("change", () => saveDevType({ ...readDevType(), font: fontSelect.value }));
+  sizeInput.addEventListener("input", () => saveDevType({ ...readDevType(), size: Number(sizeInput.value) }));
+  document.querySelector("#devTypeReset").addEventListener("click", () => {
+    saveDevType({ font: "", size: 100 });
+    showToast(t("Font and size reset"));
+  });
+  applyDevType(readDevType());
+}
+
+// ----------------------------------------------------------------- diary
+// Cravings and slips with strength, trigger and a note. A slip is logged, never a reset.
+const diaryTriggers = [...planTriggers, { id: "other", label: "Other" }];
+const diaryTriggerIds = diaryTriggers.map((item) => item.id);
+const dayPartLabels = {
+  morning: "Most entries: mornings",
+  afternoon: "Most entries: afternoons",
+  evening: "Most entries: evenings",
+  night: "Most entries: nights",
+};
+let diaryDraft = null;
+
+function readDiary() {
+  return normalizeDiary(readJSON(DIARY_KEY, null), diaryTriggerIds);
+}
+
+function writeDiary(entries) {
+  writeJSON(DIARY_KEY, entries.length ? { entries } : null);
+}
+
+function upsertDiaryEntry(entry) {
+  const entries = readDiary().entries.filter((item) => item.id !== entry.id);
+  writeDiary([entry, ...entries]);
+}
+
+function newDiaryEntry(kind) {
+  const at = Date.now();
+  return { id: `${at}-${Math.random().toString(36).slice(2, 7)}`, at, kind, strength: null, trigger: null, note: "" };
+}
+
+/** Opens the entry sheet. fromSos: the craving is already counted and saved, only details are added. */
+function openDiarySheet(entry, { isNew = true, fromSos = false } = {}) {
+  diaryDraft = { ...entry, isNew, fromSos };
+  renderDiarySheet();
+  openSheet(elements.diarySheet);
+}
+
+// Two dropdowns: what happened, and what triggered it. Strength and note stay on old entries but are no longer asked.
+function renderDiarySheet() {
+  const draft = diaryDraft;
+  elements.diarySheetTitle.textContent = draft.fromSos ? t("Craving resisted") : draft.isNew ? t("New entry") : t("Edit entry");
+  document.querySelector("#diaryKindField").classList.toggle("is-hidden", draft.fromSos || !draft.isNew);
+  const kind = document.querySelector("#diaryKindSelect");
+  kind.value = draft.kind;
+  const trigger = document.querySelector("#diaryTriggerSelect");
+  trigger.innerHTML = "";
+  [{ id: "", label: "Not sure" }, ...diaryTriggers].forEach((item) => {
+    const option = document.createElement("option");
+    option.value = item.id;
+    option.textContent = t(item.label);
+    trigger.append(option);
+  });
+  trigger.value = draft.trigger || "";
+  elements.diarySlipHint.classList.toggle("is-hidden", draft.kind !== "slip");
+}
+
+function saveDiaryEntry() {
+  const { isNew, fromSos, ...entry } = diaryDraft;
+  upsertDiaryEntry(entry);
+  if (isNew && !fromSos && entry.kind === "craving") addCraving();
+  diaryDraft = null;
+  closeSheet();
+  haptics.success();
+  renderDiary();
+  updateReceipt(false);
+  showToast(entry.kind === "slip" ? t("Logged. Keep going.") : t("Saved to your diary"));
+}
+
+function deleteDiaryEntry(id) {
+  const entries = readDiary().entries;
+  const entry = entries.find((item) => item.id === id);
+  if (!entry) return;
+  writeDiary(entries.filter((item) => item.id !== id));
+  if (entry.kind === "craving") {
+    localStorage.setItem(CRAVINGS_KEY, String(Math.max(0, readCravings() - 1)));
+    mirrorStorage(CRAVINGS_KEY);
+  }
+  haptics.select();
+  renderDiary();
+  showToast(t("Entry deleted"));
+}
+
+function diaryDayLabel(date) {
+  const today = new Date();
+  const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+  if (date.toDateString() === today.toDateString()) return t("Today");
+  if (date.toDateString() === yesterday.toDateString()) return t("Yesterday");
+  return new Intl.DateTimeFormat(intlLocale(), { weekday: "short", day: "numeric", month: "short" }).format(date);
+}
+
+function renderDiary() {
+  const entries = readDiary().entries;
+  const stats = diaryStats(entries);
+  document.querySelector("#diarySummary").textContent = t("Last 7 days: {c} resisted · {s} slips", {
+    c: numberFormatter.format(stats.weekCravings),
+    s: numberFormatter.format(stats.weekSlips),
+  });
+  // One line instead of a chart: the trigger that shows up most.
+  const top = stats.topTriggers[0];
+  const topLine = document.querySelector("#diaryTop");
+  topLine.classList.toggle("is-hidden", !top);
+  if (top) topLine.textContent = t("Most common trigger: {trigger}", { trigger: planLabel(diaryTriggers, top.trigger) });
+
+  // Entries, newest first, grouped by day.
+  const time = new Intl.DateTimeFormat(intlLocale(), { hour: "2-digit", minute: "2-digit" });
+  elements.diaryList.innerHTML = "";
+  let lastDay = "";
+  entries.slice(0, 60).forEach((entry) => {
+    const date = new Date(entry.at);
+    const day = diaryDayLabel(date);
+    if (day !== lastDay) {
+      const heading = document.createElement("li");
+      heading.className = "diary-day";
+      heading.textContent = day;
+      elements.diaryList.append(heading);
+      lastDay = day;
+    }
+    const row = document.createElement("li");
+    row.className = `diary-entry diary-entry--${entry.kind}`;
+    const main = document.createElement("button");
+    main.type = "button";
+    main.className = "diary-entry__main";
+    const parts = [entry.kind === "slip" ? t("Slipped") : t("Resisted")];
+    if (entry.trigger) parts.push(planLabel(diaryTriggers, entry.trigger));
+    main.innerHTML = "<span class=\"diary-entry__time\"></span><span class=\"diary-entry__text\"></span>";
+    main.querySelector(".diary-entry__time").textContent = time.format(date);
+    main.querySelector(".diary-entry__text").textContent = parts.join(" · ") + (entry.note ? ` – ${entry.note}` : "");
+    main.addEventListener("click", () => openDiarySheet(entry, { isNew: false }));
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "diary-entry__delete";
+    remove.textContent = "×";
+    remove.setAttribute("aria-label", t("Delete entry"));
+    remove.addEventListener("click", () => deleteDiaryEntry(entry.id));
+    row.append(main, remove);
+    elements.diaryList.append(row);
+  });
+  elements.diaryEmpty.classList.toggle("is-hidden", entries.length > 0);
+}
+
+function initDiary() {
+  document.querySelector("#diaryAdd").addEventListener("click", () => openDiarySheet(newDiaryEntry("craving")));
+  document.querySelector("#diaryKindSelect").addEventListener("change", (event) => {
+    diaryDraft.kind = event.target.value;
+    renderDiarySheet();
+  });
+  document.querySelector("#diaryTriggerSelect").addEventListener("change", (event) => {
+    diaryDraft.trigger = event.target.value || null;
+  });
+  document.querySelector("#diarySave").addEventListener("click", saveDiaryEntry);
+  document.querySelector("#diaryCancel").addEventListener("click", () => {
+    diaryDraft = null;
+    closeSheet();
+  });
+  enableSwipeToClose(elements.diarySheet);
 }
 
 // ----------------------------------------------------------------- touch
@@ -1823,9 +2572,8 @@ function initTools() {
     elements.alertTimeField.classList.toggle("is-hidden", !elements.alertDaily.checked);
   });
 
-  elements.sosStart.addEventListener("click", () => { stopSos(); resetSosUi(); startSos(); });
   elements.sosDone.addEventListener("click", finishSos);
-  elements.sosPlanEdit.addEventListener("click", () => showTab("plan"));
+  elements.sosStop.addEventListener("click", () => showTab("start"));
 
   document.querySelector("#planButton").addEventListener("click", () => showTab("plan"));
   document.querySelector("#planSave").addEventListener("click", savePlan);
@@ -1864,86 +2612,6 @@ function syncDateChips() {
   document.querySelectorAll(".chip[data-days-ago]").forEach((chip) => {
     chip.classList.toggle("is-active",
       !elements.notStoppedYet.checked && elements.quitDate.value === dateDaysAgo(Number(chip.dataset.daysAgo)));
-  });
-}
-
-// ---------------------------------------------------------------------------
-// Tap a value on the receipt to change it in place (quit date, prices)
-// ---------------------------------------------------------------------------
-
-let receiptEditing = false;
-
-function finishReceiptEdit() {
-  receiptEditing = false;
-  updateReceipt();
-}
-
-function editReceiptDate(button) {
-  const input = document.createElement("input");
-  input.type = "date";
-  input.className = "receipt-edit-input";
-  input.value = elements.quitDate.value;
-  input.max = toInputDate(new Date());
-  button.replaceWith(input);
-  receiptEditing = true;
-  input.focus();
-  try { input.showPicker?.(); } catch { /* picker needs a user gesture on some browsers */ }
-
-  let timer = null;
-  const commit = () => {
-    window.clearTimeout(timer);
-    if (!receiptEditing) return;
-    if (input.value && input.value <= input.max) {
-      elements.quitDate.value = input.value;
-      elements.notStoppedYet.checked = false;
-      syncNotStoppedFields();
-      syncAdvancedFields();
-      syncDateChips();
-    }
-    finishReceiptEdit();
-  };
-  // Typed dates fire "change" per segment, so wait for a pause; a picker closes with blur.
-  input.addEventListener("change", () => { window.clearTimeout(timer); timer = window.setTimeout(commit, 900); });
-  input.addEventListener("blur", commit);
-  input.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") { event.preventDefault(); commit(); }
-    if (event.key === "Escape") { window.clearTimeout(timer); finishReceiptEdit(); }
-  });
-}
-
-function editReceiptMoney(button, field) {
-  const input = document.createElement("input");
-  input.type = "text";
-  const wholeNumber = field.type === "number";
-  input.inputMode = wholeNumber ? "numeric" : "decimal";
-  input.className = "receipt-edit-input";
-  input.value = field.value;
-  button.replaceWith(input);
-  receiptEditing = true;
-  input.focus();
-  input.select();
-
-  const commit = (save) => {
-    if (!receiptEditing) return;
-    const value = parseDecimal(input.value) ?? 0;
-    if (save && value > 0) field.value = wholeNumber ? String(Math.max(1, Math.round(value))) : input.value.trim();
-    finishReceiptEdit();
-  };
-  input.addEventListener("blur", () => commit(true));
-  input.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") { event.preventDefault(); commit(true); }
-    if (event.key === "Escape") commit(false);
-  });
-}
-
-function initReceiptEditing() {
-  elements.receiptRows.addEventListener("click", (event) => {
-    const button = event.target.closest(".receipt-edit");
-    const field = button && elements[button.dataset.edit];
-    if (!field || receiptEditing) return;
-    haptics.tap();
-    if (button.dataset.edit === "quitDate") editReceiptDate(button);
-    else editReceiptMoney(button, field);
   });
 }
 
@@ -2065,17 +2733,40 @@ function showTab(name) {
   if (name === "receipt") updateReceipt(false);
   if (name === "sos") enterSos();
   if (name === "plan") enterPlan();
-  if (name === "diary") elements.diaryCravings.textContent = numberFormatter.format(readCravings());
+  if (name === "diary") renderDiary();
+  if (name === "health") renderHealth();
 }
 
 function initTabs() {
-  document.querySelectorAll(".tab-button").forEach((button) => {
+  document.querySelectorAll(".tab-button[data-tab]").forEach((button) => {
     button.addEventListener("click", () => {
       if (button.dataset.tab === activeTab && activeTab !== "sos") return;
       haptics.select();
       showTab(button.dataset.tab);
     });
   });
+}
+
+// ----------------------------------------------------------------- first-run hints
+function syncReceiptHint() {
+  document.querySelector("#receiptHint").classList.toggle("is-hidden", localStorage.getItem(HINT_KEY) === "1");
+}
+
+function initHints() {
+  const infoButton = document.querySelector("#introInfoButton");
+  infoButton.addEventListener("click", () => {
+    const open = infoButton.getAttribute("aria-expanded") !== "true";
+    infoButton.setAttribute("aria-expanded", String(open));
+    document.querySelector("#introPoints").classList.toggle("is-hidden", !open);
+    haptics.select();
+  });
+  document.querySelector("#receiptHintClose").addEventListener("click", () => {
+    localStorage.setItem(HINT_KEY, "1");
+    mirrorStorage(HINT_KEY);
+    syncReceiptHint();
+    haptics.select();
+  });
+  syncReceiptHint();
 }
 
 // ----------------------------------------------------------------- More page
@@ -2265,10 +2956,17 @@ function renderGoalIdeas() {
 initTouchEnhancements();
 initTools();
 initOnboarding();
-initReceiptEditing();
 initMoreMenu();
+initHints();
 initTabs();
+initDiary();
 initDevMode();
 initExtras();
 initInteractiveReceipt();
+initBoard();
+initToday();
+initActions();
+initWeekReceipt();
+appReady = true;
+maybeShowWeekReceipt();
 document.querySelector("#goalButton").addEventListener("click", renderGoalIdeas);

@@ -55,17 +55,19 @@ den Apps selbst geprüft werden.
 - **Studienbasierte Bausteine** gratis: Wenn-dann-Plan (bei anderen nicht gefunden), Coach-Nachrichten, SOS.
 - **Schnellster Einstieg** ohne Registrierung.
 
-## Vorschlag Navigation (für die nächste Runde)
+## Navigation (Stand 23.11.2026)
 
 ```
-[ Bon ]  [ Plan ]  [ ● SOS ]  [ Tagebuch ]  [ Mehr ]
+[ Start ]  [ Tagebuch ]  [ ＋ Eintrag ]  [ Bon ]  [ Mehr ]
 ```
 
-- Bon: Startseite mit Tagen, Geld, Sparziel, Teilen.
-- Plan: Wenn-dann-Plan, später fester Rauchstopp-Tag und Vorbereitung.
-- SOS: ganze Seite – Atmen, Bewegung, eigener Plan; danach „Geschafft“ oder „Ausgerutscht“ → Tagebuch.
-- Tagebuch: Cravings und Ausrutscher, „Deine Auslöser“, Verlauf (ersetzt den Reset bei Ausrutschern).
-- Mehr: Einstellungen (Erinnerungen, Coach, Sprache, Farbe, Entwickler, Zurücksetzen).
+- Start: Bordcomputer (Tage, Geld, Lebenszeit), SOS-Karte, Tages-Check-in mit Tipp, Gesundheit.
+- ＋ in der Mitte (wie der Erstellen-Knopf bei Instagram): alles, was man im Moment braucht – SOS, Verlangen
+  widerstanden, Ausgerutscht, Wenn-dann-Plan. Von jeder Seite mit einem Tipp erreichbar.
+- Tagebuch: Verlauf und „Deine Auslöser“. Bon: teilbarer Beleg. Mehr: Einstellungen.
+
+Von Social Apps übernommen: feste Leiste mit 5 Zielen, eine zentrale Aktion, täglich etwas Neues (Tipp des Tages),
+Rückmeldung mit einem Tipp. Bewusst nicht: Endlos-Feed, Serien mit Verlustangst, Druck-Mitteilungen.
 
 ## Quellen
 

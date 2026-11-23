@@ -2779,12 +2779,12 @@ body.has-sheet {
   font-weight: 700;
 }
 
-.intro-info[open] .info-button {
+.info-button[aria-expanded="true"] {
   background: var(--ink);
   color: var(--paper, #fff);
 }
 
-.intro-info .intro-points {
+.intro-step .intro-points {
   margin: 0 0 14px;
 }
 
@@ -2988,7 +2988,7 @@ body {
 }
 
 /* ===================================================================== */
-/* Tab bar: receipt, plan, SOS, diary, more                              */
+/* Tab bar: receipt, health, SOS, diary, more                              */
 /* ===================================================================== */
 .tab-bar {
   position: fixed;
@@ -3106,4 +3106,1341 @@ body {
 
 .tab-page > h2:first-child {
   margin-top: 0;
+}
+
+/* Info "i" is a real button; only it opens the info */
+button.info-button {
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.intro-points.is-hidden {
+  display: none;
+}
+
+/* Receipt color: brush icon instead of a rainbow dot */
+.receipt-color__brush {
+  width: 22px;
+  height: 22px;
+  color: var(--ink);
+  pointer-events: none;
+}
+
+/* One-time hint above the receipt */
+.receipt-hint {
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px dashed var(--line);
+  padding: 12px 14px;
+  background: #fffef5;
+  font-family: var(--mono);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.receipt-hint p {
+  margin: 0 0 6px;
+}
+
+.receipt-wrap:not([data-tab="receipt"]) .receipt-hint {
+  display: none;
+}
+
+/* Diary */
+.diary-add {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.diary-section {
+  margin-top: 16px;
+}
+
+.diary-triggers,
+.diary-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.diary-triggers li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: baseline;
+  border-bottom: 1px dotted var(--line);
+  padding: 6px 0;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+}
+
+.diary-bar {
+  color: var(--muted);
+  letter-spacing: -0.04em;
+}
+
+.diary-day {
+  margin-top: 10px;
+  padding: 4px 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+}
+
+.diary-entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 40px;
+  border-bottom: 1px dotted var(--line);
+}
+
+.diary-entry__main {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 8px;
+  align-items: baseline;
+  min-height: 44px;
+  border: 0;
+  padding: 8px 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.86rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.diary-entry__time {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.diary-entry--slip .diary-entry__text {
+  color: #b00000;
+}
+
+.diary-entry__delete {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.diary-label {
+  margin: 14px 0 6px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.diary-kind {
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+
+.diary-kind.is-hidden {
+  display: none;
+}
+
+.diary-strength {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.diary-trigger-chips {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.diary-trigger-chips .chip {
+  min-height: 42px;
+  padding: 0 4px;
+  font-size: 0.72rem;
+}
+
+/* "Last 7 days" has a long value: put it under its label */
+.diary-stats div:last-child {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+}
+
+.diary-stats div:last-child dd {
+  margin: 0;
+}
+
+/* ===================================================================== */
+/* Action color: important buttons are blue in every receipt theme       */
+/* ===================================================================== */
+:root {
+  --action: #1d4ed8;
+  --action-pressed: #1e3a8a;
+  --action-soft: #dbe6ff;
+}
+
+.primary-button:not(.danger-button) {
+  border-color: var(--action);
+  background: var(--action);
+  color: #ffffff;
+}
+
+.primary-button:not(.danger-button):active {
+  background: var(--action-pressed);
+}
+
+.primary-button:focus-visible,
+.secondary-button:focus-visible,
+.chip:focus-visible,
+.tab-button:focus-visible {
+  outline: 3px solid var(--action);
+  outline-offset: 2px;
+}
+
+.tab-button.is-active {
+  color: var(--action);
+}
+
+.tab-button.is-active::after {
+  width: 18px;
+  height: 3px;
+  background: var(--action);
+  content: "";
+}
+
+.tab-button--sos.is-active::after {
+  display: none;
+}
+
+.text-button {
+  color: var(--action);
+}
+
+/* Selected answers stay black with a check, so "selected" never looks like "disabled". */
+.chip.is-active,
+.mode-card.is-active {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #ffffff;
+  opacity: 1;
+}
+
+.chip.is-active::before {
+  content: "✓ ";
+}
+
+/* ===================================================================== */
+/* Health tab                                                            */
+/* ===================================================================== */
+.health-summary {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0 12px;
+  border: 1px solid var(--line);
+  padding: 12px 14px;
+  background: #fffef5;
+}
+
+.health-summary strong {
+  font-size: 1.35rem;
+}
+
+.health-summary span {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.health-list {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0 20px;
+  padding: 0;
+  list-style: none;
+}
+
+.health-item {
+  border: 1px solid var(--line);
+  padding: 12px 14px;
+  background: #fffef5;
+}
+
+.health-item__head {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.health-item__head strong {
+  font-size: 0.98rem;
+}
+
+.health-item__percent {
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.health-bar {
+  height: 12px;
+  margin: 8px 0;
+  border: 1px solid var(--line);
+  background: #ffffff;
+}
+
+.health-bar span {
+  display: block;
+  height: 100%;
+  background: var(--action);
+  transition: width 400ms ease;
+}
+
+.health-item.is-done .health-bar span {
+  background: #15803d;
+}
+
+.health-item.is-done .health-item__percent {
+  color: #15803d;
+}
+
+.health-item__detail,
+.health-item__status {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.health-item__status {
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.health-item.is-done .health-item__status::before {
+  content: "✓ ";
+  color: #15803d;
+}
+
+.help-card {
+  display: grid;
+  gap: 8px;
+  margin: 8px 0 12px;
+  border: 2px solid var(--action);
+  padding: 14px;
+  background: var(--action-soft);
+}
+
+.help-card p {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.help-card__call {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.health-source {
+  margin: 0 0 24px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.health-source a {
+  color: inherit;
+}
+
+/* ===================================================================== */
+/* Developer: font and size                                              */
+/* ===================================================================== */
+.dev-heading {
+  margin: 18px 0 8px;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+}
+
+.dev-field {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.dev-field select,
+.dev-field input[type="range"] {
+  width: 100%;
+  min-height: 44px;
+  accent-color: var(--action);
+}
+
+.dev-field output {
+  font-weight: 700;
+}
+
+html[data-dev-font] body,
+html[data-dev-font] body *:not(svg):not(use) {
+  font-family: var(--dev-font) !important;
+}
+
+/* The wizard moves on 240 ms after a tap; show the choice at once instead of fading into it. */
+.chip.is-active,
+.mode-card.is-active {
+  transition: none;
+}
+
+/* ===================================================================== */
+/* On-board computer (.obc): first view on opening, later a widget.      */
+/* Inspired by 90s car dashboards: black panel, glowing dot-matrix glass,*/
+/* rubber keys with a small LED. All colors are tokens per theme, so a   */
+/* native widget can use the same values.                                */
+/* ===================================================================== */
+.obc {
+  --obc-panel: #161616;
+  --obc-panel-edge: #2b2b2b;
+  --obc-key: #2a2a2a;
+  --obc-key-dark: #1b1b1b;
+  --obc-key-text: #ececec;
+  --obc-brand: #d9d9d9;
+  --obc-glow: #ff5a1e;
+  --obc-glow-soft: rgba(255, 90, 30, 0.5);
+  --obc-ghost: rgba(255, 90, 30, 0.07);
+  --obc-glass: #170604;
+  --obc-glass-edge: #050101;
+  --obc-dots: 0.8;
+  width: 100%;
+  display: grid;
+  gap: 10px;
+  border: 1px solid #000;
+  border-radius: 10px;
+  padding: 12px;
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(255, 255, 255, 0.06), transparent 55%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.012) 0 1px, transparent 1px 3px),
+    var(--obc-panel);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.5),
+    0 12px 28px rgba(0, 0, 0, 0.22);
+  color: var(--obc-key-text);
+  font-family: var(--mono);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.obc[data-obc-theme="green"] {
+  --obc-glow: #46ffbf;
+  --obc-glow-soft: rgba(70, 255, 191, 0.45);
+  --obc-ghost: rgba(70, 255, 191, 0.06);
+  --obc-glass: #03130d;
+}
+
+.obc[data-obc-theme="blue"] {
+  --obc-glow: #69d2ff;
+  --obc-glow-soft: rgba(105, 210, 255, 0.45);
+  --obc-ghost: rgba(105, 210, 255, 0.06);
+  --obc-glass: #030f19;
+}
+
+/* Daylight LCD: dark segments on grey-green glass, no glow. */
+.obc[data-obc-theme="lcd"] {
+  --obc-glow: #1c2512;
+  --obc-glow-soft: transparent;
+  --obc-ghost: rgba(28, 37, 18, 0.08);
+  --obc-glass: #b8c79a;
+  --obc-glass-edge: #7d8a63;
+  --obc-dots: 0.35;
+}
+
+.obc__brand {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: var(--obc-brand);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.obc__brand strong {
+  font-style: italic;
+  letter-spacing: 0.02em;
+}
+
+.obc__grille {
+  width: 30px;
+  height: 12px;
+  background: repeating-linear-gradient(90deg, #050505 0 2px, transparent 2px 4px);
+  opacity: 0.9;
+}
+
+.obc__led {
+  width: 6px;
+  height: 6px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: #ff3b1f;
+  box-shadow: 0 0 6px rgba(255, 59, 31, 0.8);
+}
+
+/* Glass: dark display window with a dot-matrix screen over the text. */
+.obc__glass {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #000;
+  border-radius: 4px;
+  background:
+    linear-gradient(180deg, var(--obc-ghost), transparent 70%),
+    var(--obc-glass);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.7), inset 0 0 0 1px var(--obc-glass-edge), 0 1px 0 rgba(255, 255, 255, 0.06);
+  color: var(--obc-glow);
+  text-shadow: 0 0 4px var(--obc-glow-soft), 0 0 14px var(--obc-glow-soft);
+}
+
+.obc__glass::after {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, transparent 0 58%, var(--obc-glass) 72%) 0 0 / 3px 3px;
+  content: "";
+  opacity: var(--obc-dots);
+  pointer-events: none;
+}
+
+.obc__glass::before {
+  position: absolute;
+  inset: 0 0 55% 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent);
+  content: "";
+  pointer-events: none;
+}
+
+.obc__main {
+  display: grid;
+  gap: 2px;
+  min-height: 132px;
+  padding: 10px 14px 12px;
+}
+
+.obc__label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.obc__main .obc__value {
+  display: block;
+  font-size: clamp(2.5rem, 15vw, 3.7rem);
+  font-style: italic;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.obc__main .obc__value small {
+  font-size: 0.42em;
+  font-style: normal;
+  letter-spacing: 0.08em;
+}
+
+.obc__sub {
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.obc__minis {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.obc__mini {
+  display: grid;
+  gap: 2px;
+  min-height: 58px;
+  padding: 8px 10px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.obc__mini .obc__label {
+  font-size: 0.6rem;
+}
+
+.obc__mini .obc__value {
+  overflow: hidden;
+  font-size: 1.08rem;
+  font-style: italic;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.obc__keys {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.obc__key {
+  position: relative;
+  min-height: 42px;
+  border: 1px solid #000;
+  border-radius: 5px;
+  padding: 0 4px;
+  background: linear-gradient(180deg, var(--obc-key), var(--obc-key-dark));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.13), 0 2px 0 #000;
+  color: var(--obc-key-text);
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  touch-action: manipulation;
+  transition: transform 60ms ease, box-shadow 60ms ease;
+}
+
+.obc__key:active {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 #000;
+  transform: translateY(2px);
+}
+
+/* Small LED on the active key, like the indicator on a car's LIMIT key. */
+.obc__key::after {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  width: 8px;
+  height: 3px;
+  border-radius: 1px;
+  background: #3a3a3a;
+  content: "";
+}
+
+.obc__key.is-active::after {
+  background: var(--obc-glow);
+  box-shadow: 0 0 6px var(--obc-glow-soft);
+}
+
+.obc[data-obc-theme="lcd"] .obc__key.is-active::after {
+  background: #ff5a1e;
+}
+
+.obc__key--light::after {
+  display: none;
+}
+
+.obc__key:focus-visible,
+.obc__mini:focus-visible {
+  outline: 2px solid var(--obc-glow);
+  outline-offset: 2px;
+}
+
+/* Ignition: the displays flicker on once when the app opens. */
+.obc.is-booting .obc__glass {
+  animation: obc-boot 900ms steps(1, end);
+}
+
+@keyframes obc-boot {
+  0% { color: transparent; text-shadow: none; }
+  20% { color: var(--obc-glow); }
+  30% { color: transparent; text-shadow: none; }
+  45% { color: var(--obc-glow); filter: brightness(1.6); }
+  100% { filter: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .obc.is-booting .obc__glass { animation: none; }
+}
+
+/* ===================================================================== */
+/* On-board computer in the app's own look: paper panel, 1px ink lines,  */
+/* square corners, hard shadow, mono caps. Only the glass changes with   */
+/* the theme; "receipt" (default) prints in the receipt ink color.       */
+/* ===================================================================== */
+.obc {
+  --obc-panel: #fffef5;
+  --obc-key-text: var(--ink);
+  --obc-brand: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 14px;
+  background:
+    linear-gradient(90deg, rgba(5, 5, 5, 0.025) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(5, 5, 5, 0.022) 1px, transparent 1px),
+    var(--obc-panel);
+  background-size: 3px 3px, 3px 3px, auto;
+  box-shadow: var(--shadow);
+  color: var(--ink);
+}
+
+.obc[data-obc-theme="receipt"] {
+  --obc-glow: var(--ink);
+  --obc-glow-soft: transparent;
+  --obc-ghost: transparent;
+  --obc-glass: #f3f0e2;
+  --obc-glass-edge: transparent;
+  --obc-dots: 0.55;
+}
+
+.obc__brand {
+  border-bottom: 1px dashed var(--line);
+  padding-bottom: 8px;
+}
+
+.obc__grille {
+  background: repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 4px);
+}
+
+.obc__led {
+  border-radius: 0;
+  background: var(--action);
+  box-shadow: none;
+}
+
+.obc__glass {
+  border: 1px solid var(--line);
+  border-radius: 0;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+.obc[data-obc-theme="receipt"] .obc__glass {
+  box-shadow: inset 0 1px 0 rgba(5, 5, 5, 0.08);
+}
+
+.obc__glass::before {
+  display: none;
+}
+
+.obc__key {
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background:
+    linear-gradient(90deg, rgba(5, 5, 5, 0.025) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(5, 5, 5, 0.022) 1px, transparent 1px),
+    #fffef5;
+  background-size: 3px 3px, 3px 3px, auto;
+  box-shadow: none;
+  color: var(--ink);
+  font-weight: 400;
+}
+
+.obc__key:active {
+  box-shadow: none;
+  transform: translate(2px, 2px);
+}
+
+/* Selected key: black like every other selected answer in the app. */
+.obc__key.is-active {
+  background: var(--ink);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.obc__key::after {
+  background: rgba(5, 5, 5, 0.18);
+}
+
+.obc__key.is-active::after,
+.obc[data-obc-theme="lcd"] .obc__key.is-active::after {
+  background: var(--action);
+  box-shadow: none;
+}
+
+.obc__key--light {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+}
+
+.obc__key--light::before {
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--line);
+  background: var(--obc-glass);
+  content: "";
+}
+
+.start-page {
+  display: grid;
+  gap: 18px;
+  padding-top: 4px;
+}
+
+.start-page[hidden] {
+  display: none;
+}
+
+.start-health {
+  margin-top: 6px;
+}
+
+/* ===================================================================== */
+/* Center "+" button: the one action you need in the moment              */
+/* ===================================================================== */
+.tab-button--action {
+  min-height: 60px;
+  margin: -16px 6px 0;
+  border: 1px solid var(--action);
+  background: var(--action);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 3px 4px 0 rgba(5, 5, 5, 0.82);
+}
+
+.tab-button--action .icon {
+  width: 26px;
+  height: 26px;
+  stroke-width: 2.4;
+}
+
+.tab-button--action:active {
+  background: var(--action-pressed);
+  box-shadow: 1px 1px 0 rgba(5, 5, 5, 0.82);
+  transform: translate(2px, 3px);
+}
+
+.action-sos {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 8px 0 14px;
+  min-height: 56px;
+}
+
+/* ===================================================================== */
+/* Start: SOS card and today card                                        */
+/* ===================================================================== */
+.sos-card,
+.today-card {
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(90deg, rgba(5, 5, 5, 0.025) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(5, 5, 5, 0.022) 1px, transparent 1px),
+    #fffef5;
+  background-size: 3px 3px, 3px 3px, auto;
+}
+
+.sos-card {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+}
+
+.sos-card strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.sos-card > div span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.sos-card .primary-button {
+  display: inline-flex;
+  flex: none;
+  gap: 6px;
+  align-items: center;
+  min-width: 92px;
+}
+
+.today-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.today-card h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.today-card .kicker {
+  justify-self: start;
+}
+
+.checkin-levels {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+}
+
+.checkin-levels .chip {
+  padding: 0 4px;
+  font-size: 0.78rem;
+}
+
+.checkin-feedback {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.checkin-next {
+  justify-self: start;
+}
+
+.checkin-week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.checkin-week::after {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 0.74rem;
+  content: attr(data-count);
+}
+
+.checkin-day {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  color: var(--muted);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+}
+
+.checkin-day i {
+  display: block;
+  width: 100%;
+  height: 22px;
+  border: 1px solid var(--line);
+  background: #ffffff;
+}
+
+.checkin-day.is-future i {
+  border-style: dashed;
+  opacity: 0.45;
+}
+
+.checkin-day.is-today {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.checkin-day.is-today i {
+  outline: 2px solid var(--action);
+  outline-offset: 1px;
+}
+
+/* Filled days: the stronger the urge, the darker - never red, a hard day is still a win. */
+.checkin-day.is-level-0 i { background: #c9f0d4; }
+.checkin-day.is-level-1 i { background: #9fd9b0; }
+.checkin-day.is-level-2 i { background: #5fae79; }
+.checkin-day.is-level-3 i { background: #2f6f45; }
+
+.today-tip {
+  display: grid;
+  gap: 4px;
+  border-top: 1px dashed var(--line);
+  padding-top: 10px;
+}
+
+.today-tip p {
+  margin: 0;
+}
+
+.today-tip p:last-child {
+  font-size: 0.88rem;
+}
+
+/* ===================================================================== */
+/* Start = the on-board computer as its own phone-sized screen.          */
+/* On a wide screen it stays phone-sized and centered (receipt-wrap).    */
+/* ===================================================================== */
+.start-page {
+  padding-top: 0;
+}
+
+.start-page .obc {
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+  min-height: min(calc(100dvh - 150px - env(safe-area-inset-bottom, 0px)), 820px);
+}
+
+.start-page .obc__main {
+  align-content: center;
+  padding: 16px;
+}
+
+.start-page .obc__main .obc__value {
+  font-size: clamp(3.4rem, 21vw, 5.6rem);
+}
+
+.start-page .obc__sub {
+  font-size: 0.82rem;
+  line-height: 1.4;
+  white-space: normal;
+}
+
+.start-page .obc__mini {
+  min-height: 70px;
+}
+
+.start-page .obc__mini .obc__value {
+  font-size: 1.25rem;
+}
+
+.obc__keys--nav {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.start-page .obc__key {
+  min-height: 48px;
+}
+
+/* SOS key: the hazard-light key of the dashboard. */
+.obc__key--sos {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.obc__hazard {
+  width: 16px;
+  height: 14px;
+  background: #d61f1f;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.obc__key--sos::after {
+  display: none;
+}
+
+/* "Today" key: blue LED until today's check-in is done. */
+.obc__key--go.needs-checkin::after {
+  background: var(--action);
+}
+
+.obc__key--go[data-go="health"]::after {
+  display: none;
+}
+
+.page-back {
+  justify-self: start;
+  margin-bottom: 8px;
+  text-transform: none;
+}
+
+.health-page {
+  display: grid;
+}
+
+.health-page[hidden] {
+  display: none;
+}
+
+.today-sheet .checkin-levels {
+  margin: 4px 0;
+}
+
+/* ===================================================================== */
+/* SOS: one calm task                                                    */
+/* ===================================================================== */
+.sos-page {
+  display: grid;
+  gap: 18px;
+  justify-items: center;
+  padding-top: 8px;
+  text-align: center;
+}
+
+.sos-page[hidden] {
+  display: none;
+}
+
+.sos-intro {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.breath-circle {
+  position: relative;
+  display: grid;
+  width: min(72vw, 270px);
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px dashed var(--line);
+  border-radius: 50%;
+}
+
+.breath-circle__disc {
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--action);
+  border-radius: 50%;
+  background: var(--action-soft);
+  transform: scale(0.55);
+}
+
+.breath-circle__text {
+  position: relative;
+  display: grid;
+  gap: 2px;
+}
+
+.breath-circle__text strong {
+  font-size: 1.6rem;
+  text-transform: uppercase;
+}
+
+.breath-circle__text span {
+  min-height: 1.2em;
+  font-size: 2.2rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.sos-progress {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+}
+
+.sos-progress__bar {
+  height: 6px;
+  border: 1px solid var(--line);
+  background: #ffffff;
+}
+
+.sos-progress__bar span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--ink);
+}
+
+.sos-progress > span {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.sos-page .sos-plan {
+  width: 100%;
+  text-align: left;
+}
+
+.sos-page .sos-done {
+  width: 100%;
+  min-height: 56px;
+}
+
+.sos-stop {
+  min-height: 44px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .breath-circle__disc { transition: none !important; }
+}
+
+.start-page .obc__main .obc__value[data-size="mid"] {
+  font-size: clamp(2.8rem, 16vw, 4.4rem);
+}
+
+.start-page .obc__main .obc__value[data-size="long"] {
+  font-size: clamp(2.2rem, 12vw, 3.4rem);
+}
+
+.health-page > .kicker,
+.health-page .start-health > .kicker {
+  justify-self: start;
+  width: max-content;
+}
+
+/* Top key row: one display key, light, receipt. */
+.obc__keys--top {
+  grid-template-columns: 1.3fr 1fr 1fr;
+}
+
+.obc__key--mode,
+.obc__key--print {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+}
+
+.obc__key--mode::after,
+.obc__key--print::after {
+  display: none;
+}
+
+.obc__dots {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.obc__dots i {
+  width: 6px;
+  height: 3px;
+  background: rgba(5, 5, 5, 0.2);
+}
+
+.obc__dots i.is-on {
+  background: var(--action);
+}
+
+.obc__key--print .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.start-page .obc__main {
+  cursor: pointer;
+}
+
+/* ===================================================================== */
+/* Rewards: gold display (day 30) and the "NEW" mark on the light key    */
+/* ===================================================================== */
+.obc[data-obc-theme="gold"] {
+  --obc-glow: #ffc23d;
+  --obc-glow-soft: rgba(255, 194, 61, 0.45);
+  --obc-ghost: rgba(255, 194, 61, 0.07);
+  --obc-glass: #140d02;
+}
+
+.obc__key--light.is-new::after {
+  display: block;
+  top: -8px;
+  right: -6px;
+  width: auto;
+  height: auto;
+  padding: 1px 4px;
+  border: 1px solid var(--line);
+  background: var(--action);
+  color: #ffffff;
+  content: attr(data-badge);
+  font-size: 0.56rem;
+  letter-spacing: 0.04em;
+}
+
+
+/* ===================================================================== */
+/* Week receipt                                                          */
+/* ===================================================================== */
+.week-receipt {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 12px;
+  border: 1px solid var(--line);
+  padding: 14px;
+  background: var(--receipt, #fffefa);
+  text-align: center;
+}
+
+.week-receipt__brand {
+  margin: 0;
+  font-style: italic;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.week-receipt h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+}
+
+.week-receipt__range {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.week-receipt__rows {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  text-align: left;
+}
+
+.week-receipt__rows div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px dotted var(--line);
+  padding-bottom: 4px;
+}
+
+.week-receipt__rows dt {
+  text-transform: uppercase;
+  font-size: 0.82rem;
+}
+
+.week-receipt__rows dd {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.week-receipt__message {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* ===================================================================== */
+/* Diary, simplified                                                     */
+/* ===================================================================== */
+.diary-page {
+  display: grid;
+  gap: 12px;
+}
+
+.diary-page[hidden] {
+  display: none;
+}
+
+.diary-page h2 {
+  margin: 0;
+}
+
+.diary-summary,
+.diary-top {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.diary-top {
+  color: var(--muted);
+}
+
+.diary-field {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.diary-field select {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 0 12px;
+  background: #ffffff;
+  color: var(--ink);
+  font-size: 1rem;
 }

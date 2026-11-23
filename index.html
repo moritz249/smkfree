@@ -31,7 +31,7 @@
     <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
     <link rel="icon" href="assets/favicon-32x32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="assets/icon-180.png">
-    <link rel="stylesheet" href="styles.css?v=20261122-3">
+    <link rel="stylesheet" href="styles.css?v=20261123-16">
     <script src="assets/html2canvas.min.js" defer></script>
   </head>
   <body>
@@ -64,7 +64,10 @@
         <symbol id="i-plan" viewBox="0 0 24 24"><path d="M4 6h6M4 12h6M4 18h6M14 6l6 6-6 6M14 12h6"/></symbol>
         <symbol id="i-headphones" viewBox="0 0 24 24"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="6"/><rect x="17" y="14" width="4" height="6"/></symbol>
         <symbol id="i-dinner" viewBox="0 0 24 24"><path d="M5 3v5a2 2 0 0 0 4 0V3M7 3v18M17 3c-2.5 2-2.5 7 0 9v9"/></symbol>
+        <symbol id="i-brush" viewBox="0 0 24 24"><path d="M20 3l-8.5 8.5"/><path d="M11.5 11.5c-2.5-.5-5 1-5.5 4-.3 2-1.3 3.5-3 4.5 4.5 1 9.5-.5 10-4.5.2-1.6-.3-3.2-1.5-4z"/></symbol>
         <symbol id="i-code" viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+        <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M3 17a9 9 0 0 1 18 0"/><path d="M12 17l5-6"/><circle cx="12" cy="17" r="1.5"/></symbol>
         <symbol id="i-pause" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></symbol>
       </defs>
     </svg>
@@ -87,17 +90,15 @@
           <section class="step is-active" data-mode="all">
             <div class="intro-step">
               <p class="intro-logo">smkfree</p>
-              <details class="intro-info">
-                <summary class="intro-heading">
-                  <h2 data-i18n>When did you stop?</h2>
-                  <span class="info-button" aria-label="Info" data-i18n-aria>i</span>
-                </summary>
-                <ul class="intro-points">
+              <div class="intro-heading">
+                <h2 data-i18n>When did you stop?</h2>
+                <button type="button" class="info-button" id="introInfoButton" aria-expanded="false" aria-controls="introPoints" aria-label="Info" data-i18n-aria>i</button>
+              </div>
+              <ul class="intro-points is-hidden" id="introPoints">
                   <li><svg class="icon" aria-hidden="true"><use href="#i-clock"></use></svg><span data-i18n>30 seconds</span></li>
                   <li><svg class="icon" aria-hidden="true"><use href="#i-lock"></use></svg><span data-i18n>No account</span></li>
                   <li><svg class="icon" aria-hidden="true"><use href="#i-phone"></use></svg><span data-i18n>On your device</span></li>
                 </ul>
-              </details>
             </div>
             <div class="chip-row" role="group" aria-label="Quick pick" data-i18n-aria>
               <button type="button" class="chip" data-days-ago="0" data-i18n>Today</button>
@@ -246,6 +247,10 @@
         </form>
 
         <section class="receipt-wrap" id="receiptWrap" data-tab="receipt" aria-label="SMKFREE receipt" data-i18n-aria>
+          <div class="receipt-hint is-hidden" id="receiptHint" role="note">
+            <p><strong data-i18n>This is your receipt.</strong> <span data-i18n>It counts up live with every smoke-free minute. Set a goal, share it, or tap + when a craving hits.</span></p>
+            <button type="button" class="text-button" id="receiptHintClose" data-i18n>Got it</button>
+          </div>
           <div class="receipt-quick">
             <button type="button" id="goalButton" class="secondary-button"><svg class="icon" aria-hidden="true"><use href="#i-target"></use></svg><span data-i18n>Goal</span></button>
             <button type="button" id="downloadButton" class="primary-button"><svg class="icon" aria-hidden="true"><use href="#i-share"></use></svg><span data-i18n>Share</span></button>
@@ -257,7 +262,7 @@
               <span class="receipt__top-gap" aria-hidden="true"></span>
               <label class="receipt-color" aria-label="Receipt color" data-i18n-aria>
                 <input type="color" id="receiptColor" value="#7c3aed">
-                <span class="receipt-color__dot" id="receiptColorDot" aria-hidden="true"></span>
+                <svg class="icon receipt-color__brush" aria-hidden="true"><use href="#i-brush"></use></svg>
               </label>
               <p>SMKFREE</p>
               <h2 data-i18n>Quit Receipt</h2>
@@ -324,31 +329,26 @@
             </footer>
           </article>
           </div>
-          <div class="tab-page" id="sosPage" data-tab="sos" hidden>
-      <h2 id="sosTitle" data-i18n>Ride it out. 3 minutes.</h2>
-      <div class="breath" aria-live="polite">
-        <div class="breath__bar"><span id="breathFill"></span></div>
-        <div class="breath__meta">
-          <strong id="breathPhase">Ready</strong>
-          <span id="sosTimer">3:00</span>
-        </div>
-      </div>
-      <dl class="summary-list sos-stats">
-        <div><dt data-i18n>Cravings resisted</dt><dd id="sosCount">0</dd></div>
-        <div hidden><dt data-i18n>One craving is worth</dt><dd id="sosWorth">--</dd></div>
-      </dl>
-      <div class="sos-plan">
-        <div id="sosPlanBox" class="is-hidden">
-          <p class="sos-plan__title" data-i18n>Your plan</p>
-          <ul class="plan-list" id="sosPlanList"></ul>
-        </div>
-        <button type="button" class="text-button" id="sosPlanEdit" data-i18n>Plan what you do instead</button>
-      </div>
-      <div class="sheet__actions" id="sosActions">
-        <button type="button" class="primary-button" id="sosStart" data-i18n>Start</button>
-      </div>
-      <button type="button" class="primary-button primary-button--large sos-done is-hidden" id="sosDone" data-i18n>I made it +1</button>
-    </div>
+          <div class="tab-page sos-page" id="sosPage" data-tab="sos" hidden>
+            <p class="sos-intro" id="sosTitle" data-i18n>The urge passes. Breathe along.</p>
+            <div class="breath-circle" id="breathCircle" aria-live="polite">
+              <span class="breath-circle__disc" id="breathDisc" aria-hidden="true"></span>
+              <div class="breath-circle__text">
+                <strong id="breathPhase">--</strong>
+                <span id="breathCount" aria-hidden="true"></span>
+              </div>
+            </div>
+            <div class="sos-progress">
+              <div class="sos-progress__bar" aria-hidden="true"><span id="sosFill"></span></div>
+              <span id="sosTimer">3:00</span>
+            </div>
+            <div class="sos-plan is-hidden" id="sosPlanBox">
+              <p class="sos-plan__title" data-i18n>Your plan</p>
+              <ul class="plan-list" id="sosPlanList"></ul>
+            </div>
+            <button type="button" class="primary-button primary-button--large sos-done" id="sosDone" data-i18n>Done, the urge is gone</button>
+            <button type="button" class="text-button sos-stop" id="sosStop" data-i18n>Stop</button>
+          </div>
 
           <div class="tab-page" id="planPage" data-tab="plan" hidden>
       <p class="kicker" data-i18n>If-then plan</p>
@@ -362,14 +362,75 @@
       </div>
     </div>
 
-          <div class="tab-page" id="diaryPage" data-tab="diary" hidden>
-      <p class="kicker" data-i18n>Diary</p>
-      <h2 data-i18n>Coming soon</h2>
-      <p class="step-hint" data-i18n>Soon you can log every craving and slip here with one tap and see what triggers you most.</p>
-      <dl class="summary-list">
-        <div><dt data-i18n>Cravings resisted</dt><dd id="diaryCravings">0</dd></div>
-      </dl>
-    </div>
+          <div class="tab-page diary-page" id="diaryPage" data-tab="diary" hidden>
+            <h2 data-i18n>Diary</h2>
+            <button type="button" class="primary-button primary-button--large" id="diaryAdd" data-i18n>+ New entry</button>
+            <p class="diary-summary" id="diarySummary"></p>
+            <p class="diary-top is-hidden" id="diaryTop"></p>
+            <ul class="diary-list" id="diaryList"></ul>
+            <p class="step-hint" id="diaryEmpty" data-i18n>No entries yet.</p>
+          </div>
+
+          <div class="tab-page start-page" id="startPage" data-tab="start" hidden>
+            <!-- On-board computer: the first thing you see. Self-contained (.obc + data-obc-theme) so it can become a widget. -->
+            <section class="obc" id="board" data-obc-theme="receipt" data-obc-metric="time" aria-label="On-board computer" data-i18n-aria>
+              <header class="obc__brand">
+                <span class="obc__grille" aria-hidden="true"></span>
+                <span><strong>SMKFREE</strong> <span data-i18n>ON-BOARD COMPUTER</span></span>
+                <span class="obc__led" aria-hidden="true"></span>
+              </header>
+              <div class="obc__glass obc__main" aria-live="polite">
+                <span class="obc__label" id="boardMainLabel">--</span>
+                <strong class="obc__value" id="boardMainValue">--</strong>
+                <span class="obc__sub" id="boardMainSub"></span>
+              </div>
+              <div class="obc__minis">
+                <button type="button" class="obc__glass obc__mini" id="boardMiniA" data-metric="money">
+                  <span class="obc__label"></span><strong class="obc__value"></strong>
+                </button>
+                <button type="button" class="obc__glass obc__mini" id="boardMiniB" data-metric="third">
+                  <span class="obc__label"></span><strong class="obc__value"></strong>
+                </button>
+              </div>
+              <div class="obc__keys obc__keys--top" role="group" aria-label="Display" data-i18n-aria>
+                <button type="button" class="obc__key obc__key--mode" id="boardMode" aria-label="Switch display: days, money, life" data-i18n-aria>
+                  <span data-i18n>Display ▸</span>
+                  <span class="obc__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                </button>
+                <button type="button" class="obc__key obc__key--light" id="boardLight" aria-label="Change display color" data-i18n-aria><span data-i18n>Light</span></button>
+                <button type="button" class="obc__key obc__key--print" data-go="receipt"><span data-i18n>Print my receipt</span></button>
+              </div>
+              <!-- Second row: keys that open something, like the hazard and function keys in a car. -->
+              <div class="obc__keys obc__keys--nav" role="group" aria-label="Open" data-i18n-aria>
+                <button type="button" class="obc__key obc__key--sos" data-go="sos" aria-label="SOS: help with a craving now" data-i18n-aria><span class="obc__hazard" aria-hidden="true"></span><span>SOS</span></button>
+                <button type="button" class="obc__key obc__key--go" data-go="today" id="boardTodayKey"><span data-i18n>Today</span></button>
+                <button type="button" class="obc__key obc__key--go" data-go="health"><span data-i18n>Body</span></button>
+              </div>
+            </section>
+          </div>
+
+          <div class="tab-page health-page" id="healthPage" data-tab="health" hidden>
+            <button type="button" class="text-button page-back" data-go="start" data-i18n>‹ Back to start</button>
+            <p class="kicker" data-i18n>Health</p>
+            <h2 id="healthTitle" data-i18n>Your body is recovering</h2>
+            <div class="health-summary">
+              <strong id="healthReached">--</strong>
+              <span id="healthNext"></span>
+            </div>
+            <p class="step-hint" data-i18n>The percentage shows how far along you are on the way to each point in time. A simple estimate, not a medical test.</p>
+            <p class="step-hint is-hidden" id="healthVapingNote" data-i18n>The body-repair timeline is researched for tobacco. For vaping there is too little data yet, so you see your vape-free milestones here.</p>
+            <ol class="health-list" id="healthList"></ol>
+
+            <div class="help-card">
+              <p class="sos-plan__title" data-i18n>Free help</p>
+              <p data-i18n>Medication or nicotine replacement plus support roughly doubles your chances. Ask your doctor or pharmacy.</p>
+              <a class="primary-button help-card__call" href="tel:+498008313131"><svg class="icon" aria-hidden="true"><use href="#i-phone"></use></svg><span data-i18n>Call quit line (DE, free)</span></a>
+              <p class="step-hint"><span data-i18n>BIÖG phone counseling: 0800 8 31 31 31. Mon–Thu 10–22, Fri–Sun 10–18.</span></p>
+              <a class="text-button" href="https://rauchfrei-info.de/" target="_blank" rel="noopener" data-i18n>rauchfrei-info.de online program</a>
+            </div>
+            <p class="health-source"><span data-i18n>Source:</span> <a href="https://www.dkfz.de/forschung/translationale-zentren/ncpc/stabsstelle-krebspraevention/rauchstopp" target="_blank" rel="noopener" data-i18n>German Cancer Research Center (DKFZ)</a></p>
+            </section>
+          </div>
 
           <div class="tab-page" id="morePage" data-tab="more" hidden>
       <p class="kicker" data-i18n>More</p>
@@ -378,7 +439,7 @@
         <button type="button" class="menu-row" id="editButton"><svg class="icon" aria-hidden="true"><use href="#i-pencil"></use></svg><span data-i18n>Edit details</span><span class="menu-row__value" aria-hidden="true">›</span></button>
         <label class="menu-row" id="customColorLabel">
           <input type="color" id="customColor" value="#7c3aed">
-          <svg class="icon" aria-hidden="true"><use href="#i-drop"></use></svg><span data-i18n>Receipt color</span><span class="menu-row__swatch" id="colorSwatch" aria-hidden="true"></span>
+          <svg class="icon" aria-hidden="true"><use href="#i-brush"></use></svg><span data-i18n>Receipt color</span><span class="menu-row__swatch" id="colorSwatch" aria-hidden="true"></span>
         </label>
         <label class="menu-row" id="benefitsLabel">
           <input id="showBenefits" name="showBenefits" type="checkbox">
@@ -396,10 +457,10 @@
     </div>
 
           <nav class="tab-bar" aria-label="Main" data-i18n-aria>
-            <button type="button" class="tab-button is-active" data-tab="receipt" aria-current="page"><svg class="icon" aria-hidden="true"><use href="#i-receipt"></use></svg><span data-i18n>Receipt</span></button>
-            <button type="button" class="tab-button" data-tab="plan"><svg class="icon" aria-hidden="true"><use href="#i-plan"></use></svg><span data-i18n>Plan</span></button>
-            <button type="button" class="tab-button tab-button--sos" data-tab="sos" id="sosButton"><svg class="icon" aria-hidden="true"><use href="#i-breath"></use></svg><span data-i18n>SOS</span></button>
+            <button type="button" class="tab-button is-active" data-tab="start" aria-current="page"><svg class="icon" aria-hidden="true"><use href="#i-gauge"></use></svg><span data-i18n>Home</span></button>
             <button type="button" class="tab-button" data-tab="diary"><svg class="icon" aria-hidden="true"><use href="#i-calendar"></use></svg><span data-i18n>Diary</span></button>
+            <button type="button" class="tab-button tab-button--action" id="actionButton" aria-haspopup="dialog" aria-label="New entry or SOS" data-i18n-aria><svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg><span data-i18n>Log</span></button>
+            <button type="button" class="tab-button" data-tab="receipt"><svg class="icon" aria-hidden="true"><use href="#i-receipt"></use></svg><span data-i18n>Receipt</span></button>
             <button type="button" class="tab-button" data-tab="more" id="moreButton"><svg class="icon" aria-hidden="true"><use href="#i-more"></use></svg><span data-i18n>More</span></button>
           </nav>
 
@@ -442,6 +503,14 @@
           <span><span data-i18n>Quit coach</span><small data-i18n>Short tips that help, most in your first week. Uses your if-then plan.</small></span>
         </label>
         <label class="toggle-field">
+          <input id="alertCheckin" type="checkbox" checked>
+          <span><span data-i18n>Evening check-in</span><small data-i18n>At 8 pm, only if you have not checked in yet.</small></span>
+        </label>
+        <label class="toggle-field">
+          <input id="alertWeekly" type="checkbox" checked>
+          <span><span data-i18n>Week receipt</span><small data-i18n>Sunday evening: your week at a glance.</small></span>
+        </label>
+        <label class="toggle-field">
           <input id="alertMilestones" type="checkbox" checked>
           <span><span data-i18n>Milestones</span><small data-i18n>1 day, 1 week, 1 month … plus health small print.</small></span>
         </label>
@@ -467,6 +536,27 @@
 
 
 
+    <section class="sheet" id="diarySheet" role="dialog" aria-modal="true" aria-labelledby="diarySheetTitle" hidden>
+      <div class="sheet__grip" aria-hidden="true"></div>
+      <h2 id="diarySheetTitle" data-i18n>New entry</h2>
+      <label class="diary-field" id="diaryKindField">
+        <span data-i18n>What happened?</span>
+        <select id="diaryKindSelect">
+          <option value="craving" data-i18n>Craving resisted</option>
+          <option value="slip" data-i18n>Slipped</option>
+        </select>
+      </label>
+      <label class="diary-field">
+        <span data-i18n>Trigger</span>
+        <select id="diaryTriggerSelect"></select>
+      </label>
+      <p class="step-hint is-hidden" id="diarySlipHint" data-i18n>A slip erases nothing. Your receipt keeps counting.</p>
+      <div class="sheet__actions">
+        <button type="button" class="secondary-button" id="diaryCancel" data-i18n>Cancel</button>
+        <button type="button" class="primary-button" id="diarySave" data-i18n>Save</button>
+      </div>
+    </section>
+
     <section class="sheet" id="resetSheet" role="dialog" aria-modal="true" aria-labelledby="resetSheetTitle" hidden>
       <div class="sheet__grip" aria-hidden="true"></div>
       <p class="kicker kicker--danger" data-i18n>Reset</p>
@@ -476,6 +566,7 @@
         <li data-i18n>Receipt and quit date</li>
         <li data-i18n>Savings goal</li>
         <li data-i18n>If-then plan</li>
+        <li data-i18n>Diary entries</li>
         <li data-i18n>Reminders and coach</li>
         <li data-i18n>Craving count</li>
         <li data-i18n>Receipt color</li>
@@ -484,6 +575,63 @@
       <div class="sheet__actions">
         <button type="button" class="secondary-button" id="resetCancel" data-i18n>Cancel</button>
         <button type="button" class="primary-button danger-button" id="resetConfirm" data-i18n>Delete everything</button>
+      </div>
+    </section>
+
+    <!-- Daily check-in: one tap, then feedback, this week and the tip of the day. -->
+    <section class="sheet today-sheet" id="todaySheet" role="dialog" aria-modal="true" aria-labelledby="todayQuestion" hidden>
+      <div class="sheet__grip" aria-hidden="true"></div>
+      <p class="kicker" data-i18n>Today</p>
+      <h2 id="todayQuestion" data-i18n>How strong was the urge today?</h2>
+      <div class="chip-row checkin-levels" id="checkinLevels" role="group" aria-labelledby="todayQuestion">
+        <button type="button" class="chip" data-level="0" data-i18n>None</button>
+        <button type="button" class="chip" data-level="1" data-i18n>Mild</button>
+        <button type="button" class="chip" data-level="2" data-i18n>Medium</button>
+        <button type="button" class="chip" data-level="3" data-i18n>Strong</button>
+      </div>
+      <p class="checkin-feedback is-hidden" id="checkinFeedback" role="status"></p>
+      <button type="button" class="secondary-button checkin-next is-hidden" id="checkinNext"></button>
+      <ol class="checkin-week" id="checkinWeek" aria-label="This week" data-i18n-aria></ol>
+      <div class="today-tip">
+        <p class="sos-plan__title" data-i18n>Tip of the day</p>
+        <strong id="tipTitle"></strong>
+        <p id="tipBody"></p>
+      </div>
+      <div class="sheet__actions">
+        <button type="button" class="secondary-button" id="weekOpen" data-i18n>Week receipt</button>
+        <button type="button" class="primary-button" id="todayClose" data-i18n>Close</button>
+      </div>
+    </section>
+
+    <section class="sheet week-sheet" id="weekSheet" role="dialog" aria-modal="true" aria-labelledby="weekTitle" hidden>
+      <div class="sheet__grip" aria-hidden="true"></div>
+      <div class="week-receipt">
+        <p class="week-receipt__brand">SMKFREE</p>
+        <h2 id="weekTitle" data-i18n>WEEK RECEIPT</h2>
+        <p class="week-receipt__range" id="weekRange"></p>
+        <div class="receipt__divider"></div>
+        <dl class="week-receipt__rows" id="weekRows"></dl>
+        <ol class="checkin-week" id="weekDays" aria-label="This week" data-i18n-aria></ol>
+        <div class="receipt__divider"></div>
+        <p class="week-receipt__message" id="weekMessage"></p>
+      </div>
+      <div class="sheet__actions">
+        <button type="button" class="secondary-button" id="weekClose" data-i18n>Close</button>
+        <button type="button" class="primary-button" id="weekShare" data-i18n>Share</button>
+      </div>
+    </section>
+
+    <section class="sheet" id="actionSheet" role="dialog" aria-modal="true" aria-labelledby="actionSheetTitle" hidden>
+      <div class="sheet__grip" aria-hidden="true"></div>
+      <h2 id="actionSheetTitle" data-i18n>What's up?</h2>
+      <button type="button" class="primary-button primary-button--large action-sos" data-action="sos"><svg class="icon" aria-hidden="true"><use href="#i-breath"></use></svg><span data-i18n>Craving now: SOS, 3 minutes</span></button>
+      <div class="menu-list">
+        <button type="button" class="menu-row" data-action="craving"><svg class="icon" aria-hidden="true"><use href="#i-heart"></use></svg><span data-i18n>I resisted a craving</span><span class="menu-row__value" aria-hidden="true">›</span></button>
+        <button type="button" class="menu-row" data-action="slip"><svg class="icon" aria-hidden="true"><use href="#i-pencil"></use></svg><span data-i18n>I slipped</span><span class="menu-row__value" aria-hidden="true">›</span></button>
+        <button type="button" class="menu-row" data-action="plan"><svg class="icon" aria-hidden="true"><use href="#i-plan"></use></svg><span data-i18n>If-then plan</span><span class="menu-row__value" aria-hidden="true">›</span></button>
+      </div>
+      <div class="sheet__actions">
+        <button type="button" class="secondary-button" id="actionClose" data-i18n>Close</button>
       </div>
     </section>
 
@@ -498,6 +646,22 @@
         <button type="button" class="menu-row" data-dev-test="money"><svg class="icon" aria-hidden="true"><use href="#i-target"></use></svg><span data-i18n>Money milestones</span><span class="menu-row__value" aria-hidden="true">›</span></button>
         <button type="button" class="menu-row" data-dev-test="daily"><svg class="icon" aria-hidden="true"><use href="#i-receipt"></use></svg><span data-i18n>Daily receipt</span><span class="menu-row__value" aria-hidden="true">›</span></button>
       </div>
+      <h3 class="dev-heading" data-i18n>Font and size</h3>
+      <label class="dev-field">
+        <span data-i18n>Font</span>
+        <select id="devFont">
+          <option value="" data-i18n>Standard (mono)</option>
+          <option value="system" data-i18n>System (sans-serif)</option>
+          <option value="rounded" data-i18n>Rounded</option>
+          <option value="serif" data-i18n>Serif</option>
+          <option value="courier" data-i18n>Typewriter</option>
+        </select>
+      </label>
+      <label class="dev-field">
+        <span><span data-i18n>Text size</span> <output id="devSizeValue">100 %</output></span>
+        <input type="range" id="devSize" min="80" max="140" step="5" value="100">
+      </label>
+      <button type="button" class="text-button" id="devTypeReset" data-i18n>Reset font and size</button>
       <div class="sheet__actions">
         <button type="button" class="secondary-button" id="devOff" data-i18n>Turn off</button>
         <button type="button" class="primary-button" id="devClose" data-i18n>Close</button>
@@ -513,6 +677,6 @@
 
 
 
-<script type="module" src="app.js?v=20261122-3"></script>
+<script type="module" src="app.js?v=20261123-16"></script>
   </body>
 </html>
