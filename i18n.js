@@ -559,6 +559,8 @@ const dictionaries = {
     "Craving right now?": "Gerade Verlangen?",
     "Breathe along for 3 minutes.": "3 Minuten mitatmen.",
     "Light or dark": "Hell oder dunkel",
+    "How should SMKFREE look?": "Wie soll SMKFREE aussehen?",
+    "You can change this any time in Settings.": "Kannst du jederzeit in den Einstellungen ändern.",
     "{years} {m} mo.": "{years} {m} Mon.",
     "{goal} on {date}": "{goal} am {date}",
     "A new version is ready.": "Eine neue Version ist da.",

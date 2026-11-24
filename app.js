@@ -1077,7 +1077,7 @@ function applyAppearance(value = readAppearance()) {
   const root = document.documentElement;
   if (value === "auto") delete root.dataset.appearance;
   else root.dataset.appearance = value;
-  document.querySelectorAll("#appearanceRow [data-appearance]").forEach((button) => {
+  document.querySelectorAll(".appearance-switch [data-appearance]").forEach((button) => {
     button.setAttribute("aria-checked", String(button.dataset.appearance === value));
   });
   setStatusBarDark(value === "dark" || (value === "auto" && systemDark.matches));
@@ -1087,12 +1087,26 @@ function applyAppearance(value = readAppearance()) {
 
 // ----------------------------------------------------------------- app theme (Standard, Mint, Lavender)
 const UI_THEME_KEY = "smkfree-ui-theme";
+// Each design brings a matching receipt (ink color and paper). Choosing a design applies it;
+// "Customize receipt" can change it afterwards.
 const UI_THEMES = [
-  { id: "standard", label: "Standard" },
-  { id: "mint", label: "Mint" },
-  { id: "lavender", label: "Lavender" },
-  { id: "dracula", label: "Dracula" },
+  { id: "standard", label: "Standard", receipt: { color: "#2563eb", paper: "auto" } },
+  { id: "mint", label: "Mint", receipt: { color: "#6d5bd0", paper: "auto" } },
+  { id: "lavender", label: "Lavender", receipt: { color: "#4b50c8", paper: "auto" } },
+  { id: "dracula", label: "Dracula", receipt: { color: "#7c3aed", paper: "night" } },
 ];
+
+/** Gives the receipt the look that belongs to a design. */
+function applyDesignReceipt(themeId) {
+  const theme = UI_THEMES.find((item) => item.id === themeId);
+  if (!theme) return;
+  customColorInput.value = theme.receipt.color;
+  onColorChange();
+  if (theme.receipt.paper === "auto") localStorage.removeItem(RECEIPT_PAPER_KEY);
+  else localStorage.setItem(RECEIPT_PAPER_KEY, theme.receipt.paper);
+  mirrorStorage(RECEIPT_PAPER_KEY);
+  applyReceiptLook();
+}
 
 function readUiTheme() {
   const value = localStorage.getItem(UI_THEME_KEY);
@@ -1122,6 +1136,7 @@ function initUiTheme() {
       else localStorage.setItem(UI_THEME_KEY, value);
       mirrorStorage(UI_THEME_KEY);
       applyUiTheme(value);
+      applyDesignReceipt(value);
     });
   });
   document.querySelector("#themeClose").addEventListener("click", () => closeSheet());
@@ -1130,7 +1145,8 @@ function initUiTheme() {
 }
 
 function initAppearance() {
-  document.querySelectorAll("#appearanceRow [data-appearance]").forEach((button) => {
+  // The same switch sits in the Design sheet and in the last onboarding step.
+  document.querySelectorAll(".appearance-switch [data-appearance]").forEach((button) => {
     button.addEventListener("click", () => {
       const value = button.dataset.appearance;
       if (value === "auto") localStorage.removeItem(APPEARANCE_KEY);
@@ -2288,7 +2304,7 @@ function syncLookRows(days) {
   colorValue.querySelector("i").style.background = color ? (neutralInDark ? "#f2f2f7" : color.hex) : "var(--ios-label)";
   colorValue.querySelector("span").textContent = color
     ? (neutralInDark ? t("White") : t(receiptColorNames.find((item) => item.id === color.id)?.label || "Color"))
-    : t("Standard");
+    : t("Theme");
   const font = pickUnlocked(RECEIPT_FONTS, localStorage.getItem(RECEIPT_FONT_KEY), days);
   const fontValue = document.querySelector("#fontRowValue");
   fontValue.textContent = t(font.label);

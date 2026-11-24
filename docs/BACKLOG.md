@@ -100,4 +100,6 @@ Alle Daten liegen nur lokal (Web: `localStorage`; App zusätzlich native Prefere
   Rechtliches und Installieren auf Deutsch, Tab-Leiste volle Breite mit schwebendem +, ruhige „Gerade Verlangen?“-Kachel,
   Tacho „54 Jahre“ mit Ziel und Datum (Kalenderjahre), neue Wortwahl (Geld gespart, Gewonnene Lebenszeit, Suchtprotokoll),
   UI-Richtlinien.
+- **24.11. (spät):** Design-Auswahl als 4. Schritt beim ersten Start (Hell/Dunkel + Design, nicht unter „Angaben ändern“);
+  jedes Design bringt einen passenden Bon mit (Farbe, Hintergrund), änderbar unter „Bon anpassen“.
 - Ältere Punkte: siehe Git-Historie.

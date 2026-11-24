@@ -3452,3 +3452,16 @@ html:not([lang="de"]) .legal-shell [lang="de"] {
 .appearance-switch button {
   min-height: 36px;
 }
+
+/* Onboarding: last step chooses the look (same controls as Settings → Design). Not shown when editing details. */
+.wizard.is-editing .step--design {
+  display: none !important;
+}
+
+.step--design .appearance-switch {
+  margin: 4px 0 16px;
+}
+
+.step--design .theme-options {
+  margin-top: 0;
+}

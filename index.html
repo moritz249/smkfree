@@ -41,7 +41,7 @@
       } catch (e) { /* storage blocked: follow the system */ }
     </script>
     <link rel="stylesheet" href="styles.css?v=20261123-20">
-    <link rel="stylesheet" href="ios.css?v=20261124-31">
+    <link rel="stylesheet" href="ios.css?v=20261124-34">
     <script src="assets/html2canvas.min.js" defer></script>
   </head>
   <body>
@@ -246,6 +246,23 @@
                   <option value="CHF">CHF</option>
                 </select>
               </label>
+            </div>
+          </section>
+
+          <!-- Last step at first start: pick the look. Changeable later in Settings → Design; hidden when editing. -->
+          <section class="step step--design" data-mode="all">
+            <h2 data-i18n>How should SMKFREE look?</h2>
+            <p class="step-hint" data-i18n>You can change this any time in Settings.</p>
+            <span class="segmented appearance-switch" role="radiogroup" aria-label="Appearance" data-i18n-aria>
+              <button type="button" role="radio" data-appearance="auto" data-i18n>Auto</button>
+              <button type="button" role="radio" data-appearance="light" data-i18n>Light</button>
+              <button type="button" role="radio" data-appearance="dark" data-i18n>Dark</button>
+            </span>
+            <div class="theme-options" role="radiogroup" aria-label="Theme" data-i18n-aria>
+              <button type="button" class="theme-option" role="radio" data-ui-theme-option="standard"><span class="theme-option__preview" aria-hidden="true"><i></i><i></i><i></i></span><span data-i18n>Standard</span></button>
+              <button type="button" class="theme-option" role="radio" data-ui-theme-option="mint"><span class="theme-option__preview" aria-hidden="true"><i></i><i></i><i></i></span><span data-i18n>Mint</span></button>
+              <button type="button" class="theme-option" role="radio" data-ui-theme-option="lavender"><span class="theme-option__preview" aria-hidden="true"><i></i><i></i><i></i></span><span data-i18n>Lavender</span></button>
+              <button type="button" class="theme-option" role="radio" data-ui-theme-option="dracula"><span class="theme-option__preview" aria-hidden="true"><i></i><i></i><i></i></span><span data-i18n>Dracula</span></button>
             </div>
           </section>
 
@@ -835,6 +852,6 @@
 
 
 
-<script type="module" src="app.js?v=20261124-33"></script>
+<script type="module" src="app.js?v=20261124-35"></script>
   </body>
 </html>
