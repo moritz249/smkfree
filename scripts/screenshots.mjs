@@ -46,7 +46,12 @@ const seed = {
   "smkfree-language": "de",
   "smkfree-hint-receipt": "1",
   "smkfree-cravings": "14",
-  "smkfree-checkins": JSON.stringify({ "2026-11-23": 1 }),
+  // The last seven days, newest last: strong at first, calmer towards today.
+  "smkfree-checkins": JSON.stringify(Object.fromEntries([3, 2, 2, 1, 0, 1, 0].map((level, index) => {
+    const date = new Date(now - (6 - index) * day);
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    return [key, level];
+  }))),
   "smkfree-diary": JSON.stringify({ entries: [
     { id: "a", at: now - 2 * 3600000, kind: "craving", trigger: "coffee", note: "Kurz rausgegangen, Wasser getrunken" },
     { id: "b", at: now - day - 5 * 3600000, kind: "craving", trigger: "stress", note: "" },
@@ -86,6 +91,15 @@ await shot("checkin-dark", { steps: `${go("start")} document.querySelector('#boa
 await shot("actions-dark", { steps: `${go("start")} document.querySelector('#actionButton').click(); await w(600);` });
 await shot("life-dark", { steps: `${go("start")} document.querySelector('#boardLife').click(); await w(600);` });
 await shot("diary-dark", { steps: go("diary") });
+for (const scheme of ["dark", "light"]) {
+  await shot(`share-${scheme}`, { scheme, steps: `${go("start")} document.querySelector('#startShare').click(); await w(2500);` });
+  // The short share picture itself, exactly as it is sent.
+  const cardUrl = await run("return document.querySelector('#sharePreview').src;");
+  if (cardUrl?.startsWith("data:image/png;base64,")) {
+    fs.writeFileSync(path.join(outDir, `share-card-${scheme}.png`), Buffer.from(cardUrl.split(",")[1], "base64"));
+    console.log(`saved share-card-${scheme}`);
+  }
+}
 
 // A wide picture for sharing: four phones side by side.
 const files = ["start-dark", "sos-dark", "receipt-dark", "checkin-dark"].map((n) => pathToFileURL(path.resolve(outDir, n + ".png")).href);

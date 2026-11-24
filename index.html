@@ -39,7 +39,7 @@
       } catch (e) { /* storage blocked: follow the system */ }
     </script>
     <link rel="stylesheet" href="styles.css?v=20261123-20">
-    <link rel="stylesheet" href="ios.css?v=20261123-44">
+    <link rel="stylesheet" href="ios.css?v=20261124-5">
     <script src="assets/html2canvas.min.js" defer></script>
   </head>
   <body>
@@ -126,8 +126,8 @@
             </label>
           </section>
 
-          <!-- Step 2: Habit (one tap moves on) -->
-          <section class="step" data-mode="all" data-autoadvance>
+          <!-- Step 2: Habit (pick one, then Next) -->
+          <section class="step" data-mode="all">
             <h2 data-i18n>What are you quitting?</h2>
             <div class="mode-picker">
               <label class="mode-card mode-card--compact">
@@ -668,6 +668,30 @@
       </div>
     </section>
 
+    <!-- Share: pick what leaves the phone. The compact card is first and already shown as a preview. -->
+    <section class="sheet share-sheet" id="shareSheet" role="dialog" aria-modal="true" aria-labelledby="shareSheetTitle" hidden>
+      <div class="sheet__grip" aria-hidden="true"></div>
+      <h2 id="shareSheetTitle" data-i18n>What do you want to share?</h2>
+      <img class="share-preview" id="sharePreview" alt="Preview of the share picture" data-i18n-aria>
+      <div class="action-list">
+        <button type="button" class="action-card action-card--sos" data-share="card">
+          <span class="action-card__icon"><svg class="icon" aria-hidden="true"><use href="#i-share"></use></svg></span>
+          <span class="action-card__text"><strong data-i18n>Short receipt</strong><small data-i18n>This picture: days and money. Fits any chat.</small></span>
+        </button>
+        <button type="button" class="action-card" data-share="full">
+          <span class="action-card__icon"><svg class="icon" aria-hidden="true"><use href="#i-receipt"></use></svg></span>
+          <span class="action-card__text"><strong data-i18n>Whole receipt</strong><small data-i18n>Every line, with savings goal and progress.</small></span>
+        </button>
+        <button type="button" class="action-card" data-share="app">
+          <span class="action-card__icon action-card__icon--muted"><svg class="icon" aria-hidden="true"><use href="#i-lock"></use></svg></span>
+          <span class="action-card__text"><strong data-i18n>Only the app</strong><small data-i18n>Just the link, none of your numbers.</small></span>
+        </button>
+      </div>
+      <div class="sheet__actions">
+        <button type="button" class="secondary-button" id="shareClose" data-i18n>Cancel</button>
+      </div>
+    </section>
+
     <section class="sheet" id="colorSheet" role="dialog" aria-modal="true" aria-labelledby="colorSheetTitle" hidden>
       <div class="sheet__grip" aria-hidden="true"></div>
       <h2 id="colorSheetTitle" data-i18n>Receipt color</h2>
@@ -742,6 +766,6 @@
 
 
 
-<script type="module" src="app.js?v=20261123-42"></script>
+<script type="module" src="app.js?v=20261124-5"></script>
   </body>
 </html>

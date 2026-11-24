@@ -32,10 +32,8 @@ export const haptics = {
     if (h) return safe(() => h.impact({ style: "MEDIUM" }));
     navigator.vibrate?.(14);
   },
-  select() {
-    const h = plugin("Haptics");
-    if (h) return safe(() => h.selectionChanged());
-  },
+  // Switching tabs, opening sheets and similar taps stay silent: less buzzing, only moments that matter vibrate.
+  select() {},
   success() {
     const h = plugin("Haptics");
     if (h) return safe(() => h.notification({ type: "SUCCESS" }));
@@ -108,6 +106,23 @@ export async function shareImageNative(blob, { title, text, filename }) {
     await share.share({ title, text, files: [uri], dialogTitle: title });
   } catch (error) {
     // The user closing the sheet is not an error worth surfacing.
+    if (/cancel/i.test(String(error?.message || error))) {
+      const abort = new Error("Share canceled");
+      abort.name = "AbortError";
+      throw abort;
+    }
+    throw error;
+  }
+  return true;
+}
+
+/** Shares a link with one line of text through the native sheet. Returns false on the web. */
+export async function shareLinkNative({ title, text, url }) {
+  const share = plugin("Share");
+  if (!share) return false;
+  try {
+    await share.share({ title, text, url, dialogTitle: title });
+  } catch (error) {
     if (/cancel/i.test(String(error?.message || error))) {
       const abort = new Error("Share canceled");
       abort.name = "AbortError";

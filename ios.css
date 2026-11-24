@@ -2189,3 +2189,190 @@ button.stat-card:active,
   content: "";
   pointer-events: none;
 }
+
+/* ===================================================================== */
+/* Craving in traffic-light colors: none green, mild yellow, medium      */
+/* orange, strong red. Used by the check-in, its week and the start row. */
+/* ===================================================================== */
+:root {
+  --craving-0: #34c759;
+  --craving-1: #ffcc00;
+  --craving-2: #ff9500;
+  --craving-3: #ff3b30;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-appearance="light"]) {
+    --craving-0: #30d158;
+    --craving-1: #ffd60a;
+    --craving-2: #ff9f0a;
+    --craving-3: #ff453a;
+  }
+}
+
+:root[data-appearance="dark"] {
+  --craving-0: #30d158;
+  --craving-1: #ffd60a;
+  --craving-2: #ff9f0a;
+  --craving-3: #ff453a;
+}
+
+.checkin-levels .chip[data-level="0"] { --level: var(--craving-0); --level-ink: #000000; }
+.checkin-levels .chip[data-level="1"] { --level: var(--craving-1); --level-ink: #000000; }
+.checkin-levels .chip[data-level="2"] { --level: var(--craving-2); --level-ink: #000000; }
+.checkin-levels .chip[data-level="3"] { --level: var(--craving-3); --level-ink: #ffffff; }
+
+/* Each answer carries its color as a dot; the chosen one is filled with it. */
+.checkin-levels .chip::before,
+.checkin-levels .chip.is-active::before {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--level);
+  content: "";
+}
+
+:is(.tab-page, .sheet) .checkin-levels .chip.is-active {
+  background: var(--level);
+  color: var(--level-ink);
+  font-weight: 700;
+}
+
+.checkin-levels .chip.is-active::before {
+  background: var(--level-ink);
+  opacity: 0.55;
+}
+
+.checkin-day.is-level-0 i { background: var(--craving-0); }
+.checkin-day.is-level-1 i { background: var(--craving-1); }
+.checkin-day.is-level-2 i { background: var(--craving-2); }
+.checkin-day.is-level-3 i { background: var(--craving-3); }
+
+/* Start row: this week as mini bars, like the small charts in Apple Health. */
+.checkin-row__dots {
+  align-items: flex-end;
+  gap: 5px;
+  height: 24px;
+}
+
+.checkin-row__dots i {
+  width: 12px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--ios-fill-2);
+}
+
+.checkin-row__dots i.is-level-0 { height: 8px; background: var(--craving-0); }
+.checkin-row__dots i.is-level-1 { height: 13px; background: var(--craving-1); }
+.checkin-row__dots i.is-level-2 { height: 18px; background: var(--craving-2); }
+.checkin-row__dots i.is-level-3 { height: 24px; background: var(--craving-3); }
+
+.checkin-row__dots i.is-today {
+  outline: 0;
+  box-shadow: 0 3px 0 -1px var(--ios-label);
+}
+
+/* Apple Health style values: big numbers, smaller quiet units. */
+.value-unit {
+  margin: 0 0.12em;
+  color: var(--ios-secondary);
+  font-size: 0.58em;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.value-unit:first-child {
+  margin-left: 0;
+}
+
+.value-unit:last-child {
+  margin-right: 0;
+}
+
+/* Dark receipt: the share button is filled with the (light) ink, so its text uses the dark card color.
+   Before, it was white on white and showed as an empty white bar. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-appearance="light"]) .receipt .receipt-addon--share { color: var(--ios-card); }
+}
+:root[data-appearance="dark"] .receipt .receipt-addon--share { color: var(--ios-card); }
+
+/* Share sheet: the picture you are about to send, then the three choices. */
+.share-preview {
+  display: block;
+  width: min(62%, 240px);
+  aspect-ratio: 1;
+  margin: 12px auto 4px;
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+  object-fit: cover;
+}
+
+.share-sheet .action-list {
+  margin-top: 12px;
+}
+
+.share-sheet .action-card {
+  min-height: 64px;
+}
+
+/* Short receipt for sharing: a copy of the receipt is laid out off screen, wider than on a phone. */
+.share-capture {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  pointer-events: none;
+}
+
+.share-capture .receipt {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  box-shadow: none;
+  animation: none;
+  transform: none;
+}
+
+.receipt-compact__link {
+  margin: 18px 0 4px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  text-transform: none;
+}
+
+/* The preview in the share sheet has the picture's 5:4 shape. */
+.share-preview {
+  width: min(88%, 340px);
+  aspect-ratio: 5 / 4;
+  background: var(--ios-fill);
+}
+
+.share-preview.is-loading {
+  animation: share-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes share-pulse {
+  from { opacity: 0.5; }
+  to { opacity: 1; }
+}
+
+/* Short receipt: less empty paper on top, a logo sized for the wider layout. */
+.share-capture .receipt--compact {
+  padding-top: 34px;
+  padding-bottom: 22px;
+}
+
+.share-capture .receipt--compact .receipt__top-gap {
+  display: none;
+}
+
+.share-capture .receipt--compact .receipt__header p {
+  font-size: 6.2rem;
+}
+
+.share-capture .receipt--compact .hero-days strong {
+  font-size: 7rem;
+}

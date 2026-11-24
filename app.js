@@ -42,6 +42,7 @@ import {
   scheduleTestNotification,
   setStatusBarDark,
   shareImageNative,
+  shareLinkNative,
 } from "./native.js";
 import { applyTranslations, getLanguage, intlLocale, languages, nextLanguage, setLanguage, t } from "./i18n.js";
 
@@ -1074,6 +1075,8 @@ function applyAppearance(value = readAppearance()) {
     button.setAttribute("aria-checked", String(button.dataset.appearance === value));
   });
   setStatusBarDark(value === "dark" || (value === "auto" && systemDark.matches));
+  // The color dot in More follows the mode (black ink is white on the dark receipt).
+  if (appReady) applyCustomThemeVars(customColorInput.value);
 }
 
 function initAppearance() {
@@ -1150,6 +1153,22 @@ function startValues(data) {
   return { time, thirdValue };
 }
 
+/** Like Apple Health: the numbers large, units (€, Tage, Std.) smaller and quieter. */
+function setValueWithUnits(el, text) {
+  el.textContent = "";
+  String(text).split(/([0-9][0-9.,]*)/).forEach((part) => {
+    if (!part) return;
+    if (/^[0-9]/.test(part)) el.append(part);
+    else {
+      const unit = document.createElement("small");
+      unit.className = "value-unit";
+      unit.textContent = part;
+      el.append(unit);
+    }
+  });
+  el.setAttribute("aria-label", String(text));
+}
+
 function renderStart(state, progress) {
   const page = document.querySelector("#startPage");
   if (!page || !document.querySelector("#gauge")) return;
@@ -1167,7 +1186,7 @@ function renderStart(state, progress) {
   const time = goals.time;
   const pct = Math.round(Math.min(1, Math.max(0, time.ratio)) * 100);
   document.querySelector("#gaugeFill").setAttribute("stroke-dasharray", `${pct > 0 ? Math.max(pct, 1.5) : 0} 100`);
-  document.querySelector("#gaugeValue").textContent = values.time;
+  setValueWithUnits(document.querySelector("#gaugeValue"), values.time);
   document.querySelector("#gaugeSub").textContent = !goals.started ? notYet : time.done ? "" : t("{time} until {goal}", {
     time: formatTimeLeft(time.hoursLeft), goal: goalLabel(time.target),
   });
@@ -1179,7 +1198,7 @@ function renderStart(state, progress) {
 
   // Money card (tap: savings goal) and life card.
   const money = goals.money;
-  document.querySelector("#statMoney").textContent = formatCurrency(data.money, currency);
+  setValueWithUnits(document.querySelector("#statMoney"), formatCurrency(data.money, currency));
   document.querySelector("#statMoney").classList.toggle("is-long", formatCurrency(data.money, currency).length > 9);
   document.querySelector("#statMoneyBar").style.width = `${Math.round(Math.min(1, money.ratio) * 100)}%`;
   document.querySelector("#statMoneySub").textContent = !goals.started ? notYet : money.done ? ""
@@ -1187,7 +1206,7 @@ function renderStart(state, progress) {
     : t("{amount} to {goal}", { amount: formatCurrency(money.left, currency), goal: formatCurrency(money.target, currency) });
   const third = goals.third;
   document.querySelector("#statThirdLabel").textContent = data.third.kind === "life" ? t("Life back*") : data.third.kind === "rolls" ? t("Not rolled") : t("Not vaped");
-  document.querySelector("#statThird").textContent = values.thirdValue;
+  setValueWithUnits(document.querySelector("#statThird"), values.thirdValue);
   document.querySelector("#statThird").classList.toggle("is-long", values.thirdValue.length > 9);
   document.querySelector("#statThirdBar").style.width = `${Math.round(Math.min(1, third.ratio) * 100)}%`;
   document.querySelector("#statThirdSub").textContent = !goals.started ? notYet : third.done ? ""
@@ -1203,10 +1222,11 @@ function renderStart(state, progress) {
     : t("Check in for today");
   const dots = document.querySelector("#checkinRowDots");
   dots.innerHTML = "";
+  // This week as small bars like in Apple Health: height and traffic-light color show how strong the urge was.
   checkinWeek(checkins).forEach((day) => {
-    const dot = document.createElement("i");
-    dot.className = [day.level !== null ? "is-on" : "", day.isToday ? "is-today" : ""].filter(Boolean).join(" ");
-    dots.append(dot);
+    const bar = document.createElement("i");
+    bar.className = [day.level !== null ? `is-on is-level-${day.level}` : "", day.isToday ? "is-today" : ""].filter(Boolean).join(" ");
+    dots.append(bar);
   });
 
   // Body card: the most recent reached milestone and the next ones, three at most.
@@ -1278,7 +1298,7 @@ function openLifeSheet() {
     rows.push([t("Next goal"), next]);
   }
   document.querySelector("#lifeSheetKicker").textContent = kicker;
-  document.querySelector("#lifeSheetValue").textContent = data.started ? value : "--";
+  setValueWithUnits(document.querySelector("#lifeSheetValue"), data.started ? value : "--");
   document.querySelector("#lifeSheetLead").textContent = data.started ? lead : t("Starts on your quit day");
   const list = document.querySelector("#lifeSheetRows");
   list.innerHTML = "";
@@ -1299,8 +1319,7 @@ function initBoard() {
   // Share from the start page: the receipt is what gets shared, so it opens and shares right away.
   document.querySelector("#startShare").addEventListener("click", () => {
     haptics.select();
-    showTab("receipt");
-    window.setTimeout(() => elements.downloadButton.click(), 60);
+    openShareSheet();
   });
   document.querySelector("#lifeSheetClose").addEventListener("click", () => closeSheet());
   enableSwipeToClose(document.querySelector("#lifeSheet"));
@@ -1416,39 +1435,169 @@ async function createReceiptImageBlob() {
   }
 }
 
-async function shareReceiptImage() {
-  const filename = "smoke-free-receipt.png";
-  const blob = await createReceiptImageBlob();
-  const title = t("SMKFREE Quit Receipt");
-  const text = shareText();
-  const link = "https://moritz249.github.io/smkfree/";
+// ----------------------------------------------------------------- sharing
+// Three choices: a compact square card (fits a WhatsApp or iMessage bubble without cropping),
+// the whole receipt, or only the app link without any of your numbers.
+const SHARE_LINK = "https://moritz249.github.io/smkfree/";
+const SHARE_WIDTH = 1200;
+const SHARE_HEIGHT = 960; // 5:4, a little wider than tall: shown whole in WhatsApp and iMessage
+const SHARE_RECEIPT_CSS_WIDTH = 600;
 
-  if (isNativeApp && await shareImageNative(blob, { title, text: `${text} ${link}`, filename })) {
-    return "shared";
+/**
+ * The short receipt: the real receipt (same font, logo, color, light or dark), cut after the total
+ * and laid out wider than on the phone, then placed on a 5:4 picture.
+ */
+async function createCompactReceiptBlob() {
+  const dark = isDarkMode();
+  const host = document.createElement("div");
+  host.className = "share-capture";
+  host.style.width = `${SHARE_RECEIPT_CSS_WIDTH}px`;
+  const clone = elements.receipt.cloneNode(true);
+  clone.removeAttribute("id");
+  clone.classList.add("is-capturing", "receipt--compact");
+  if (dark) {
+    clone.classList.add("is-capturing-dark");
+    clone.style.setProperty("--receipt-ink-dark", darkReceiptInk());
   }
+  // Keep the top: header, divider, days and the total. Everything below stays on the full receipt.
+  const total = clone.querySelector(".receipt__total");
+  let next = total?.nextElementSibling;
+  while (next) {
+    const after = next.nextElementSibling;
+    next.remove();
+    next = after;
+  }
+  const link = document.createElement("p");
+  link.className = "receipt-compact__link";
+  link.textContent = SHARE_LINK.replace("https://", "").replace(/\/$/, "");
+  clone.append(link);
+  host.append(clone);
+  document.body.append(host);
+  try {
+    const background = dark ? "#1c1c1e" : "#ffffff";
+    const shot = await html2canvas(clone, {
+      backgroundColor: background,
+      scale: 3,
+      useCORS: true,
+      logging: false,
+      allowTaint: true,
+    });
+    // Center the receipt on the 5:4 picture, scaled to fit with a margin.
+    const canvas = document.createElement("canvas");
+    canvas.width = SHARE_WIDTH;
+    canvas.height = SHARE_HEIGHT;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = dark ? "#000000" : "#f2f2f7";
+    ctx.fillRect(0, 0, SHARE_WIDTH, SHARE_HEIGHT);
+    const margin = 48;
+    const fit = Math.min((SHARE_WIDTH - margin * 2) / shot.width, (SHARE_HEIGHT - margin * 2) / shot.height);
+    const w = shot.width * fit;
+    const h = shot.height * fit;
+    const x = (SHARE_WIDTH - w) / 2;
+    const y = (SHARE_HEIGHT - h) / 2;
+    ctx.save();
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x, y, w, h, 28);
+    else ctx.rect(x, y, w, h);
+    ctx.clip();
+    ctx.drawImage(shot, x, y, w, h);
+    ctx.restore();
+    return canvas;
+  } finally {
+    host.remove();
+  }
+}
+
+/** Hands an image to the share sheet (app: native sheet, web: Web Share, else a download). */
+async function shareImage(blob, filename) {
+  const title = t("SMKFREE Quit Receipt");
+  // The link goes inside the text: WhatsApp and iMessage keep it as the caption under the picture.
+  const text = `${shareText()} ${SHARE_LINK}`;
+  if (isNativeApp && await shareImageNative(blob, { title, text, filename })) return "shared";
 
   const file = new File([blob], filename, { type: "image/png" });
-  const shareData = {
-    title,
-    text,
-    url: "https://moritz249.github.io/smkfree/",
-    files: [file],
-  };
-
   if (navigator.canShare?.({ files: [file] }) && navigator.share) {
     try {
-      await navigator.share(shareData);
+      await navigator.share({ title, text, files: [file] });
       return "shared";
     } catch (error) {
       if (error?.name === "AbortError") throw error;
     }
   }
-
   const objectUrl = URL.createObjectURL(blob);
   downloadUrl(objectUrl, filename);
   window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
   return "downloaded";
 }
+
+async function shareReceiptImage() {
+  return shareImage(await createReceiptImageBlob(), "smkfree-receipt.png");
+}
+
+/** Only the app: a link and one line, none of your numbers. The chat shows the link preview. */
+async function shareAppOnly() {
+  const title = "SMKFREE";
+  const text = t("SMKFREE helps me stay smoke-free. No account, everything stays on your phone.");
+  if (isNativeApp && await shareLinkNative({ title, text, url: SHARE_LINK })) return "shared";
+  if (navigator.share) {
+    try {
+      await navigator.share({ title, text, url: SHARE_LINK });
+      return "shared";
+    } catch (error) {
+      if (error?.name === "AbortError") throw error;
+    }
+  }
+  await navigator.clipboard?.writeText(`${text} ${SHARE_LINK}`);
+  return "copied";
+}
+
+let shareCardBlob = null;
+
+function openShareSheet() {
+  const preview = document.querySelector("#sharePreview");
+  preview.removeAttribute("src");
+  preview.classList.add("is-loading");
+  // Ready before the tap, so sharing starts right away (browsers only allow it straight after a tap).
+  const canvasReady = createCompactReceiptBlob();
+  shareCardBlob = canvasReady.then(canvasToBlob);
+  canvasReady.then((canvas) => {
+    preview.src = canvas.toDataURL("image/png");
+    preview.classList.remove("is-loading");
+  }).catch(() => preview.classList.remove("is-loading"));
+  openSheet(document.querySelector("#shareSheet"));
+}
+
+async function runShare(kind) {
+  closeSheet(false);
+  try {
+    let result;
+    if (kind === "card") result = await shareImage(await shareCardBlob, "smkfree.png");
+    else if (kind === "app") result = await shareAppOnly();
+    else {
+      // The whole receipt is captured from the page, so it has to be on screen.
+      if (activeTab !== "receipt") {
+        showTab("receipt");
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      }
+      result = await shareReceiptImage();
+    }
+    if (result === "shared") haptics.success();
+    if (result === "downloaded") showToast(t("Image saved"));
+    if (result === "copied") showToast(t("Link copied"));
+  } catch (error) {
+    if (error?.name !== "AbortError") showToast(t("Share failed"));
+  }
+}
+
+function initShareSheet() {
+  const sheet = document.querySelector("#shareSheet");
+  sheet.querySelectorAll("[data-share]").forEach((button) => {
+    button.addEventListener("click", () => runShare(button.dataset.share));
+  });
+  document.querySelector("#shareClose").addEventListener("click", () => closeSheet());
+  enableSwipeToClose(sheet);
+}
+
 
 function showStep(index, direction = 0) {
   const activeSteps = getActiveSteps();
@@ -1757,16 +1906,7 @@ function leaveEditing() {
   elements.form.classList.remove("is-editing");
   setButtonLabel(elements.receiptButton, t("Print my receipt"));
 }
-elements.downloadButton.addEventListener("click", async () => {
-  setButtonLabel(elements.downloadButton, t("Preparing"));
-  try {
-    const result = await shareReceiptImage();
-    setButtonLabel(elements.downloadButton, result === "shared" ? t("Shared") : t("Downloaded"));
-  } catch (error) {
-    setButtonLabel(elements.downloadButton, error?.name === "AbortError" ? t("Share") : t("Share failed"));
-  }
-  window.setTimeout(() => { setButtonLabel(elements.downloadButton, t("Share")); }, 1600);
-});
+elements.downloadButton.addEventListener("click", openShareSheet);
 
 window.addEventListener("pagehide", saveCurrentState);
 document.addEventListener("visibilitychange", () => {
@@ -1838,8 +1978,10 @@ function applyCustomThemeVars(hex) {
 
   [document.querySelector("#colorSwatch")].forEach((swatch) => {
     if (!swatch) return;
-    swatch.style.background = dotBgHex;
-    swatch.style.borderColor = inkHex;
+    // Black ink shows white on the dark receipt, so the menu dot does too.
+    const neutralDark = s < 0.05 && isDarkMode();
+    swatch.style.background = neutralDark ? "#f2f2f7" : dotBgHex;
+    swatch.style.borderColor = neutralDark ? "#f2f2f7" : inkHex;
   });
 }
 
@@ -1876,15 +2018,19 @@ function renderColorSheet() {
   const current = localStorage.getItem(THEME_KEY) === "custom" ? (localStorage.getItem(CUSTOM_COLOR_KEY) || "").toLowerCase() : "";
   const wrap = document.querySelector("#colorSwatches");
   wrap.innerHTML = "";
+  const dark = isDarkMode();
   receiptColorStatus(days).colors.forEach((color) => {
-    const name = t(receiptColorNames.find((item) => item.id === color.id)?.label || "Color");
+    // In dark mode the receipt is dark, so "black" ink is printed white: the swatch shows what you get.
+    const neutralInDark = dark && color.id === "black";
+    const name = neutralInDark ? t("White") : t(receiptColorNames.find((item) => item.id === color.id)?.label || "Color");
+    const dotColor = neutralInDark ? "#f2f2f7" : color.hex;
     const button = document.createElement("button");
     button.type = "button";
     button.className = `color-swatch${color.unlocked ? "" : " is-locked"}`;
     button.setAttribute("role", "radio");
     button.setAttribute("aria-checked", String(color.hex.toLowerCase() === current));
     button.setAttribute("aria-label", color.unlocked ? name : `${name}: ${t("From day {day}", { day: color.day })}`);
-    button.innerHTML = `<span class="color-swatch__dot" style="background:${color.hex}"></span><span class="color-swatch__name"></span>`;
+    button.innerHTML = `<span class="color-swatch__dot" style="background:${dotColor}"></span><span class="color-swatch__name"></span>`;
     button.querySelector(".color-swatch__name").textContent = color.unlocked ? name : t("From day {day}", { day: color.day });
     button.addEventListener("click", () => {
       if (!color.unlocked) {
@@ -2346,8 +2492,8 @@ function sosStep() {
   if (breath.index !== sosPhaseIndex) {
     sosPhaseIndex = breath.index;
     elements.breathPhase.textContent = t(breath.phase.label);
-    if (breath.index === 0) haptics.press();
-    else haptics.tap();
+    // One soft pulse when a new breath starts, nothing in between.
+    if (breath.index === 0) haptics.tap();
   }
   const count = String(Math.max(1, Math.ceil(breath.left)));
   if (elements.breathCount.textContent !== count) elements.breathCount.textContent = count;
@@ -2932,9 +3078,6 @@ function initTouchEnhancements() {
   addMoneySteppers();
   enableWizardSwipe();
 
-  document.addEventListener("pointerdown", (event) => {
-    if (event.target.closest(".primary-button, .secondary-button, .mode-card, .toggle-field")) haptics.tap();
-  }, { passive: true });
 
   document.querySelectorAll(".step input").forEach((input) => {
     if (!input.enterKeyHint) input.enterKeyHint = "next";
@@ -3052,14 +3195,23 @@ function initOnboarding() {
   elements.quitDate.addEventListener("input", syncDateChips);
   elements.notStoppedYet.addEventListener("input", syncDateChips);
 
-  // Tapping a habit card is the answer, so move on without an extra "Next" tap.
-  let advancing = false;
-  elements.modeRadios.forEach((radio) => {
-    radio.addEventListener("click", () => {
-      if (isEditing() || advancing || !radio.closest("[data-autoadvance]")?.classList.contains("is-active")) return;
-      advancing = true;
-      window.setTimeout(() => { advancing = false; advanceWizard(); }, 240);
+  // Tapping a field with a value selects it, so typing replaces the number instead of adding to it.
+  document.querySelectorAll("#quitForm input[type='number'], #quitForm input[inputmode='decimal']").forEach((input) => {
+    let justFocused = false;
+    const selectAll = () => { try { input.select(); } catch { /* not selectable */ } };
+    input.addEventListener("focus", () => {
+      if (!input.value) return;
+      justFocused = true;
+      // iOS places the caret after focus, so select a moment later.
+      window.setTimeout(selectAll, 0);
     });
+    // Releasing the finger or mouse puts the caret back, so select once more on that first click.
+    input.addEventListener("click", () => {
+      if (!justFocused) return;
+      justFocused = false;
+      selectAll();
+    });
+    input.addEventListener("blur", () => { justFocused = false; });
   });
 
   syncDateChips();
@@ -3461,6 +3613,7 @@ initBoard();
 initToday();
 initActions();
 initNotificationTaps();
+initShareSheet();
 initBackNavigation();
 initAppearance();
 appReady = true;
