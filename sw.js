@@ -1,5 +1,5 @@
 // Bump on every release: a changed sw.js is how phones learn that a new version exists.
-const CACHE = "smkfree-v113";
+const CACHE = "smkfree-v115";
 const ASSETS = [
   "./",
   "./index.html",
@@ -41,12 +41,37 @@ self.addEventListener("install", (e) => {
   );
 });
 
+// Versions before v87 had no update logic in the page: open tabs would keep showing the old app.
+const FIRST_SELF_UPDATING_VERSION = 87;
+
+function cacheVersion(key) {
+  const match = /^smkfree-v(\d+)$/.exec(key);
+  return match ? Number(match[1]) : null;
+}
+
 self.addEventListener("activate", (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k.startsWith("smkfree-") && k !== CACHE).map((k) => caches.delete(k)))
-    ).then(() => self.clients.claim())
-  );
+  const activation = (async () => {
+    const keys = await caches.keys();
+    const old = keys.filter((k) => k.startsWith("smkfree-") && k !== CACHE);
+    // Upgrading from such an old version: reload its open pages once, so everyone lands on the new app.
+    // Newer pages reload themselves when idle (app.js), so they are left alone. Saved data is not touched.
+    const fromOldApp = old.some((k) => {
+      const version = cacheVersion(k);
+      return version !== null && version < FIRST_SELF_UPDATING_VERSION;
+    });
+    await Promise.all(old.map((k) => caches.delete(k)));
+    await self.clients.claim();
+    return fromOldApp;
+  })();
+  e.waitUntil(activation);
+  // The reload starts only after activation is done and is not waited for: the reloaded page is
+  // served by this worker, so waiting for it inside activation would block both and loop.
+  activation.then((fromOldApp) => {
+    if (!fromOldApp) return;
+    self.clients.matchAll({ type: "window" }).then((pages) => {
+      pages.forEach((page) => page.navigate(page.url).catch(() => {}));
+    });
+  });
 });
 
 // Pages, scripts and styles: network first, so a normal reload always shows the newest version.

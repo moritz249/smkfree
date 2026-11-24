@@ -1,143 +1,103 @@
 # Backlog
 
-Reihenfolge nach Priorität: Optik → Usability → Funktionen → Monetarisierung.
+Stand: 24.11.2026. Reihenfolge innerhalb der Abschnitte nach Priorität. Hier anfangen: **„Als Nächstes“**.
 
-## Design: nativer iOS-Look (Branch `ios-design`)
+Zielgruppe junge Erwachsene (18–35), auch ADHS: wenig Text, eine Aufgabe pro Bildschirm, klare große Flächen.
+UI-Regeln: [UI-RICHTLINIEN.md](UI-RICHTLINIEN.md). Evidenz: [EVIDENZ.md](EVIDENZ.md). Konkurrenz: [KONKURRENZ.md](KONKURRENZ.md).
 
-- [x] `ios.css` über `styles.css`: Systemschrift, Apple-Systemfarben hell/dunkel, runde Karten, Pillen-Knöpfe, Sheets mit Griff.
-- [x] Start Variante B (Feedback: Ringe zu nah an Apple Fitness, zu bunt): Tacho-Bogen in einer Akzentfarbe vom letzten
-      zum nächsten Meilenstein, Karten Gespart (→ Sparziel) und Leben zurück, Check-in-Zeile mit Wochenpunkten,
-      Kacheln SOS (breit), Körper, Bon, Farben. Belohnungen schalten Akzentfarben frei.
-- [x] Schwebende Glas-Tab-Leiste (Start · Tagebuch · Bon · Mehr), ＋ als eigener runder Knopf. Belohnungen = Akzentfarben.
-- [x] Onboarding nativ (große Titel, Pillen-Chips, runde Stepper, Auswahlkarten mit blauem Rahmen); beim Bearbeiten nur das
-      Onboarding sichtbar. Tagebuch, Plan, SOS, Sheets, Sparziel und Bon-Hinweis angeglichen; Ausrutscher orange statt rot.
-- [x] Schritt 1 vereinfacht: nur Rauchstopp-Datum (vorausgefüllt mit heute) statt vier Schnellwahl-Knöpfen.
-- [x] Bon im App-Look: weiße Karte, Systemschrift, keine Papierstruktur; Aufbau und Bon-Farbe bleiben.
-- [x] Mehr → Darstellung: Auto · Hell · Dunkel (Segment-Schalter), wird vor dem ersten Zeichnen angewendet, Statusleiste folgt.
-- [x] Bon im Dunkelmodus: dunkle Karte, Bon-Farbe per OKLCH aufgehellt; geteiltes Bild bleibt weiß.
-- [x] Farben: zwei ab Start (Blau, Orange), dann Tag 1, 3, 7, 30.
-- [x] „Angaben ändern“ als eine Seite (Datum, Art, Verbrauch, Speichern); erstes Onboarding bleibt schrittweise.
-- [x] Installations- und Rechtliches-Seite im iOS-Look (Karten, große Titel, Darstellung wird übernommen).
-- [x] Bon-Farbe: 8 feste Farben statt freier Farbwahl, 3 ab Start, dann Tag 1, 3, 7, 14, 30 (Sheet mit Farbkreisen).
-- [x] Teilen-Bild folgt der Darstellung: im Dunkelmodus dunkler Bon (aufgehellte Bon-Farbe als Hex, QR auf weißem Feld).
-- [x] Plan speichern: Knopf zeigt „✓ Gespeichert“, dann zurück zur Ausgangsseite.
-- [x] Gesundheit: Icon je Punkt (Puls, Tropfen, Lunge, Herz, Gehirn, Schild), mehr Abstand, erreichte Punkte grün.
-- [x] Start: Körper-Karte mit zuletzt erreichtem und den nächsten zwei Punkten, Tipp öffnet die Gesundheitsseite.
-- [ ] Icons im SF-Symbols-Stil; Bon-Tab (Ziel/Teilen) und Wochen-Bon im Dunkelmodus feinschleifen; Test auf echtem iPhone.
-- [ ] Entscheiden: alter Bordcomputer-Code (`.obc`, `renderBoard`) löschen, wenn der neue Start bleibt.
+## Als Nächstes
 
-## V2 (nach dem ersten Release)
+- [ ] **Graphen auf Start.** Vorschlag (noch nicht entschieden, mit 1 und 2 anfangen):
+      1. Verlangen-Verlauf aus dem Suchtprotokoll: Balken in Ampelfarben, umschaltbar Woche/Monat wie Apple Health.
+      2. „Wann und warum“: Tageszeit des Verlangens und häufigste Auslöser aus dem Tagebuch (hilft beim Wenn-dann-Plan).
+      3. Überstanden vs. geraucht pro Woche.
+      4. Gespartes Geld als Linie mit Sparziel-Markierung (sagt wenig Neues, eher zuletzt).
+- [ ] **Englische Texte angleichen** an die neue deutsche Wortwahl (24.11.): „Money saved“ statt „not burned“,
+      „Life gained“ statt „life back“, „Cravings got through“, Dank-Satz „Thanks for taking care of yourself“,
+      Name des Suchtprotokolls auf Englisch klären. Englische Schlüssel in `app.js`/`index.html` und `i18n.js` ändern.
+- [ ] **Auf echten Geräten testen:** Teilen in WhatsApp und iMessage (kurzer Bon 5:4, ganzer Bon, nur Link),
+      Wischen vom linken Rand in der App, Vibrationen, Sticker im Teilen-Bild. iOS-App wurde noch nie gebaut (braucht Mac).
+- [ ] **Link-Vorschau der Webseite** (`assets/share-card.png`, og:image) neu machen: zeigt noch alte englische
+      Beispielzahlen (422 Tage), wirkt bei „Nur die App teilen“ wie die Zahlen des Absenders. Neues Bild ohne Zahlen.
 
-- [ ] **Startseite modular**: Karten (Tacho, Gespart, Leben, Körper, Check-in, SOS, Bon, Farben) ein- und ausblenden und
-      per Ziehen sortieren, wie die Widgets auf dem iPhone-Homescreen. Reihenfolge lokal speichern; sinnvolle
-      Voreinstellung für neue Nutzer. Vorlage für die späteren nativen Widgets.
-- [ ] **Bon mit Stickern gestalten**: Sticker (z. B. Meilenstein-Abzeichen, Emojis, Stempel) auf den Bon setzen, die ins
-      Teilen-Bild übernommen werden; manche Sticker als Belohnung freischaltbar.
+## Vor dem App Store (Apple-Richtlinien geprüft am 23.11.2026)
 
-## Usability
+- [ ] **Entwickler-Menü** (7× auf „Version“) im iOS-Release ausblenden oder in den Prüfer-Notizen beschreiben
+      (Richtlinie 2.5.19: keine versteckten Funktionen).
+- [ ] **Support-Kontakt** in der App und als Support-URL (1.5): E-Mail oder Seite festlegen, bisher nur GitHub-Profil.
+- [ ] App Store Connect: Altersfreigabe mit Tabak-Bezug ehrlich angeben; in iOS-Texten Android nicht erwähnen;
+      Screenshots aus `docs/screenshots` (`npm run screenshots`).
+- [ ] Bereits erfüllt: Quellen und Hinweis „Ärztin/Arzt fragen“ (1.4.1), Datenschutzseite DE/EN mit Löschen (5.1.1),
+      keine Daten nach außen, Teilen über System-Sheet, Noto-Emoji-Lizenz unter „Bildquellen“.
 
-- [x] Bon vereinfacht: große Tage-Zahl statt 5 Zeitzeilen, doppelte Zeilen raus, nur 1 Coupon, QR/Link nur im geteilten Bild.
-- [x] „Frühere Ausgaben“ (erweiterter Bon) entfernt. Rechenlogik bleibt in app-core.js, falls sie später wieder gebraucht wird.
+## Design und Bedienung
 
-- [x] Zurücksetzen mit eigenem Bestätigungs-Sheet (listet auf, was gelöscht wird) statt Browser-Dialog.
-- [ ] Optional: Rückgängig nach dem Zurücksetzen, Teil-Reset, eigenes Einstellungs-Sheet.
-- [x] **Entwicklermodus**: 7× auf „Version“ im Mehr-Menü tippen. Test-Mitteilungen (Coach, Meilenstein, Geld, Tagesbon) in 10 s.
-- [ ] **Rückfall-Modus**: Ausrutscher festhalten statt alles zu löschen (neues Startdatum mit Verlauf).
-- [x] **Tab-Leiste** (Bon · Plan · SOS · Tagebuch · Mehr) statt Werkzeugleiste; SOS, Plan und Mehr als ganze Seiten,
-      Ziel und Teilen über dem Bon. Ruckelnde Druck-/Slide-Animationen entfernt. Siehe [KONKURRENZ.md](KONKURRENZ.md).
-- [x] Usability-Test 1 (Kilian, 22.11.2026): nur „i“ öffnet Infos, Bon nicht mehr direkt bearbeitbar
-      (Änderungen über „Mehr → Angaben ändern“), Pinsel statt Farbpunkt, ganze Schachteln, einmaliger Hinweis zum Bon.
-- [ ] **Mehrfachauswahl bei der Art** (Wunsch aus Test 1): z. B. Zigaretten + Vape gleichzeitig. Braucht neues
-      Datenmodell (`modes: []` statt `mode`), Migration (`STORAGE_VERSION` 5), Konsum-Schritte je Art, Summen auf dem
-      Bon, Coach/Mitteilungen und Teilen-Text über alle Arten.
-- [x] **Tagebuch**: Verlangen und Ausrutscher mit Stärke (1–5), Auslöser und Notiz. „Deine Auslöser“ (Top 3),
-      Tageszeit, letzte 7 Tage, Verlauf mit Löschen. SOS „Geschafft +1“ legt den Eintrag an. Ausrutscher setzen
-      nichts zurück.
-- [ ] Tagebuch-Ideen: Auslöser im Coach nutzen („Kaffee ist dein häufigster Auslöser …“), Rückfall-Modus mit
-      neuem Startdatum bei echtem Rückfall, Export.
-- [x] ~~Navigation auf dem Bon~~ (ersetzt durch Tab-Leiste): Unten-Werkzeugleiste (SOS, Ziel, Teilen, Mehr) statt 7 Buttons oben; Ändern, Farbe, Gesundheit, Erinnern, Sprache, Zurücksetzen ins „Mehr“-Menü (Apple HIG: Aktionen in eine Toolbar unten).
-- [ ] Bon bei „noch nicht aufgehört“: oben statt Nullen „Verbrannt pro Jahr“ zeigen.
-- [ ] Erstes Öffnen nach dem Bon: kurzer einmaliger Hinweis auf den Craving-SOS-Knopf.
-- [ ] Datum-Eingabe: natives iOS-Datumsrad im Bottom-Sheet statt Browser-Datumsfeld prüfen.
-- [x] **Gesundheit-Tab** (ersetzt „Plan“ in der Tab-Leiste; Plan weiter über Mehr und SOS): 8 Funktionen nach DKFZ-Zeitplan
-      mit Prozent bis zum jeweiligen Zeitpunkt, „X von 8 erreicht“, Hilfe-Karte mit Rauchfrei-Telefon (BIÖG) und rauchfrei-info.de.
-- [x] Verbrauchsfelder starten mit echten Standardwerten statt grauer Platzhalter (vorher: „Bon drucken“ verlangte trotzdem Eingabe).
-- [x] Wichtige Buttons blau (`--action`), ausgewählte Antworten schwarz mit Haken, aktiver Tab blau markiert.
-- [x] Entwicklermodus: Schriftart und Textgröße (80–140 %) zum Testen.
-- [x] **Tab-Leiste neu** (23.11.2026): Start · Tagebuch · **＋ Eintrag** · Bon · Mehr. SOS ist kein Tab mehr, sondern
-      eine Aktion: im ＋-Sheet (SOS, Verlangen widerstanden, Ausgerutscht, Wenn-dann-Plan) und als Karte auf Start.
-- [x] **Tages-Check-in** auf Start: „Wie stark war das Verlangen heute?“ (Keins/Leicht/Mittel/Stark), Wochenansicht
-      Mo–So, Rückmeldung je nach Stärke (Plan bzw. SOS anbieten), **Tipp des Tages** aus dem Coach. Keine Serie, die
-      reißt: ein verpasster Tag bleibt einfach leer.
-- [x] **Start = nur Bordcomputer** in Handygröße (Desktop: zentriert). Tasten Reihe 1: Tage/Geld/Leben/Licht, Reihe 2:
-      SOS (Warnblink-Dreieck), Heute (Check-in-Sheet, blaue LED bis eingecheckt), Körper (Gesundheit als eigene Seite).
-- [x] **SOS vereinfacht** (UX-Faustregeln, W3C COGA): Atemkreis mit Phase und 4-3-2-1, dünne 3-Minuten-Linie, „Geschafft“
-      ab Sekunde 1, „Abbrechen“ sichtbar; Zähler und Euro-Wert raus aus dem Moment des Verlangens.
-- [x] Neuer-Nutzer-Durchgang: Tag 0 zeigt Stunden statt „0 Tage“, Bon-Hinweis nennt + statt SOS-Tab, Reset hebt Datums-Chip auf.
-- [x] Board-Display zeigt alle drei Werte gleichzeitig: je Zeile Wert, 12er-Segmentbalken und „noch …“ bis zum nächsten Ziel
-      (`boardGoals()`); Geld-Zeile öffnet das Sparziel. Anzeige-Taste und Mini-Displays entfernt, Tasten 2+3.
-- [x] ~~Board-Tasten 3+3:~~ „Anzeige ▸“ (Tage/Geld/Leben in einer Taste, auch Tippen aufs Display), Licht, Bon drucken · SOS, Heute, Körper.
-- **Entscheidungen 23.11.2026:** Zielgruppe junge Erwachsene (18–35). SOS bleibt nur Atmen. Bon bleibt wichtig, wird vom
-  Bordcomputer aus gedruckt. Wiederkommen über: Abend-Erinnerung, Belohnungen, Wochenrückblick (nächste Schritte):
-- [x] Abend-Erinnerung „Kurz einchecken?“ um 20 Uhr, entfällt nach dem Check-in (Plan wird neu berechnet). Schalter unter Erinnerungen.
-- [x] Belohnungen: Displayfarben ab Tag 1/3/7/14/30 (Orange, Blau, Grün, LCD, Gold); „NEU“ an der Licht-Taste, Hinweis auf die nächste.
-- [x] Wochen-Bon: im Heute-Sheet, sonntags ab 18 Uhr einmal automatisch, Mitteilung So 19 Uhr, Teilen als Text.
-- [x] Tagebuch vereinfacht: ein „+ Neuer Eintrag“, Sheet mit zwei Dropdowns (Was passiert? · Auslöser), eine Zusammenfassungszeile.
-- [ ] Check-in im Coach nutzen (z. B. nach zwei „Stark“-Tagen Plan anbieten) und Tages-Mitteilung „Kurz einchecken?“.
-- [ ] Wochenrückblick am Sonntag: Check-ins, Cravings, Gespartes der Woche als kleiner Bon zum Teilen.
-- [ ] Usability-Test mit 3–5 Leuten (Ziel: Bon in unter 45 s, ohne Hilfe).
+- [ ] Name „Mint“ prüfen: das Design ist seit 24.11. graublau (#96b1bd). Vorschlag „Nebel“.
+- [ ] Begriff „Suchtprotokoll“ für den täglichen Check bestätigen (seit 24.11., vorher „Tages-Check“).
+- [ ] Optional: Noto-Emoji-3D-Sticker statt 2D; weitere Sticker, Schriften und Bon-Hintergründe als Belohnung.
+- [ ] Mehr Designs nach Wunsch (gleiches Muster wie Dracula: nur Variablen für hell und dunkel).
+- [ ] **Startseite modular:** Karten ein-/ausblenden und per Ziehen sortieren, Reihenfolge lokal speichern.
+- [ ] **Mehrfachauswahl bei der Art** (Zigaretten + Vape): neues Datenmodell `modes: []`, Migration (`STORAGE_VERSION` 5).
+- [ ] **Rückfall-Modus:** bei echtem Rückfall neues Startdatum mit Verlauf statt alles zu löschen.
+- [ ] Optional: Rückgängig nach dem Zurücksetzen, Teil-Reset.
+- [ ] Tagebuch: Auslöser im Coach nutzen („Kaffee ist dein häufigster Auslöser …“), Export.
+- [ ] Suchtprotokoll im Coach nutzen (nach zwei „Stark“-Tagen Plan anbieten).
+- [ ] SOS: Option „5 Min. bewegen“; „Mehr Hilfe“-Karte. Quellen für Coach-Aussagen in `legal.html`.
+- [ ] Usability-Test mit 3–5 Leuten (Ziel: Bon in unter 45 s ohne Hilfe).
+
+## Aufräumen im Code
+
+- [ ] `ios.css` ist durch viele Runden gewachsen (Regeln am Ende überschreiben frühere). Zusammenführen, doppelte
+      Regeln entfernen, dabei mit `npm run screenshots` vorher/nachher vergleichen.
+- [ ] Alten Bordcomputer-Code entfernen (`.obc`, `renderBoard`, `boardThemeStatus`-Paletten, `#board`), wird nicht mehr angezeigt.
+- [ ] Wochen-Bon-Reste entfernen (`weekSummary`, Texte, alte `weekly`-Erinnerung): Funktion wurde am 23.11. gestrichen.
+- [ ] Ungenutzte Übersetzungen in `i18n.js` aufräumen.
 
 ## Daten / Persistenz
 
-Aktueller Stand: Alle Daten liegen nur lokal. Web: `localStorage` des Browsers. App: zusätzlich gespiegelt
-in den nativen Preferences (iOS UserDefaults / Android SharedPreferences), damit iOS sie nicht löschen kann.
-Verloren gehen sie nur beim Löschen der App bzw. der Browserdaten.
+Alle Daten liegen nur lokal (Web: `localStorage`; App zusätzlich native Preferences). Neue Schlüssel immer in
+`MIRRORED_KEYS` (`native.js`) und in die Liste in `resetApp()` (`app.js`) eintragen.
 
-- [ ] **Export / Import** als Datei (JSON) oder Teilen-Link für Gerätewechsel.
-- [ ] Optional **iCloud-Sync** (iOS Key-Value Store) bzw. Android Auto Backup prüfen. Bleibt ohne eigenen Server.
-- [ ] Wenn Daten von einer zur nächsten Version wechseln: Migration statt Löschen (`STORAGE_VERSION`).
+- [ ] **Export / Import** als Datei (JSON) für Gerätewechsel.
+- [ ] Optional iCloud-Key-Value-Sync bzw. Android Auto Backup prüfen (ohne eigenen Server).
+- [ ] Bei Datenänderungen Migration statt Löschen (`STORAGE_VERSION`).
 
 ## Teilen / Wachstum
 
-- [x] Persönlicher Teilen-Text mit Zahlen und Frage an Freunde; Meilenstein-Coupon „7 Tage! Teile deinen Bon“.
-- [ ] Story-Format 9:16 (Bon zentriert auf Papier-Hintergrund) für Instagram/WhatsApp-Status.
-- [ ] „Freund herausfordern“: Link öffnet direkt den Rechner mit der Frage „Was verbrennst du?“.
-- [ ] Jahres-Bon / Rückblick zum Jahrestag als besonderer Beleg.
+- [ ] Story-Format 9:16 für Instagram/WhatsApp-Status.
+- [ ] „Freund herausfordern“: Link öffnet den Rechner mit „Was verbrennst du?“.
+- [ ] Jahres-Bon zum Jahrestag; Bon-Archiv (monatlich).
 - [ ] Universal Links / App-Store-Link im QR-Code, sobald die App im Store ist.
 
-## Funktionen
+## Funktionen später
 
-Evidenz und Ideen aus Studien: [EVIDENZ.md](EVIDENZ.md).
-
-- [x] **Wenn-dann-Plan**: bis zu 3 Auslöser mit Ersatzhandlung („Mehr“-Menü und SOS), wird im SOS angezeigt.
-- [x] **Rauchfrei-Coach**: lokale Push-Tipps (Woche 1 zweimal täglich, dann seltener bis Woche 12), nutzt den Wenn-dann-Plan.
-      Schalter unter „Erinnern“, standardmäßig an. Plant immer die nächsten 14 Tage, neu bei jedem App-Start.
-- [ ] Quellen für die Coach-Aussagen (Medikamente verdoppeln Chancen, Rückfälle in den ersten Tagen) in `legal.html` ergänzen.
-- [ ] SOS: Option „5 Min. bewegen“; „Mehr Hilfe“-Karte (Medikamente, Rauchfrei-Telefon).
-
-- [x] **Start-Tab** (erster Tab, öffnet beim App-Start): Bordcomputer im App-Stil (Papier, 1px-Linien, harter Schatten), darunter
-      Gesundheit (ersetzt den eigenen Gesundheit-Tab). Display-Farben: Bon (folgt der Bon-Farbe), Orange, Blau, LCD.
-- [x] **Bordcomputer** (Stil: 90er-Auto-Display): Tage, Gespartes, Lebenszeit zurück (nur Zigaretten;
-      Selbstgedrehte/Vape zeigen Stück/ml). Tasten Tage/Geld/Leben tauschen das große Display, „Licht“ wechselt
-      Bon/Orange/Blau/LCD. Daten aus `boardData()` in app-core.js, Farben als `--obc-*`-Tokens: beides Vorlage fürs Widget.
-- [ ] **Widgets** (Home- und Sperrbildschirm) im Bordcomputer-Stil: „Tage rauchfrei“ und „€ gespart“. Braucht
-      eine native WidgetKit-Erweiterung (Swift) auf dem Mac bzw. ein Android-App-Widget.
-- [ ] **Bon-Archiv**: monatlicher Bon zum Durchblättern und Sammeln.
+- [ ] **Widgets** (Home/Sperrbildschirm): „Tage rauchfrei“, „€ gespart“. Braucht WidgetKit (Swift, Mac) bzw. Android-Widget.
 - [ ] Face-ID-/PIN-Sperre (optional).
-- [ ] Weitere Sprachen: neues Wörterbuch in `i18n.js` hinzufügen (Tests prüfen Vollständigkeit).
-- [ ] `legal.html` und Store-Texte auf Deutsch.
+- [ ] Weitere Sprachen: neues Wörterbuch in `i18n.js` (erscheint automatisch in der Sprachliste; Tests prüfen Vollständigkeit).
 - [ ] Apple Health: Achtsamkeitsminuten aus der Atemübung (optional).
 
 ## Monetarisierung (unaufdringlich, werbefrei)
 
-- [ ] **SMKFREE Pro** als einmaliger Kauf: Widgets, eigene Farben, Bon-Archiv, Export.
-- [ ] **Trinkgeld-Kasse** im Bon-Stil („Gib einen Kaffee aus, den du nicht verraucht hast“).
-- [ ] Umsetzung mit StoreKit / Google Play Billing, z. B. über RevenueCat oder ein Capacitor-Kauf-Plugin.
-      Voraussetzung: Apple Developer Account.
-- [ ] Kauf-Hinweis nie im Assistenten, frühestens nach dem 3. Öffnen und nur einmal.
+- [ ] SMKFREE Pro als Einmalkauf (Widgets, Bon-Archiv, Export, Extra-Sticker); Trinkgeld-Kasse im Bon-Stil.
+- [ ] StoreKit / Google Play Billing (z. B. RevenueCat). Kauf-Hinweis frühestens nach dem 3. Öffnen, nur einmal.
 
 ## Technik
 
 - [ ] GitHub Actions: Tests bei jedem Push; optional Android-Build in der Cloud.
-- [ ] GitHub Pages auf den neuen Stand bringen (Website = PWA bleibt parallel bestehen).
-- [ ] Icon als echte Vektorgrafik (statt Schrift im SVG), damit es auf jedem Rechner gleich gerendert wird.
+- [ ] Icon als echte Vektorgrafik.
+- [ ] Nächste Android-Test-APK: `versionCode` 11 (zuletzt installiert: 10 auf dem Galaxy S10e). APK nur auf Ansage bauen.
+
+## Erledigt (Überblick)
+
+- **23.11.:** Atemübung zuverlässig (zeitbasiert), Suchtprotokoll ohne Tipp/Wochen-Bon, „Gewonnene Lebenszeit“-Infoblatt,
+  klares +-Menü, Tagebuch mit Notiz und Datum, Wischen-zurück, Statusleisten-Fix, Apple-Richtlinien geprüft,
+  Screenshots + Collage (`npm run screenshots`).
+- **24.11.:** Ampelfarben fürs Verlangen, Werte im Apple-Health-Stil, weniger Vibration, Onboarding (Schritt 2 mit Weiter,
+  Felder markieren beim Antippen), Teilen-Blatt (kurzer Bon / ganzer Bon / nur App, erst wählen dann teilen),
+  zuverlässige Updates (Netzwerk zuerst, Update-Hinweis, einmaliger Neustart für alte Installationen),
+  Designs Standard/Mint/Lavendel/Dracula mit Hell/Dunkel im Design-Blatt, Bon anpassen (Farbe, Hintergrund, Schrift,
+  Noto-Sticker, freischaltbar), Einstellungen-Tab mit Währung und Sprachliste, Zurück oben links überall,
+  Rechtliches und Installieren auf Deutsch, Tab-Leiste volle Breite mit schwebendem +, ruhige „Gerade Verlangen?“-Kachel,
+  Tacho „54 Jahre“ mit Ziel und Datum (Kalenderjahre), neue Wortwahl (Geld gespart, Gewonnene Lebenszeit, Suchtprotokoll),
+  UI-Richtlinien.
+- Ältere Punkte: siehe Git-Historie.

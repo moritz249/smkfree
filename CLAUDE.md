@@ -12,19 +12,24 @@ SMKFREE: a privacy-first smoke-free tracker (cigarettes, roll-your-own, vaping) 
 npm test                                   # node --test (Node 20+), runs tests/*.test.js
 node --test tests/app-core.test.js         # single file
 node --test --test-name-pattern="dailySaving"   # single test by name
-npm run serve                              # http-server on :8000, caching disabled (or: python -m http.server 8000)
+npm run serve                              # local server on :8000 without caching (scripts/serve.mjs, no dependencies)
+npm run screenshots                        # needs `npm run serve` running: demo screenshots + share collage into docs/screenshots (headless Edge)
 npm run build                              # copy site into www/ (Capacitor webDir)
 npm run sync / sync:ios / sync:android     # build + npx cap sync
 npx cap open android | ios
 npx capacitor-assets generate --assetPath resources --ios --android   # regenerate icons/splash
 ```
 
-There is no linter configured. `.claude/launch.json` in the parent folder defines a `smkfree-web` preview server on port 8000.
+There is no linter configured. `.claude/launch.json` in the parent folder defines a `smkfree-web` preview server on port 8000 (`node scripts/serve.mjs`, no caching).
+
+Start of a new session: read `docs/BACKLOG.md` (section „Als Nächstes“) and `docs/UI-RICHTLINIEN.md`. The owner writes in German; the app is German-first (English is the i18n key language). Build an APK only when asked.
 
 ## Architecture
 
-- `app.js` (large): all UI and side effects — the onboarding wizard (steps, validation), receipt rendering, themes/custom color, savings goal, reminders, craving SOS timer, sharing/download via html2canvas, toolbar and "More" menu. Imports pure logic from `app-core.js`, translations from `i18n.js`, and platform features from `native.js`.
-- `app-core.js`: pure, DOM-free calculations (progress per mode, German historical pack-price interpolation for "advanced" spend, daily savings, goal progress, notification plan). This is the tested layer; keep new logic here when it can be pure. It receives the translator via `options.t` rather than importing `i18n.js`.
+- `app.js` (large): all UI and side effects. Tabs: Start (gauge, cards, body, Suchtprotokoll row, craving tile), Tagebuch, Bon, Einstellungen (`data-tab="more"`); sub pages health, plan and sos with a top-left „‹ Zurück“ and history entries (`SUB_PAGES`, `goBack()`); sheets for everything small (`openSheet`/`closeSheet`). Also the onboarding wizard, the craving SOS breathing (frame-based, `breathAt`), sharing (`openShareSheet`: short receipt = clone of the receipt top captured by html2canvas onto 1200×960, whole receipt, or app link only), the update check/banner, and the "+" action sheet. Imports pure logic from `app-core.js`, translations from `i18n.js`, and platform features from `native.js`.
+- Looks are two separate things: the **app design** (`data-ui-theme` on `<html>`: standard, mint, lavender, dracula; light/dark via `data-appearance`; only CSS variables in `ios.css`) and the **receipt look** ("Bon anpassen": color, paper/background, font, sticker; unlock lists `RECEIPT_COLORS/PAPERS/FONTS/STICKERS` in `app-core.js`, applied by `applyReceiptLook`). Stickers are bundled Noto Emoji SVGs in `assets/stickers/` (license file there, credited in `legal.html`); they are shown as PNG copies because html2canvas cannot draw those SVGs.
+- `styles.css` is the old receipt-era base, `ios.css` the native look on top. `ios.css` grew in rounds: later rules override earlier ones, so add new rules at the end in a labelled section (cleanup is in the backlog).
+- `app-core.js`: pure, DOM-free calculations (progress per mode with calendar years/months via `calendarDiff`, German historical pack-price interpolation for "advanced" spend, daily savings, goal steps incl. anniversaries past ten years, notification plan, unlock lists). This is the tested layer; keep new logic here when it can be pure. It receives the translator via `options.t` rather than importing `i18n.js`.
 - `native.js`: thin Capacitor bridge reading `window.Capacitor` at runtime (no imports). Every call must have a web fallback or no-op so the PWA keeps working. It also mirrors `localStorage` keys into native Preferences because iOS WKWebView storage can be evicted — **when adding a new persisted key, add it to `MIRRORED_KEYS` here and to the key list cleared in `resetApp()` in `app.js`**.
 - Storage: main state under `smoke-free-progress` with `STORAGE_VERSION` (app.js); a version mismatch currently discards stored state, so changing the state shape means bumping the version or writing a migration.
 - `i18n.js`: English text is the key; `t("English text")` returns the active language's string. Only a `de` dictionary exists. HTML opts in via `data-i18n`, `data-i18n-placeholder`, `data-i18n-aria`.
