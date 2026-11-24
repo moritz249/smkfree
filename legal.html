@@ -3,19 +3,122 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#111111">
+    <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
     <meta
       name="description"
       content="Privacy and legal notes for SMKFREE, a private non-commercial smoke-free receipt tracker."
     >
     <title>Privacy / Legal - SMKFREE</title>
     <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="assets/icon.svg">
-    <link rel="stylesheet" href="styles.css?v=20261021-1">
+    <link rel="apple-touch-icon" href="assets/icon-180.png">
+    <link rel="icon" href="assets/favicon-32x32.png" sizes="32x32" type="image/png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <script>
+      // Same appearance and language as the app, before the page paints.
+      try {
+        var appearance = localStorage.getItem("smkfree-appearance");
+        if (appearance === "light" || appearance === "dark") document.documentElement.dataset.appearance = appearance;
+        var uiTheme = localStorage.getItem("smkfree-ui-theme");
+        if (uiTheme === "mint" || uiTheme === "lavender" || uiTheme === "dracula") document.documentElement.dataset.uiTheme = uiTheme;
+      } catch (e) { /* follow the system */ }
+      try {
+        var lang = localStorage.getItem("smkfree-language") || (navigator.language || "en").slice(0, 2).toLowerCase();
+        document.documentElement.lang = lang === "de" ? "de" : "en";
+      } catch (e) { /* English */ }
+    </script>
+    <link rel="stylesheet" href="styles.css?v=20261123-36">
+    <link rel="stylesheet" href="ios.css?v=20261124-31">
   </head>
   <body>
     <main class="legal-shell scan-frame">
-      <article class="legal-card">
+      <a class="nav-back" href="index.html" onclick="if (history.length > 1) { history.back(); return false; }"><span lang="de">‹ Zurück</span><span lang="en">‹ Back</span></a>
+
+      <article class="legal-card" lang="de">
+        <p class="intro-logo">smkfree</p>
+        <p class="kicker">Datenschutz / Rechtliches</p>
+        <h1>Privates, nicht kommerzielles Projekt</h1>
+
+        <section>
+          <h2>Zweck</h2>
+          <p>
+            SMKFREE ist ein privater, nicht kommerzieller Tracker für rauchfreie Zeit. Aus deinen Angaben
+            entsteht eine Übersicht im Stil eines Kassenbons. Die App dient nur der Motivation.
+          </p>
+        </section>
+
+        <section>
+          <h2>Keine medizinische oder finanzielle Beratung</h2>
+          <p>
+            Gesundheitsvorteile, geschätzte zurückgewonnene Lebenszeit, Zigarettenzahlen und Kosten sind
+            grobe Schätzungen zur Motivation. Sie sind keine medizinische, finanzielle oder sonstige
+            fachliche Beratung. Die tatsächlichen Wirkungen und Kosten sind von Mensch zu Mensch verschieden.
+            Sprich vor medizinischen Entscheidungen mit deiner Ärztin oder deinem Arzt.
+          </p>
+        </section>
+
+        <section>
+          <h2>Quellen der Gesundheitsschätzungen</h2>
+          <p>
+            Die Meilensteine und die Gesundheitsseite folgen dem Zeitverlauf des Deutschen Krebsforschungszentrums,
+            <a href="https://www.dkfz.de/forschung/translationale-zentren/ncpc/stabsstelle-krebspraevention/rauchstopp">DKFZ: Rauchstopp</a>
+            (siehe auch den <a href="https://www.cdc.gov/tobacco/about/benefits-of-quitting.html">Zeitverlauf der CDC</a>).
+            Die Prozentzahlen auf der Gesundheitsseite zeigen, wie viel Zeit bis zum jeweils genannten Zeitpunkt
+            vergangen ist (bei einer Spanne bis zu deren Ende). Sie sind eine einfache Schätzung zur Motivation,
+            keine Messung von Körperfunktionen. Die Nummer der Rauchfrei-Beratung (BIÖG, 0800 8 31 31 31)
+            stammt von derselben DKFZ-Seite.
+            Die Lebenserwartung bei Zigaretten beruht auf einer Schätzung für die Bevölkerung von 20 Minuten pro
+            Zigarette aus Jackson, Jarvis und West,
+            <a href="https://doi.org/10.1111/add.16757">The price of a cigarette: 20 minutes of life?</a>
+            (Addiction, 2025). Sie beruht auf Durchschnittswerten und ist keine Vorhersage für die Lebensdauer
+            einer einzelnen Person. Für Dampfen und Selbstgedrehte gilt sie nicht.
+          </p>
+        </section>
+
+        <section>
+          <h2>Speicherung auf deinem Gerät</h2>
+          <p>
+            Deine Angaben, Tagebucheinträge, dein Sparziel und deine Einstellungen werden nur auf deinem Gerät
+            gespeichert: auf der Webseite im localStorage des Browsers, in der App auf iPhone und Android
+            zusätzlich im lokalen Speicher der App. Nichts wird an einen Server gesendet. Erinnerungen sind
+            lokale Benachrichtigungen, die dein Handy selbst plant. SMKFREE hat keine Konten, keine Analyse,
+            keine Werbung und keine Tracking-Skripte. Mit „Alle Daten löschen“ in der App oder durch Löschen
+            der App entfernst du die gespeicherten Daten.
+          </p>
+        </section>
+
+        <section>
+          <h2>Hosting</h2>
+          <p>
+            Die Webseite liegt bei GitHub Pages. GitHub kann technische Zugriffsdaten wie IP-Adresse und
+            Browserinformationen verarbeiten, um das Hosting bereitzustellen und abzusichern.
+          </p>
+        </section>
+
+        <section>
+          <h2>Bildquellen</h2>
+          <p>
+            Die Sticker auf dem Bon stammen aus <a href="https://github.com/googlefonts/noto-emoji">Noto Emoji</a>
+            von Google (Copyright Google LLC), lizenziert unter der SIL Open Font License 1.1 bzw. Apache 2.0.
+            Der Lizenztext liegt der App bei (<a href="assets/stickers/LICENSE-noto-emoji.txt">LICENSE-noto-emoji.txt</a>).
+          </p>
+        </section>
+
+        <section>
+          <h2>Kontakt</h2>
+          <p>
+            Bei Fragen zu diesem privaten Projekt nutze das mit dieser Seite verbundene GitHub-Profil:
+            <a href="https://github.com/moritz249">github.com/moritz249</a>.
+          </p>
+        </section>
+
+        <p class="legal-note">
+          Diese Seite ist ein praktischer Hinweis zu Datenschutz und Projekt. Sie ersetzt keine Rechtsberatung
+          und kein förmliches Impressum, wo eines gesetzlich vorgeschrieben ist.
+        </p>
+      </article>
+
+      <article class="legal-card" lang="en">
         <p class="intro-logo">smkfree</p>
         <p class="kicker">Privacy / Legal</p>
         <h1>Private non-commercial project</h1>
@@ -33,15 +136,20 @@
           <p>
             Health benefits, estimated life back, cigarette counts, and cost totals are rough
             motivational estimates. They are not medical, financial, or professional advice.
-            Actual effects and costs vary from person to person.
+            Actual effects and costs vary from person to person. Talk to your doctor before
+            making medical decisions.
           </p>
         </section>
 
         <section>
           <h2>Health estimate sources</h2>
           <p>
-            Tobacco milestones are a simplified summary of the
-            <a href="https://www.cdc.gov/tobacco/about/benefits-of-quitting.html">CDC benefits of quitting timeline</a>.
+            Tobacco milestones and the Health page follow the timeline of the German Cancer Research Center,
+            <a href="https://www.dkfz.de/forschung/translationale-zentren/ncpc/stabsstelle-krebspraevention/rauchstopp">DKFZ: Rauchstopp</a>
+            (see also the <a href="https://www.cdc.gov/tobacco/about/benefits-of-quitting.html">CDC benefits of quitting timeline</a>).
+            The percentages on the Health page show the share of time passed until each point in time the source
+            names (for a range, its end). They are a simple estimate for motivation, not a measurement of body
+            functions. The quit line number (BIÖG, 0800 8 31 31 31) is taken from the same DKFZ page.
             The cigarette life-expectancy figure uses a population-level estimate of 20 minutes per cigarette
             from Jackson, Jarvis, and West,
             <a href="https://doi.org/10.1111/add.16757">The price of a cigarette: 20 minutes of life?</a>
@@ -53,11 +161,11 @@
         <section>
           <h2>Local storage</h2>
           <p>
-            Your entries, savings goal and settings are saved only on your device: in the browser's
+            Your entries, diary, savings goal and settings are saved only on your device: in the browser's
             localStorage on the website, and additionally in the app's local storage on iPhone and
             Android. Nothing is sent to a server. Reminders are local notifications scheduled on your
             phone. SMKFREE does not run user accounts, analytics, advertising, or tracking scripts.
-            Use Reset inside the app, or delete the app, to remove the locally saved data.
+            Use "Reset all data" inside the app, or delete the app, to remove the locally saved data.
           </p>
         </section>
 
@@ -66,6 +174,15 @@
           <p>
             The site is hosted with GitHub Pages. GitHub may process technical access data, such as
             IP address and browser information, to provide and secure the hosting service.
+          </p>
+        </section>
+
+        <section>
+          <h2>Image credits</h2>
+          <p>
+            The receipt stickers come from <a href="https://github.com/googlefonts/noto-emoji">Noto Emoji</a>
+            by Google (copyright Google LLC), licensed under the SIL Open Font License 1.1 / Apache 2.0.
+            The license text ships with the app (<a href="assets/stickers/LICENSE-noto-emoji.txt">LICENSE-noto-emoji.txt</a>).
           </p>
         </section>
 
@@ -81,7 +198,6 @@
           This page is a practical privacy and project note. It does not replace legal advice or a
           formal imprint where one is legally required.
         </p>
-        <a class="legal-back" href="index.html">Back to SMKFREE</a>
       </article>
     </main>
   </body>

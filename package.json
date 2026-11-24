@@ -9,7 +9,8 @@
     "sync": "npm run build && npx cap sync",
     "sync:ios": "npm run build && npx cap sync ios",
     "sync:android": "npm run build && npx cap sync android",
-    "serve": "npx --yes http-server -p 8000 -c-1 ."
+    "serve": "node scripts/serve.mjs",
+    "screenshots": "node scripts/screenshots.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.2",

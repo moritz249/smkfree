@@ -1,0 +1,3454 @@
+/* =====================================================================
+   SMKFREE – native iOS look (branch ios-design)
+   Loaded after styles.css. System font, Apple system colors, light and
+   dark mode, rounded cards, floating glass tab bar. The receipt keeps its
+   own paper look: it is not inside .tab-page or .sheet.
+   ===================================================================== */
+
+:root {
+  color-scheme: light dark;
+  --ios-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --ios-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --ios-rounded: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Roboto, sans-serif;
+
+  /* Light (iOS system colors) */
+  --ios-bg: #f2f2f7;
+  --ios-card: #ffffff;
+  --ios-card-2: #f2f2f7;
+  --ios-fill: rgba(120, 120, 128, 0.12);
+  --ios-fill-2: rgba(120, 120, 128, 0.2);
+  --ios-label: #000000;
+  --ios-secondary: rgba(60, 60, 67, 0.6);
+  --ios-tertiary: rgba(60, 60, 67, 0.3);
+  --ios-separator: rgba(60, 60, 67, 0.18);
+  --ios-blue: #007aff;
+  --ios-red: #ff3b30;
+  --ios-green: #34c759;
+  --ios-glass: rgba(255, 255, 255, 0.72);
+  --ios-glass-border: rgba(0, 0, 0, 0.06);
+  --ios-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+
+  /* Ring colors (Fitness-like). Palettes below swap them. */
+  --ring-1: #fa114f;
+  --ring-2: #7ed321;
+  --ring-3: #00c7e6;
+
+  /* The existing app uses these for actions. */
+  --action: var(--ios-blue);
+  --action-pressed: #0062cc;
+  --action-soft: rgba(0, 122, 255, 0.12);
+}
+
+/* Dark: when the phone is dark and the app is on "Auto", or when the app is set to "Dark". */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-appearance="light"]) {
+    --ios-bg: #000000;
+    --ios-card: #1c1c1e;
+    --ios-card-2: #2c2c2e;
+    --ios-fill: rgba(118, 118, 128, 0.24);
+    --ios-fill-2: rgba(118, 118, 128, 0.36);
+    --ios-label: #ffffff;
+    --ios-secondary: rgba(235, 235, 245, 0.6);
+    --ios-tertiary: rgba(235, 235, 245, 0.3);
+    --ios-separator: rgba(84, 84, 88, 0.65);
+    --ios-blue: #0a84ff;
+    --ios-red: #ff453a;
+    --ios-green: #30d158;
+    --ios-glass: rgba(37, 37, 40, 0.72);
+    --ios-glass-border: rgba(255, 255, 255, 0.08);
+    --ios-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    --ring-2: #a6ff00;
+    --ring-3: #1eeaef;
+    --action-pressed: #0060c0;
+    --action-soft: rgba(10, 132, 255, 0.2);
+  }
+
+}
+:root[data-appearance="dark"] {
+    --ios-bg: #000000;
+    --ios-card: #1c1c1e;
+    --ios-card-2: #2c2c2e;
+    --ios-fill: rgba(118, 118, 128, 0.24);
+    --ios-fill-2: rgba(118, 118, 128, 0.36);
+    --ios-label: #ffffff;
+    --ios-secondary: rgba(235, 235, 245, 0.6);
+    --ios-tertiary: rgba(235, 235, 245, 0.3);
+    --ios-separator: rgba(84, 84, 88, 0.65);
+    --ios-blue: #0a84ff;
+    --ios-red: #ff453a;
+    --ios-green: #30d158;
+    --ios-glass: rgba(37, 37, 40, 0.72);
+    --ios-glass-border: rgba(255, 255, 255, 0.08);
+    --ios-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    --ring-2: #a6ff00;
+    --ring-3: #1eeaef;
+    --action-pressed: #0060c0;
+    --action-soft: rgba(10, 132, 255, 0.2);
+  }
+
+/* ------------------------------------------------------------- base */
+body {
+  background: var(--ios-bg);
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  display: none;
+}
+
+/* Pages and sheets use the system colors; the receipt and onboarding keep theirs for now. */
+.tab-page,
+.sheet,
+.toast {
+  --ink: var(--ios-label);
+  --line: var(--ios-separator);
+  --muted: var(--ios-secondary);
+  --paper: var(--ios-bg);
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+}
+
+.tab-page {
+  border: 0;
+  padding: 0 16px 24px;
+  background: none;
+  box-shadow: none;
+}
+
+.tab-page h2 {
+  font-family: var(--ios-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.kicker {
+  border: 0;
+  padding: 0;
+  color: var(--ios-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.step-hint {
+  color: var(--ios-secondary);
+}
+
+/* ------------------------------------------------------------- buttons */
+.primary-button,
+.secondary-button {
+  min-height: 50px;
+  border: 0;
+  border-radius: 999px;
+  font-family: var(--ios-font);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  background-image: none;
+}
+
+.primary-button:not(.danger-button) {
+  border: 0;
+  background: var(--action);
+  color: #ffffff;
+}
+
+.secondary-button {
+  background: var(--ios-fill);
+  color: var(--action);
+}
+
+.primary-button:active,
+.secondary-button:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+
+.text-button {
+  min-height: 44px;
+  background: none;
+  color: var(--action);
+  font-family: var(--ios-font);
+  font-weight: 500;
+  text-decoration: none;
+  text-transform: none;
+}
+
+:is(.tab-page, .sheet) .chip {
+  border: 0;
+  border-radius: 999px;
+  background: var(--ios-fill);
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-transform: none;
+}
+
+:is(.tab-page, .sheet) .chip.is-active {
+  background: var(--ios-label);
+  color: var(--ios-bg);
+}
+
+/* ------------------------------------------------------------- cards and lists */
+:is(.tab-page, .sheet) :is(.health-summary, .health-item, .help-card, .menu-list, .diary-list, .summary-list, .plan-list, .sos-plan) {
+  border: 0;
+  border-radius: 14px;
+  background: var(--ios-card);
+  background-image: none;
+}
+
+:is(.tab-page, .sheet) .summary-list div,
+:is(.tab-page, .sheet) .menu-row {
+  border-color: var(--ios-separator);
+  text-transform: none;
+}
+
+.menu-row {
+  background: transparent;
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+}
+
+.help-card {
+  border: 0;
+}
+
+.health-bar,
+.sos-progress__bar {
+  border: 0;
+  border-radius: 6px;
+  background: var(--ios-fill);
+  overflow: hidden;
+}
+
+.health-bar span {
+  border-radius: 6px;
+}
+
+.checkin-day i {
+  border: 0;
+  border-radius: 6px;
+  background: var(--ios-fill);
+}
+
+:is(.tab-page, .sheet) :is(input, select, textarea) {
+  border: 0;
+  border-radius: 10px;
+  background: var(--ios-fill);
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+}
+
+/* ------------------------------------------------------------- sheets */
+.sheet {
+  border: 0;
+  border-radius: 28px 28px 0 0;
+  background: var(--ios-card);
+  background-image: none;
+  box-shadow: var(--ios-shadow);
+}
+
+.sheet h2 {
+  font-family: var(--ios-display);
+  font-weight: 700;
+}
+
+.sheet__grip {
+  width: 36px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--ios-tertiary);
+}
+
+.toast {
+  border: 0;
+  border-radius: 999px;
+  background: var(--ios-glass);
+  box-shadow: var(--ios-shadow);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  text-transform: none;
+}
+
+/* ===================================================================== */
+/* Floating glass tab bar with a separate round "+"                      */
+/* ===================================================================== */
+.tab-bar {
+  right: 0;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  left: 0;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: min(100% - 24px, 440px);
+  border: 0;
+  padding: 0;
+  background: none;
+}
+
+.tab-bar__pill {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  height: 64px;
+  border: 1px solid var(--ios-glass-border);
+  border-radius: 32px;
+  padding: 4px;
+  background: var(--ios-glass);
+  box-shadow: var(--ios-shadow);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+}
+
+.tab-button {
+  min-height: 0;
+  height: 100%;
+  border-radius: 28px;
+  gap: 2px;
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.tab-button .icon {
+  width: 24px;
+  height: 24px;
+}
+
+.tab-button.is-active {
+  background: var(--ios-fill);
+  color: var(--action);
+}
+
+.tab-button.is-active::after {
+  display: none;
+}
+
+.tab-button--action {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  min-height: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--action);
+  box-shadow: var(--ios-shadow);
+  color: #ffffff;
+}
+
+.tab-button--action .icon {
+  width: 28px;
+  height: 28px;
+  stroke-width: 2.5;
+}
+
+.tab-button--action:active {
+  background: var(--action-pressed);
+  box-shadow: var(--ios-shadow);
+  transform: scale(0.94);
+}
+
+.app-shell.is-receipt-view {
+  padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ===================================================================== */
+/* Start: large title, week rings, activity rings, metrics, tiles        */
+/* ===================================================================== */
+.start-page {
+  display: grid;
+  gap: 20px;
+  padding-top: 0;
+}
+
+.start-page[hidden] {
+  display: none;
+}
+
+.ios-head {
+  display: grid;
+  gap: 2px;
+}
+
+.ios-eyebrow {
+  margin: 0;
+  color: var(--ios-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.ios-large-title {
+  margin: 0;
+  font-family: var(--ios-display);
+  font-size: 2.125rem;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  line-height: 1.1;
+}
+
+/* Gauge: one arc, one accent color. */
+.start-page {
+  --gauge: var(--ios-blue);
+}
+
+.gauge {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  margin: 4px 0 0;
+}
+
+.gauge__svg {
+  width: min(84vw, 330px);
+  height: auto;
+  overflow: visible;
+}
+
+.gauge__track,
+.gauge__fill {
+  fill: none;
+  stroke-linecap: round;
+  stroke-width: 16;
+}
+
+.gauge__track {
+  stroke: var(--ios-fill);
+}
+
+.gauge__fill {
+  stroke: var(--gauge);
+  transition: stroke-dasharray 900ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.gauge__center {
+  position: absolute;
+  bottom: 22px;
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  text-align: center;
+}
+
+.gauge__label {
+  color: var(--ios-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.gauge__value {
+  font-family: var(--ios-rounded);
+  font-size: clamp(2.4rem, 12vw, 3.2rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.gauge__sub {
+  color: var(--ios-secondary);
+  font-size: 0.85rem;
+}
+
+.gauge__ends {
+  display: flex;
+  justify-content: space-between;
+  width: min(84vw, 330px);
+  margin-top: 2px;
+  padding: 0 6px;
+  color: var(--ios-tertiary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Two calm cards: money and life back. */
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.stat-card {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  min-width: 0;
+  border: 0;
+  border-radius: 18px;
+  padding: 14px;
+  background: var(--ios-card);
+  color: var(--ios-label);
+  font: inherit;
+  text-align: left;
+}
+
+button.stat-card {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+button.stat-card .stat-card__label::after {
+  margin-left: 4px;
+  color: var(--ios-tertiary);
+  content: "›";
+}
+
+.stat-card__label {
+  color: var(--ios-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.stat-card__value {
+  overflow: hidden;
+  font-family: var(--ios-rounded);
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stat-card__bar {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--ios-fill);
+  overflow: hidden;
+}
+
+.stat-card__bar i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--gauge);
+}
+
+.stat-card__sub {
+  color: var(--ios-secondary);
+  font-size: 0.78rem;
+}
+
+/* Check-in row: like a settings row with this week as dots. */
+.checkin-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  border: 0;
+  border-radius: 18px;
+  padding: 14px 16px;
+  background: var(--ios-card);
+  color: var(--ios-label);
+  font: inherit;
+  text-align: left;
+}
+
+.checkin-row__text {
+  display: grid;
+  gap: 8px;
+}
+
+.checkin-row__text strong {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.checkin-row.needs-checkin strong::before {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin: 0 8px 1px 0;
+  border-radius: 50%;
+  background: var(--gauge);
+  content: "";
+}
+
+.checkin-row__dots {
+  display: flex;
+  gap: 6px;
+}
+
+.checkin-row__dots i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ios-fill-2);
+}
+
+.checkin-row__dots i.is-on {
+  background: var(--gauge);
+}
+
+.checkin-row__dots i.is-today {
+  outline: 2px solid var(--ios-tertiary);
+  outline-offset: 2px;
+}
+
+.checkin-row__chevron {
+  color: var(--ios-tertiary);
+  font-size: 1.4rem;
+}
+
+/* Tiles: Control Center style, round and glassy. */
+.ios-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ios-tile {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  align-content: end;
+  justify-items: start;
+  min-height: 104px;
+  border: 0;
+  border-radius: 26px;
+  padding: 14px 16px;
+  background: var(--ios-card);
+  color: var(--ios-label);
+  font: inherit;
+  text-align: left;
+  touch-action: manipulation;
+  transition: transform 120ms ease;
+}
+
+.ios-tile:active {
+  transform: scale(0.96);
+}
+
+.ios-tile__icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  margin-bottom: auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ios-fill);
+  color: var(--ios-label);
+}
+
+.ios-tile__icon .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.ios-tile strong {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.ios-tile small {
+  color: var(--ios-secondary);
+  font-size: 0.82rem;
+}
+
+.ios-tile--sos {
+  grid-column: 1 / -1;
+  min-height: 84px;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  align-content: center;
+  column-gap: 14px;
+  background: var(--ios-red);
+  color: #ffffff;
+}
+
+.ios-tile--sos .ios-tile__icon {
+  grid-row: span 2;
+  margin: 0;
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+.ios-tile--sos small {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Today tile: blue dot until today's check-in is done. */
+.ios-tile.needs-checkin::after,
+.ios-tile.is-new::after {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  content: "";
+}
+
+.ios-tile.needs-checkin::after {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--action);
+}
+
+.ios-tile.is-new::after {
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: var(--action);
+  color: #ffffff;
+  content: attr(data-badge);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+/* Accent palettes, unlocked as rewards (same ids as the old display colors). */
+.start-page[data-palette="amber"] { --gauge: #ff9f0a; }
+.start-page[data-palette="blue"] { --gauge: #5e5ce6; }
+.start-page[data-palette="green"] { --gauge: var(--ios-green); }
+.start-page[data-palette="lcd"] { --gauge: var(--ios-label); }
+.start-page[data-palette="gold"] { --gauge: #ffcc00; }
+
+/* Health page back link and pages without a title row */
+.page-back {
+  font-weight: 500;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring-fill { transition: none; }
+}
+
+/* The receipt stays a paper receipt in both modes: its own ink, never the page text color. */
+.receipt-feed,
+.receipt {
+  color: var(--ink);
+  color-scheme: light;
+}
+
+.menu-row--danger {
+  color: var(--ios-red);
+}
+
+/* Variant B tiles: SOS wide, then three small ones in a row. */
+.ios-tiles {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ios-tile--small {
+  min-height: 96px;
+  border-radius: 22px;
+  padding: 12px;
+}
+
+.ios-tile--small .ios-tile__icon {
+  width: 32px;
+  height: 32px;
+}
+
+.ios-tile--small strong {
+  font-size: 0.92rem;
+}
+
+.ios-tile--small small {
+  font-size: 0.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gauge__fill { transition: none; }
+}
+
+.stat-card__value.is-long {
+  font-size: 1.15rem;
+  line-height: 1.2;
+  white-space: normal;
+}
+
+/* ===================================================================== */
+/* Onboarding (wizard) in the native look                                */
+/* ===================================================================== */
+.wizard {
+  --ink: var(--ios-label);
+  --line: var(--ios-separator);
+  --muted: var(--ios-secondary);
+  --paper: var(--ios-bg);
+  position: static;
+  border: 0;
+  padding: 8px 16px 16px;
+  background: none;
+  box-shadow: none;
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+}
+
+.wizard__top {
+  margin-bottom: 10px;
+  border-bottom: 0;
+  padding-bottom: 0;
+  color: var(--ios-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.progress-bar {
+  height: 4px;
+  margin-bottom: 28px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--ios-fill);
+}
+
+.progress-bar span {
+  border-radius: 2px;
+  background: var(--action);
+  animation: none;
+}
+
+.progress-bar strong {
+  display: none;
+}
+
+.wizard .step h2 {
+  margin: 0 0 16px;
+  font-family: var(--ios-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  text-transform: none;
+}
+
+.intro-logo {
+  margin-bottom: 18px;
+  border-bottom-color: var(--action);
+  color: var(--ios-label);
+  font-family: var(--ios-display);
+}
+
+.info-button {
+  border: 0;
+  border-radius: 50%;
+  background: var(--ios-fill);
+  color: var(--action);
+  font-family: var(--ios-font);
+  font-weight: 600;
+}
+
+.intro-points {
+  border-top: 0;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: var(--ios-card);
+}
+
+.intro-points .icon {
+  color: var(--action);
+}
+
+.wizard label {
+  color: var(--ios-secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.wizard input,
+.wizard select {
+  min-height: 52px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--ios-card);
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+  font-size: 1.0625rem;
+}
+
+.wizard input:focus,
+.wizard select:focus {
+  box-shadow: 0 0 0 3px var(--action-soft);
+}
+
+.wizard .chip {
+  border: 0;
+  border-radius: 999px;
+  background: var(--ios-card);
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-transform: none;
+}
+
+.wizard .chip.is-active {
+  background: var(--action);
+  color: #ffffff;
+}
+
+.stepper {
+  grid-template-columns: 52px minmax(0, 1fr) 52px;
+  gap: 8px;
+}
+
+.stepper input {
+  border: 0;
+  border-radius: 12px;
+  font-family: var(--ios-rounded);
+  font-weight: 600;
+}
+
+.stepper__button {
+  min-height: 52px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ios-fill);
+  color: var(--action);
+  font-family: var(--ios-font);
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.stepper__button:active {
+  background: var(--ios-fill-2);
+  transform: scale(0.94);
+}
+
+.money-field span {
+  color: var(--ios-secondary);
+}
+
+.mode-card {
+  border: 0;
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: var(--ios-card);
+  color: var(--ios-label);
+}
+
+.mode-card strong {
+  font-family: var(--ios-font);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.mode-card.is-active {
+  box-shadow: inset 0 0 0 2px var(--action);
+  background: var(--action-soft);
+  color: var(--ios-label);
+}
+
+.mode-card.is-active span {
+  color: var(--ios-secondary);
+}
+
+.mode-card .icon {
+  color: var(--action);
+}
+
+.toggle-field {
+  border: 0;
+  border-radius: 14px;
+  background: var(--ios-card);
+  color: var(--ios-label);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.toggle-field input {
+  accent-color: var(--action);
+}
+
+.extras-toggle {
+  border-bottom: 0;
+  color: var(--action);
+  font-family: var(--ios-font);
+  font-size: 0.9rem;
+  text-transform: none;
+}
+
+.field-error {
+  color: var(--ios-red);
+}
+
+@media (max-width: 620px) {
+  .wizard__actions {
+    margin: 0 -16px -16px;
+    border-top: 0;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: var(--ios-bg);
+  }
+}
+
+.site-footer a {
+  color: var(--ios-secondary);
+  font-family: var(--ios-font);
+  text-transform: none;
+}
+
+/* First-run hint above the receipt: a native card, not a paper slip. */
+.receipt-hint {
+  border: 0;
+  border-radius: 14px;
+  background: var(--ios-card);
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+}
+
+/* While the onboarding is open (also via "Edit details"), it is the only thing on screen. */
+.stage:not(.is-receipt-only) :is(.receipt-wrap, .tab-page, .tab-bar) {
+  display: none;
+}
+
+.toggle-field {
+  align-items: center;
+}
+
+.toggle-field input {
+  margin: 0;
+}
+
+.toggle-field > span {
+  color: var(--ios-label);
+}
+
+/* ---------- details on the remaining pages ---------- */
+.sheet label,
+.tab-page label {
+  color: var(--ios-secondary);
+  text-transform: none;
+}
+
+/* Goal ideas: selected = blue ring, no check glyph squeezing the label. */
+.goal-ideas .chip.is-active {
+  box-shadow: inset 0 0 0 2px var(--action);
+  background: var(--action-soft);
+  color: var(--ios-label);
+}
+
+.goal-ideas .chip.is-active::before {
+  content: none;
+}
+
+/* Diary: a slip is just an entry, not a red warning. */
+.diary-entry--slip .diary-entry__text,
+.diary-entry--slip {
+  color: var(--ios-label);
+}
+
+.diary-entry--slip .diary-entry__text::before {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: #ff9f0a;
+  content: "";
+}
+
+.plan-list__if {
+  text-transform: none;
+}
+
+.sos-progress__bar span {
+  background: var(--action);
+}
+
+/* Week boxes in the check-in sheet: accent shades instead of greens. */
+.checkin-day.is-level-0 i { background: color-mix(in srgb, var(--action) 30%, transparent); }
+.checkin-day.is-level-1 i { background: color-mix(in srgb, var(--action) 50%, transparent); }
+.checkin-day.is-level-2 i { background: color-mix(in srgb, var(--action) 75%, transparent); }
+.checkin-day.is-level-3 i { background: var(--action); }
+
+.checkin-day.is-today i {
+  outline-color: var(--ios-label);
+}
+
+/* ===================================================================== */
+/* Receipt: white card in the app font, same layout as before            */
+/* ===================================================================== */
+.receipt,
+.receipt--market {
+  border: 0;
+  border-radius: 20px;
+  background: #ffffff;
+  background-image: none;
+  box-shadow: var(--ios-shadow);
+  font-family: var(--ios-font);
+  letter-spacing: 0;
+}
+
+.receipt::before {
+  display: none;
+}
+
+.receipt *,
+.receipt--market * {
+  font-family: var(--ios-font);
+  letter-spacing: 0;
+}
+
+.receipt--market .receipt__header p {
+  font-family: var(--ios-display);
+  font-weight: 800;
+  letter-spacing: -0.06em;
+  transform: none;
+}
+
+.receipt--market .receipt__header h2 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.receipt #daysFree,
+.receipt .receipt__total strong,
+.receipt dd {
+  font-variant-numeric: tabular-nums;
+}
+
+.receipt #daysFree {
+  font-family: var(--ios-rounded);
+  font-weight: 700;
+}
+
+.receipt__divider {
+  border-color: rgba(60, 60, 67, 0.18);
+}
+
+.receipt-feed::before,
+.receipt-feed::after {
+  display: none;
+}
+
+/* ===================================================================== */
+/* Card insets: content never touches the card edge (iOS: 16px inset)    */
+/* ===================================================================== */
+:is(.tab-page, .sheet) :is(.diary-list, .plan-list, .summary-list) {
+  overflow: hidden;
+  padding: 0;
+}
+
+.diary-day {
+  margin: 0;
+  padding: 12px 16px 4px;
+  color: var(--ios-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.diary-entry {
+  grid-template-columns: minmax(0, 1fr) 44px;
+  align-items: center;
+  margin-left: 16px;
+  border-bottom: 1px solid var(--ios-separator);
+}
+
+.diary-entry:last-child {
+  border-bottom: 0;
+}
+
+.diary-entry__main {
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  min-height: 48px;
+  padding: 12px 0;
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+  text-align: left;
+}
+
+.diary-entry__time {
+  color: var(--ios-secondary);
+  white-space: nowrap;
+}
+
+.diary-entry__delete {
+  min-height: 44px;
+  color: var(--ios-tertiary);
+}
+
+/* Settings-style rows: 16px inset, separators start after the icon. */
+.menu-list {
+  overflow: hidden;
+  border-top: 0;
+  padding: 0;
+}
+
+.menu-row {
+  min-height: 50px;
+  border-bottom: 0;
+  padding: 0 16px;
+  box-shadow: inset 0 -1px 0 var(--ios-separator);
+}
+
+.menu-row:last-child {
+  box-shadow: none;
+}
+
+.plan-list li {
+  border-bottom: 1px solid var(--ios-separator);
+  padding: 12px 16px;
+}
+
+.plan-list li:last-child {
+  border-bottom: 0;
+}
+
+.summary-list div {
+  border-bottom: 1px solid var(--ios-separator);
+  padding: 12px 16px;
+}
+
+.summary-list div:last-child {
+  border-bottom: 0;
+}
+
+.sos-page .sos-plan,
+:is(.tab-page, .sheet) .sos-plan {
+  margin-top: 0;
+  border-top: 0;
+  padding: 12px 16px;
+}
+
+.health-summary,
+.help-card {
+  padding: 14px 16px;
+}
+
+/* Rows that are <label> elements (color picker, toggles) keep the normal text color. */
+.tab-page label.menu-row,
+.sheet label.toggle-field,
+.tab-page label.toggle-field {
+  color: var(--ios-label);
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+/* ===================================================================== */
+/* Receipt in dark mode: dark card, the receipt color lightened so it    */
+/* stays readable. The shared image follows the mode it is shared in.  */
+/* ===================================================================== */
+/* Dark: when the phone is dark and the app is on "Auto", or when the app is set to "Dark". */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-appearance="light"]) .receipt {
+    /* Read the receipt's own ink (theme or custom color) once, then lighten it. */
+    --receipt-ink-dark: color-mix(in srgb, var(--ink) 45%, #ffffff);
+    /* Same hue, fixed high lightness: black turns near-white, purple light purple. */
+    --receipt-ink-dark: oklch(from var(--ink) 0.78 calc(c * 1.4) h);
+    background: var(--ios-card);
+    box-shadow: none;
+    color: var(--receipt-ink-dark);
+    color-scheme: dark;
+  }
+  :root:not([data-appearance="light"]) .receipt:not([data-theme]),
+  :root:not([data-appearance="light"]) .receipt[data-theme=""] {
+    --receipt-ink-dark: #ffffff;
+  }
+  :root:not([data-appearance="light"]) .receipt > * {
+    --ink: var(--receipt-ink-dark);
+    --line: rgba(235, 235, 245, 0.28);
+    --muted: rgba(235, 235, 245, 0.6);
+  }
+  :root:not([data-appearance="light"]) .receipt--market .receipt__header p {
+    border-bottom-color: var(--receipt-ink-dark);
+  }
+  :root:not([data-appearance="light"]) .receipt .receipt__divider {
+    border-color: rgba(235, 235, 245, 0.18);
+  }
+
+}
+:root[data-appearance="dark"] .receipt {
+    /* Read the receipt's own ink (theme or custom color) once, then lighten it. */
+    --receipt-ink-dark: color-mix(in srgb, var(--ink) 45%, #ffffff);
+    /* Same hue, fixed high lightness: black turns near-white, purple light purple. */
+    --receipt-ink-dark: oklch(from var(--ink) 0.78 calc(c * 1.4) h);
+    background: var(--ios-card);
+    box-shadow: none;
+    color: var(--receipt-ink-dark);
+    color-scheme: dark;
+  }
+  :root[data-appearance="dark"] .receipt:not([data-theme]),
+  :root[data-appearance="dark"] .receipt[data-theme=""] {
+    --receipt-ink-dark: #ffffff;
+  }
+  :root[data-appearance="dark"] .receipt > * {
+    --ink: var(--receipt-ink-dark);
+    --line: rgba(235, 235, 245, 0.28);
+    --muted: rgba(235, 235, 245, 0.6);
+  }
+  :root[data-appearance="dark"] .receipt--market .receipt__header p {
+    border-bottom-color: var(--receipt-ink-dark);
+  }
+  :root[data-appearance="dark"] .receipt .receipt__divider {
+    border-color: rgba(235, 235, 245, 0.18);
+  }
+
+/* Appearance override from Settings: native form controls follow it too. */
+:root[data-appearance="light"] { color-scheme: light; }
+:root[data-appearance="dark"] { color-scheme: dark; }
+
+/* Segmented control (Auto · Light · Dark), like in iOS settings. */
+.menu-row--segmented {
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  cursor: default;
+}
+
+/* Label on top, Auto · Light · Dark below it, so nothing is cut off on small phones. */
+.menu-row--segmented {
+  grid-template-columns: 24px minmax(0, 1fr);
+  row-gap: 10px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.menu-row--segmented .segmented {
+  grid-column: 2;
+  width: 100%;
+}
+
+.segmented {
+  display: inline-grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 2px;
+  border-radius: 9px;
+  padding: 2px;
+  background: var(--ios-fill);
+}
+
+.segmented button {
+  min-width: 0;
+  white-space: nowrap;
+  min-height: 30px;
+  border: 0;
+  border-radius: 7px;
+  padding: 0 8px;
+  background: transparent;
+  color: var(--ios-label);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  touch-action: manipulation;
+}
+
+.segmented button[aria-checked="true"] {
+  background: var(--ios-card);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  font-weight: 600;
+}
+
+:root:not([data-appearance="light"]) .segmented button[aria-checked="true"] {
+  background: var(--ios-card-2);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-appearance="dark"]) .segmented button[aria-checked="true"] {
+    background: #ffffff;
+  }
+}
+
+:root[data-appearance="light"] .segmented button[aria-checked="true"] {
+  background: #ffffff;
+}
+
+/* ===================================================================== */
+/* Edit details: one page with every field                               */
+/* ===================================================================== */
+.edit-title {
+  display: none;
+  margin: 4px 0 18px;
+}
+
+.wizard.is-editing .edit-title {
+  display: block;
+}
+
+.wizard.is-editing :is(.wizard__top, .progress-bar, .intro-logo, .info-button, .intro-points, #backButton, #nextButton) {
+  display: none;
+}
+
+.wizard.is-editing .step[data-mode="all"],
+.wizard.is-editing[data-mode="cigarettes"] .step[data-mode="cigarettes"],
+.wizard.is-editing[data-mode="ryo"] .step[data-mode="ryo"],
+.wizard.is-editing[data-mode="vaping"] .step[data-mode="vaping"] {
+  display: block;
+  margin-bottom: 26px;
+  animation: none;
+}
+
+.wizard.is-editing .step h2 {
+  margin-bottom: 10px;
+  font-size: 1.15rem;
+}
+
+.wizard.is-editing .intro-step {
+  min-height: 0;
+}
+
+.wizard.is-editing #receiptButton {
+  display: inline-flex;
+}
+
+.wizard.is-editing #receiptButton .icon {
+  display: none;
+}
+
+/* ===================================================================== */
+/* Install and Privacy/Legal pages in the native look                    */
+/* ===================================================================== */
+.legal-shell {
+  width: min(100% - 32px, 560px);
+  margin: 0 auto;
+  padding: 24px 0 48px;
+}
+
+.legal-card {
+  --ink: var(--ios-label);
+  --line: var(--ios-separator);
+  --muted: var(--ios-secondary);
+  border: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+}
+
+.legal-card .intro-logo {
+  margin-bottom: 14px;
+  font-size: 2rem;
+}
+
+.legal-card .kicker {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.legal-card h1 {
+  margin: 0 0 20px;
+  font-family: var(--ios-display);
+  font-size: 2.125rem;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  line-height: 1.12;
+  text-transform: none;
+}
+
+.legal-card section {
+  margin: 0 0 14px;
+  border: 0;
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: var(--ios-card);
+}
+
+.legal-card h2 {
+  margin: 0 0 8px;
+  font-family: var(--ios-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.legal-card p,
+.legal-card li {
+  color: var(--ios-label);
+  font-size: 0.97rem;
+  line-height: 1.45;
+  letter-spacing: 0;
+}
+
+.legal-card ol {
+  margin: 0;
+  padding-left: 1.3em;
+}
+
+.legal-card li + li {
+  margin-top: 6px;
+}
+
+.legal-card a {
+  color: var(--action);
+  text-decoration: none;
+}
+
+.legal-note {
+  color: var(--ios-secondary);
+  font-size: 0.85rem;
+}
+
+.legal-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+  margin-top: 22px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--action);
+  color: #ffffff !important;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-decoration: none;
+  text-transform: none;
+}
+
+.legal-card ol {
+  list-style: decimal;
+}
+
+.legal-card ol li {
+  display: list-item;
+  padding: 0;
+}
+
+.legal-card ol li::marker {
+  color: var(--ios-secondary);
+  font-weight: 600;
+}
+
+.legal-back {
+  font-family: var(--ios-font);
+  font-size: 1.0625rem;
+}
+
+/* ===================================================================== */
+/* Health page: icon per item, more air                                  */
+/* ===================================================================== */
+.health-list {
+  gap: 14px;
+  margin: 16px 0 24px;
+}
+
+.health-item {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.health-item__icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--action-soft);
+  color: var(--action);
+}
+
+.health-item__icon .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.health-item.is-done .health-item__icon {
+  background: color-mix(in srgb, var(--ios-green) 18%, transparent);
+  color: var(--ios-green);
+}
+
+.health-item__body {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.health-item .health-bar {
+  height: 8px;
+  margin: 2px 0;
+}
+
+.health-item.is-done .health-bar span,
+.health-item.is-done .health-item__percent {
+  background-color: var(--ios-green);
+}
+
+.health-item.is-done .health-item__percent {
+  background: none;
+  color: var(--ios-green);
+}
+
+.health-item__detail {
+  color: var(--ios-label);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.health-item__status {
+  color: var(--ios-secondary);
+  font-size: 0.82rem;
+}
+
+.health-summary {
+  border-radius: 18px;
+  padding: 16px;
+}
+
+/* ===================================================================== */
+/* Start: body card with the current 1-3 health items                    */
+/* ===================================================================== */
+.body-card {
+  display: grid;
+  gap: 12px;
+  border: 0;
+  border-radius: 18px;
+  padding: 14px 16px 16px;
+  background: var(--ios-card);
+  color: var(--ios-label);
+  font: inherit;
+  text-align: left;
+}
+
+.body-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.body-card__head strong {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.body-card__count {
+  color: var(--ios-secondary);
+  font-size: 0.85rem;
+}
+
+.body-card__count::after {
+  margin-left: 6px;
+  color: var(--ios-tertiary);
+  content: "›";
+}
+
+.body-card__list {
+  display: grid;
+  gap: 12px;
+}
+
+.body-row {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.body-row__icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--action-soft);
+  color: var(--action);
+}
+
+.body-row.is-done .body-row__icon {
+  background: color-mix(in srgb, var(--ios-green) 18%, transparent);
+  color: var(--ios-green);
+}
+
+.body-row__icon .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.body-row__main {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.body-row__top {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  font-size: 0.92rem;
+}
+
+.body-row__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.body-row__pct {
+  color: var(--ios-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.body-row.is-done .body-row__pct {
+  color: var(--ios-green);
+  font-weight: 700;
+}
+
+.body-row__bar {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--ios-fill);
+  overflow: hidden;
+}
+
+.body-row__bar i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--gauge);
+}
+
+.body-row.is-done .body-row__bar i {
+  background: var(--ios-green);
+}
+
+/* Two tiles left after the body card moved up: receipt and colors. */
+.ios-tiles {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#planSave:disabled {
+  opacity: 1;
+}
+
+/* Share image in dark mode: the QR code keeps a white plate so it stays scannable. */
+.receipt.is-capturing-dark .receipt-qr img {
+  border-radius: 10px;
+  padding: 6px;
+  background: #ffffff;
+}
+
+/* ===================================================================== */
+/* Receipt color sheet: preset swatches, locked ones show their day      */
+/* ===================================================================== */
+.color-swatches {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px 8px;
+  margin: 8px 0 14px;
+}
+
+.color-swatch {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  border: 0;
+  padding: 4px 0;
+  background: none;
+  color: var(--ios-label);
+  font: inherit;
+  font-size: 0.78rem;
+  touch-action: manipulation;
+}
+
+.color-swatch__dot {
+  position: relative;
+  display: block;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.color-swatch[aria-checked="true"] .color-swatch__dot {
+  box-shadow: 0 0 0 3px var(--ios-card), 0 0 0 5px var(--action);
+}
+
+.color-swatch.is-locked .color-swatch__dot {
+  opacity: 0.3;
+}
+
+.color-swatch.is-locked .color-swatch__dot::after {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  content: "🔒";
+  font-size: 1rem;
+  opacity: 1;
+}
+
+.color-swatch.is-locked .color-swatch__name {
+  color: var(--ios-secondary);
+}
+
+button.receipt-color {
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* ===================================================================== */
+/* 2026-11-23 UI pass: gauge sizes, "+" sheet, life-back sheet, check-in */
+/* ===================================================================== */
+
+/* Long gauge values ("57 yr 11 mo") shrink so they stay inside the arc. */
+.gauge__value[data-size="mid"] {
+  font-size: clamp(2rem, 10vw, 2.6rem);
+}
+
+.gauge__value[data-size="long"] {
+  font-size: clamp(1.6rem, 8vw, 2.1rem);
+}
+
+.gauge__center {
+  max-width: calc(min(84vw, 330px) - 56px);
+}
+
+.gauge__sub {
+  min-height: 1.2em;
+}
+
+/* Both start cards are buttons now: same height, chevron on the label. */
+.stat-cards {
+  align-items: stretch;
+}
+
+.stat-card {
+  touch-action: manipulation;
+  transition: transform 120ms ease;
+}
+
+button.stat-card:active,
+.body-card:active,
+.checkin-row:active {
+  transform: scale(0.98);
+}
+
+.stat-card__sub:empty {
+  display: none;
+}
+
+/* The page ends above the floating tab bar. */
+.start-page {
+  padding-bottom: 8px;
+}
+
+/* "+" sheet: three big, clearly different answers. */
+.action-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.action-card {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  width: 100%;
+  min-height: 72px;
+  border: 0;
+  border-radius: 18px;
+  padding: 12px 16px;
+  background: var(--ios-fill);
+  color: var(--ios-label);
+  font: inherit;
+  text-align: left;
+  touch-action: manipulation;
+  transition: transform 120ms ease;
+}
+
+.action-card:active {
+  transform: scale(0.98);
+}
+
+.action-card__icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--action-soft);
+  color: var(--action);
+}
+
+.action-card__icon .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.action-card__icon--green {
+  background: color-mix(in srgb, var(--ios-green) 18%, transparent);
+  color: var(--ios-green);
+}
+
+.action-card__icon--muted {
+  background: var(--ios-fill-2, var(--ios-fill));
+  color: var(--ios-secondary);
+}
+
+.action-card__text {
+  display: grid;
+  gap: 2px;
+}
+
+.action-card__text strong {
+  font-size: 1.02rem;
+  font-weight: 600;
+}
+
+.action-card__text small {
+  color: var(--ios-secondary);
+  font-size: 0.85rem;
+  line-height: 1.3;
+}
+
+.action-card--sos {
+  min-height: 84px;
+  background: var(--action);
+  color: #ffffff;
+}
+
+.action-card--sos .action-card__icon {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+.action-card--sos .action-card__text small {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Life-back sheet: the big number, one sentence, two or three facts. */
+.sheet .info-sheet__value {
+  margin: 4px 0 8px;
+  line-height: 1.1;
+  font-family: var(--ios-rounded);
+  font-size: 2.2rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.info-sheet__lead {
+  margin: 0 0 16px;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.info-rows {
+  margin: 0 0 12px;
+  border-radius: 14px;
+  padding: 0 14px;
+  background: var(--ios-fill);
+}
+
+.info-rows div {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ios-separator);
+}
+
+.info-rows div:last-child {
+  border-bottom: 0;
+}
+
+.info-rows dt {
+  color: var(--ios-secondary);
+  font-size: 0.95rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.info-rows dd {
+  margin: 0;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  text-align: right;
+}
+
+/* Check-in: question, four answers, feedback, week. Even spacing, nothing else. */
+.today-sheet {
+  display: grid;
+  gap: 14px;
+}
+
+.today-sheet > * {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.today-sheet .kicker {
+  margin-bottom: -10px;
+}
+
+.today-sheet h2 {
+  margin: 0;
+}
+
+.today-sheet .checkin-feedback {
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.today-sheet .checkin-next {
+  justify-self: stretch;
+  width: 100%;
+}
+
+.today-sheet .checkin-week {
+  margin-top: 4px;
+}
+
+.today-sheet .sheet__actions {
+  margin-top: 4px;
+}
+
+/* Black receipt color: white text on the dark receipt (a lightened black would be grey). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-appearance="light"]) .receipt[data-ink="neutral"] { --receipt-ink-dark: #ffffff; }
+}
+:root[data-appearance="dark"] .receipt[data-ink="neutral"] { --receipt-ink-dark: #ffffff; }
+
+/* ===================================================================== */
+/* Check-in info, diary note and date, share on start                    */
+/* ===================================================================== */
+.today-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: -6px;
+}
+
+.today-sheet .today-head .kicker {
+  margin: 0;
+}
+
+.today-info {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  min-height: 30px;
+  place-items: center;
+  padding: 0;
+  font-size: 0.95rem;
+  font-style: normal;
+}
+
+.today-info[aria-expanded="true"] {
+  background: var(--action);
+  color: #ffffff;
+}
+
+.today-info-text {
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: var(--ios-fill);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.today-sheet .today-hint {
+  margin-top: -6px;
+}
+
+.diary-when {
+  margin: -4px 0 12px;
+  color: var(--ios-secondary);
+  font-size: 0.92rem;
+}
+
+#diaryNote {
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 14px;
+  font-size: 1rem;
+  line-height: 1.35;
+  resize: none;
+}
+
+.diary-entry__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.diary-entry__main:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.ios-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ios-head__text {
+  display: grid;
+  gap: 2px;
+}
+
+.head-action {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  margin-bottom: 2px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ios-card);
+  color: var(--action);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.head-action .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.head-action:active {
+  transform: scale(0.94);
+}
+
+.today-info:not([aria-expanded="true"]) {
+  background: var(--action-soft);
+}
+
+/* ===================================================================== */
+/* One font, calmer corners (2026-11-23)                                 */
+/* The iPhone system font (SF Pro) everywhere, also on the receipt and   */
+/* for numbers. Corners less round: cards 12px, buttons 12px.            */
+/* ===================================================================== */
+:root {
+  --ios-rounded: var(--ios-display);
+  --mono: var(--ios-font);
+  --radius-card: 12px;
+  --radius-tile: 14px;
+  --radius-button: 12px;
+  --radius-sheet: 18px;
+}
+
+/* The ASCII goal bar still needs equal-width characters to line up. */
+.receipt-goal__bar {
+  font-family: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+}
+
+.primary-button,
+.secondary-button,
+.action-card,
+.legal-back {
+  border-radius: var(--radius-button);
+}
+
+:is(.tab-page, .sheet) .chip,
+.wizard .chip {
+  border-radius: 10px;
+}
+
+.stat-card,
+.checkin-row,
+.body-card,
+.receipt--market,
+:is(.tab-page, .sheet) :is(.health-summary, .health-item, .help-card, .menu-list, .diary-list, .summary-list, .plan-list, .sos-plan),
+.intro-points {
+  border-radius: var(--radius-card);
+}
+
+.ios-tile,
+.ios-tile--small {
+  border-radius: var(--radius-tile);
+}
+
+.sheet {
+  border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+}
+
+.info-rows,
+.today-info-text {
+  border-radius: 10px;
+}
+
+.tab-bar__pill {
+  border-radius: 22px;
+}
+
+.tab-button {
+  border-radius: 16px;
+}
+
+/* App only: a solid strip behind the status bar, so content scrolling up never runs under the clock.
+   Capacitor on Android passes the inset as --safe-area-inset-top when env() is not available. */
+.is-native body::before {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 150;
+  height: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
+  background: var(--ios-bg);
+  content: "";
+  pointer-events: none;
+}
+
+/* ===================================================================== */
+/* Craving in traffic-light colors: none green, mild yellow, medium      */
+/* orange, strong red. Used by the check-in, its week and the start row. */
+/* ===================================================================== */
+:root {
+  --craving-0: #34c759;
+  --craving-1: #ffcc00;
+  --craving-2: #ff9500;
+  --craving-3: #ff3b30;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-appearance="light"]) {
+    --craving-0: #30d158;
+    --craving-1: #ffd60a;
+    --craving-2: #ff9f0a;
+    --craving-3: #ff453a;
+  }
+}
+
+:root[data-appearance="dark"] {
+  --craving-0: #30d158;
+  --craving-1: #ffd60a;
+  --craving-2: #ff9f0a;
+  --craving-3: #ff453a;
+}
+
+.checkin-levels .chip[data-level="0"] { --level: var(--craving-0); --level-ink: #000000; }
+.checkin-levels .chip[data-level="1"] { --level: var(--craving-1); --level-ink: #000000; }
+.checkin-levels .chip[data-level="2"] { --level: var(--craving-2); --level-ink: #000000; }
+.checkin-levels .chip[data-level="3"] { --level: var(--craving-3); --level-ink: #ffffff; }
+
+/* Each answer carries its color as a dot; the chosen one is filled with it. */
+.checkin-levels .chip::before,
+.checkin-levels .chip.is-active::before {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--level);
+  content: "";
+}
+
+:is(.tab-page, .sheet) .checkin-levels .chip.is-active {
+  background: var(--level);
+  color: var(--level-ink);
+  font-weight: 700;
+}
+
+.checkin-levels .chip.is-active::before {
+  background: var(--level-ink);
+  opacity: 0.55;
+}
+
+.checkin-day.is-level-0 i { background: var(--craving-0); }
+.checkin-day.is-level-1 i { background: var(--craving-1); }
+.checkin-day.is-level-2 i { background: var(--craving-2); }
+.checkin-day.is-level-3 i { background: var(--craving-3); }
+
+/* Start row: this week as mini bars, like the small charts in Apple Health. */
+.checkin-row__dots {
+  align-items: flex-end;
+  gap: 5px;
+  height: 24px;
+}
+
+.checkin-row__dots i {
+  width: 12px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--ios-fill-2);
+}
+
+.checkin-row__dots i.is-level-0 { height: 8px; background: var(--craving-0); }
+.checkin-row__dots i.is-level-1 { height: 13px; background: var(--craving-1); }
+.checkin-row__dots i.is-level-2 { height: 18px; background: var(--craving-2); }
+.checkin-row__dots i.is-level-3 { height: 24px; background: var(--craving-3); }
+
+.checkin-row__dots i.is-today {
+  outline: 0;
+  box-shadow: 0 3px 0 -1px var(--ios-label);
+}
+
+/* Apple Health style values: big numbers, smaller quiet units. */
+.value-unit {
+  margin: 0 0.12em;
+  color: var(--ios-secondary);
+  font-size: 0.58em;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.value-unit:first-child {
+  margin-left: 0;
+}
+
+.value-unit:last-child {
+  margin-right: 0;
+}
+
+/* Dark receipt: the share button is filled with the (light) ink, so its text uses the dark card color.
+   Before, it was white on white and showed as an empty white bar. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-appearance="light"]) .receipt .receipt-addon--share { color: var(--ios-card); }
+}
+:root[data-appearance="dark"] .receipt .receipt-addon--share { color: var(--ios-card); }
+
+/* Share sheet: the picture you are about to send, then the three choices. */
+.share-preview {
+  display: block;
+  width: min(62%, 240px);
+  aspect-ratio: 1;
+  margin: 12px auto 4px;
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+  object-fit: cover;
+}
+
+.share-sheet .action-list {
+  margin-top: 12px;
+}
+
+.share-sheet .action-card {
+  min-height: 64px;
+}
+
+/* Short receipt for sharing: a copy of the receipt is laid out off screen, wider than on a phone. */
+.share-capture {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  pointer-events: none;
+}
+
+.share-capture .receipt {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  box-shadow: none;
+  animation: none;
+  transform: none;
+}
+
+.receipt-compact__link {
+  margin: 18px 0 4px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  text-transform: none;
+}
+
+/* The preview in the share sheet has the picture's 5:4 shape. */
+.share-preview {
+  width: min(88%, 340px);
+  aspect-ratio: 5 / 4;
+  background: var(--ios-fill);
+}
+
+.share-preview.is-loading {
+  animation: share-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes share-pulse {
+  from { opacity: 0.5; }
+  to { opacity: 1; }
+}
+
+/* Short receipt: less empty paper on top, a logo sized for the wider layout. */
+.share-capture .receipt--compact {
+  padding-top: 34px;
+  padding-bottom: 22px;
+}
+
+.share-capture .receipt--compact .receipt__top-gap {
+  display: none;
+}
+
+.share-capture .receipt--compact .receipt__header p {
+  font-size: 6.2rem;
+}
+
+.share-capture .receipt--compact .hero-days strong {
+  font-size: 7rem;
+}
+
+/* ===================================================================== */
+/* Back is always at the top left: same look on every page you go into.  */
+/* ===================================================================== */
+.nav-back {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  align-self: start;
+  min-height: 44px;
+  margin: 0 0 4px -2px;
+  border: 0;
+  padding: 0 6px 0 2px;
+  background: none;
+  color: var(--action);
+  cursor: pointer;
+  font-family: var(--ios-font);
+  font-size: 1.0625rem;
+  font-weight: 500;
+  text-decoration: none;
+  touch-action: manipulation;
+}
+
+.wizard:not(.is-editing) .edit-back {
+  display: none;
+}
+
+.sos-page .nav-back {
+  margin-bottom: -8px;
+}
+
+/* Legal and install pages: back on top, the text in the app's language. */
+.legal-shell .nav-back {
+  display: flex;
+  width: min(100%, 720px);
+  margin: 0 auto 6px;
+}
+
+html[lang="de"] .legal-shell [lang="en"],
+html:not([lang="de"]) .legal-shell [lang="de"] {
+  display: none;
+}
+
+/* Pages in normal flow (plan, health, more): back on its own line. */
+.tab-page > .nav-back {
+  display: flex;
+  width: max-content;
+}
+
+/* ===================================================================== */
+/* Themes: color combinations for the whole app (not the receipt).       */
+/* Mint: grey-blue body (#96b1bd), white keys, lavender, lime pop button. */
+/* Lavendel: periwinkle body, white keys, deep blue-violet accent.       */
+/* Each has a light and a dark variant; "Standard" is the iOS look.      */
+/* ===================================================================== */
+:root[data-ui-theme="mint"] {
+  --ios-bg: #cfdde3;
+  --ios-card: #ffffff;
+  --ios-card-2: #eef3f5;
+  --ios-fill: rgba(74, 112, 128, 0.12);
+  --ios-fill-2: rgba(74, 112, 128, 0.2);
+  --ios-label: #13212a;
+  --ios-secondary: rgba(30, 55, 68, 0.62);
+  --ios-tertiary: rgba(30, 55, 68, 0.32);
+  --ios-separator: rgba(30, 55, 68, 0.14);
+  --ios-blue: #7357d6;
+  --ios-glass: rgba(226, 236, 240, 0.82);
+  --ios-glass-border: rgba(30, 55, 68, 0.08);
+  --action-pressed: #5c43b8;
+  --action-soft: rgba(115, 87, 214, 0.14);
+  --pop: #d6e45a;
+  --pop-ink: #2c3300;
+}
+
+:root[data-ui-theme="lavender"] {
+  --ios-bg: #e4e5fb;
+  --ios-card: #ffffff;
+  --ios-card-2: #f0f0fd;
+  --ios-fill: rgba(80, 86, 200, 0.11);
+  --ios-fill-2: rgba(80, 86, 200, 0.19);
+  --ios-label: #15163a;
+  --ios-secondary: rgba(36, 38, 92, 0.62);
+  --ios-tertiary: rgba(36, 38, 92, 0.32);
+  --ios-separator: rgba(36, 38, 92, 0.14);
+  --ios-blue: #4b50c8;
+  --ios-glass: rgba(238, 238, 254, 0.8);
+  --ios-glass-border: rgba(36, 38, 92, 0.08);
+  --action-pressed: #3a3fa8;
+  --action-soft: rgba(75, 80, 200, 0.13);
+  --pop: #4b50c8;
+  --pop-ink: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-ui-theme="mint"]:not([data-appearance="light"]) {
+    --ios-bg: #0e161a;
+    --ios-card: #18252c;
+    --ios-card-2: #213139;
+    --ios-fill: rgba(150, 177, 189, 0.14);
+    --ios-fill-2: rgba(150, 177, 189, 0.24);
+    --ios-label: #f2f6f8;
+    --ios-secondary: rgba(224, 234, 239, 0.62);
+    --ios-tertiary: rgba(224, 234, 239, 0.32);
+    --ios-separator: rgba(150, 177, 189, 0.22);
+    --ios-blue: #b7a2ff;
+    --ios-glass: rgba(24, 37, 44, 0.8);
+    --ios-glass-border: rgba(150, 177, 189, 0.12);
+    --action-pressed: #9c83f5;
+    --action-soft: rgba(183, 162, 255, 0.2);
+    --pop: #d6e45a;
+    --pop-ink: #2c3300;
+  }
+  :root[data-ui-theme="lavender"]:not([data-appearance="light"]) {
+    --ios-bg: #0f1026;
+    --ios-card: #1b1d40;
+    --ios-card-2: #25285a;
+    --ios-fill: rgba(160, 165, 255, 0.15);
+    --ios-fill-2: rgba(160, 165, 255, 0.25);
+    --ios-label: #f3f3ff;
+    --ios-secondary: rgba(228, 229, 255, 0.62);
+    --ios-tertiary: rgba(228, 229, 255, 0.32);
+    --ios-separator: rgba(160, 165, 255, 0.24);
+    --ios-blue: #a4a8ff;
+    --ios-glass: rgba(27, 29, 64, 0.8);
+    --ios-glass-border: rgba(160, 165, 255, 0.12);
+    --action-pressed: #8c91f5;
+    --action-soft: rgba(164, 168, 255, 0.2);
+    --pop: #a4a8ff;
+    --pop-ink: #12132e;
+  }
+}
+
+:root[data-ui-theme="mint"][data-appearance="dark"] {
+  --ios-bg: #0e161a;
+  --ios-card: #18252c;
+  --ios-card-2: #213139;
+  --ios-fill: rgba(150, 177, 189, 0.14);
+  --ios-fill-2: rgba(150, 177, 189, 0.24);
+  --ios-label: #f2f6f8;
+  --ios-secondary: rgba(224, 234, 239, 0.62);
+  --ios-tertiary: rgba(224, 234, 239, 0.32);
+  --ios-separator: rgba(150, 177, 189, 0.22);
+  --ios-blue: #b7a2ff;
+  --ios-glass: rgba(24, 37, 44, 0.8);
+  --ios-glass-border: rgba(150, 177, 189, 0.12);
+  --action-pressed: #9c83f5;
+  --action-soft: rgba(183, 162, 255, 0.2);
+  --pop: #d6e45a;
+  --pop-ink: #2c3300;
+}
+
+:root[data-ui-theme="lavender"][data-appearance="dark"] {
+  --ios-bg: #0f1026;
+  --ios-card: #1b1d40;
+  --ios-card-2: #25285a;
+  --ios-fill: rgba(160, 165, 255, 0.15);
+  --ios-fill-2: rgba(160, 165, 255, 0.25);
+  --ios-label: #f3f3ff;
+  --ios-secondary: rgba(228, 229, 255, 0.62);
+  --ios-tertiary: rgba(228, 229, 255, 0.32);
+  --ios-separator: rgba(160, 165, 255, 0.24);
+  --ios-blue: #a4a8ff;
+  --ios-glass: rgba(27, 29, 64, 0.8);
+  --ios-glass-border: rgba(160, 165, 255, 0.12);
+  --action-pressed: #8c91f5;
+  --action-soft: rgba(164, 168, 255, 0.2);
+  --pop: #a4a8ff;
+  --pop-ink: #12132e;
+}
+
+/* The round + button is the theme's pop key (lime on Mint). */
+:root[data-ui-theme] .tab-button--action {
+  background: var(--pop, var(--action));
+  color: var(--pop-ink, #ffffff);
+}
+
+/* Theme picker: three cards with a little preview of each combination. */
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0 6px;
+}
+
+.theme-option {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  border: 0;
+  border-radius: 14px;
+  padding: 12px 6px 10px;
+  background: var(--ios-fill);
+  color: var(--ios-label);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  touch-action: manipulation;
+}
+
+.theme-option[aria-checked="true"] {
+  box-shadow: 0 0 0 2px var(--action);
+}
+
+.theme-option__preview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  width: 100%;
+  max-width: 84px;
+  border-radius: 10px;
+  padding: 8px;
+  background: var(--preview-bg);
+}
+
+.theme-option__preview i {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--preview-key);
+}
+
+.theme-option__preview i:nth-child(2) { background: var(--preview-accent); }
+.theme-option__preview i:nth-child(3) { background: var(--preview-pop); }
+
+.theme-option[data-ui-theme-option="standard"] { --preview-bg: #f2f2f7; --preview-key: #ffffff; --preview-accent: #007aff; --preview-pop: #007aff; }
+.theme-option[data-ui-theme-option="mint"] { --preview-bg: #96b1bd; --preview-key: #ffffff; --preview-accent: #a78bfa; --preview-pop: #d6e45a; }
+.theme-option[data-ui-theme-option="lavender"] { --preview-bg: #b9bcf2; --preview-key: #ffffff; --preview-accent: #4b50c8; --preview-pop: #8e93e6; }
+
+/* SOS tile: a deeper red, calmer than the bright system red, still clearly the emergency key. */
+:root { --sos: #c4262e; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-appearance="light"]) { --sos: #a8202a; }
+}
+
+:root[data-appearance="dark"] { --sos: #a8202a; }
+
+.ios-tile--sos {
+  background: var(--sos);
+}
+
+/* "A new version is ready": above the tab bar, one button. */
+.update-banner {
+  position: fixed;
+  right: 16px;
+  bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  left: 16px;
+  z-index: 190;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 440px;
+  margin: 0 auto;
+  border-radius: 14px;
+  padding: 10px 10px 10px 16px;
+  background: var(--ios-glass);
+  box-shadow: var(--ios-shadow);
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+  font-weight: 600;
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+}
+
+.update-banner .primary-button {
+  flex: none;
+  min-height: 40px;
+  padding: 0 16px;
+  font-size: 0.95rem;
+}
+
+/* ===================================================================== */
+/* Readable text on accent buttons and in dropdown lists                 */
+/* ===================================================================== */
+/* Text on accent-filled buttons: white by default; dark where a theme's dark accent is light. */
+:root { --action-ink: #ffffff; }
+
+@media (prefers-color-scheme: dark) {
+  :root[data-ui-theme="mint"]:not([data-appearance="light"]) { --action-ink: #1a1236; }
+  :root[data-ui-theme="lavender"]:not([data-appearance="light"]) { --action-ink: #12132e; }
+}
+
+:root[data-ui-theme="mint"][data-appearance="dark"] { --action-ink: #1a1236; }
+:root[data-ui-theme="lavender"][data-appearance="dark"] { --action-ink: #12132e; }
+
+.primary-button:not(.danger-button),
+.action-card--sos {
+  color: var(--action-ink);
+}
+
+.action-card--sos .action-card__icon {
+  color: var(--action-ink);
+}
+
+.action-card--sos .action-card__text small {
+  color: color-mix(in srgb, var(--action-ink) 80%, transparent);
+}
+
+/* Dropdown lists: the open list uses the app's colors, so white text never sits on a white list. */
+:is(.tab-page, .sheet) select option {
+  background: var(--ios-card);
+  color: var(--ios-label);
+}
+
+/* "Customize receipt" sheet: small section labels between color and settings. */
+.sheet-section {
+  margin: 14px 0 8px;
+  color: var(--ios-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.receipt-settings {
+  margin-top: 0;
+}
+
+.receipt-settings .menu-row__value {
+  max-width: 12em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===================================================================== */
+/* "Customize receipt": compact rows; color, font and sticker open below */
+/* their row like a dropdown. The receipt itself shows font and sticker. */
+/* ===================================================================== */
+.look-row__value {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.look-row__value::after {
+  margin-left: 2px;
+  color: var(--ios-tertiary);
+  content: "›";
+  transition: transform 160ms ease;
+}
+
+.look-row[aria-expanded="true"] .look-row__value::after {
+  transform: rotate(90deg);
+}
+
+.look-row__dot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.35);
+}
+
+.look-panel {
+  padding: 4px 14px 12px;
+  border-bottom: 1px solid var(--ios-separator);
+}
+
+.look-panel[hidden] {
+  display: none;
+}
+
+.look-panel .step-hint {
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+}
+
+/* Swatches and choices: one scrollable row of small items instead of a big grid. */
+.look-panel .color-swatches,
+.look-choices {
+  display: flex;
+  gap: 10px;
+  margin: 0;
+  overflow-x: auto;
+  padding: 6px 2px 4px;
+  scrollbar-width: none;
+}
+
+.look-panel .color-swatches::-webkit-scrollbar,
+.look-choices::-webkit-scrollbar {
+  display: none;
+}
+
+.look-panel .color-swatch {
+  flex: none;
+  width: 58px;
+  font-size: 0.72rem;
+}
+
+.look-panel .color-swatch__dot {
+  width: 34px;
+  height: 34px;
+}
+
+.look-choice {
+  display: grid;
+  flex: none;
+  gap: 4px;
+  justify-items: center;
+  width: 66px;
+  border: 0;
+  padding: 2px 0;
+  background: none;
+  color: var(--ios-label);
+  font: inherit;
+  font-size: 0.72rem;
+  touch-action: manipulation;
+}
+
+.look-choice__sample {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--ios-fill);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.look-choice__sample--sticker {
+  font-size: 1.6rem;
+}
+
+.look-choice[aria-checked="true"] .look-choice__sample {
+  box-shadow: 0 0 0 2px var(--action);
+}
+
+.look-choice.is-locked .look-choice__sample {
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+
+.look-choice.is-locked .look-choice__name {
+  color: var(--ios-secondary);
+}
+
+/* The chosen font on the receipt (the logo keeps its own lettering). */
+.receipt[data-font],
+.receipt[data-font] *:not(.receipt__header p):not(.receipt-goal__bar):not(svg):not(use) {
+  font-family: var(--receipt-font) !important;
+}
+
+/* The sticker: a stamp in the top left corner of the receipt, slightly turned. */
+.receipt__header {
+  position: relative;
+}
+
+.receipt-sticker {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  z-index: 2;
+  font-size: 2.6rem;
+  line-height: 1;
+  transform: rotate(-12deg);
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.18));
+  pointer-events: none;
+}
+
+.receipt-sticker.is-hidden {
+  display: none;
+}
+
+/* A dot on "Customize" when a new color, font or sticker is unlocked. */
+#receiptCustomize {
+  position: relative;
+}
+
+#receiptCustomize.has-new::after {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--ios-red);
+  content: "";
+}
+
+/* The scrolling choice rows must not widen the list: they scroll inside the sheet width. */
+.receipt-settings {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.receipt-settings > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.look-panel {
+  overflow: hidden;
+}
+
+/* Settings page title without the old "More" kicker. */
+.settings-title {
+  margin: 8px 0 16px;
+}
+
+/* Lists of choices (currency, language): label, a quiet detail, check mark. */
+.choice-row {
+  grid-template-columns: minmax(0, 1fr) auto 24px;
+  width: 100%;
+  text-align: left;
+}
+
+.choice-row__label {
+  font-weight: 500;
+}
+
+.choice-row__check {
+  color: var(--action);
+  font-weight: 700;
+  text-align: right;
+}
+
+.choice-list {
+  margin-top: 12px;
+}
+
+/* "Einstellungen" is the longest tab label: slightly tighter so it stays on one line. */
+.tab-button[data-tab="more"] span {
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+/* Bigger sticker: a real stamp in the corner, half on the edge, so it does not cover the logo. */
+.receipt-sticker {
+  top: 4px;
+  left: 6px;
+  font-size: 4.4rem;
+  transform: rotate(-14deg);
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.22));
+}
+
+.share-capture .receipt-sticker {
+  top: 6px;
+  left: 10px;
+  font-size: 5rem;
+}
+
+/* ===================================================================== */
+/* Receipt background (paper): its own choice, independent of the app.  */
+/* Light papers print like light mode, "Night" like dark mode, always.   */
+/* ===================================================================== */
+:root .receipt.receipt[data-paper-tone] {
+  background: var(--receipt-paper);
+}
+
+/* Light paper while the app is dark: undo the dark receipt, keep the dark ink. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-appearance="light"]) .receipt.receipt[data-paper-tone="light"] {
+    --receipt-ink-dark: var(--ink);
+    color: var(--ink);
+    color-scheme: light;
+  }
+  :root:not([data-appearance="light"]) .receipt.receipt[data-paper-tone="light"] > * {
+    --line: rgba(60, 60, 67, 0.28);
+    --muted: rgba(60, 60, 67, 0.62);
+  }
+  :root:not([data-appearance="light"]) .receipt.receipt[data-paper-tone="light"] .receipt__divider {
+    border-color: rgba(60, 60, 67, 0.18);
+  }
+  :root:not([data-appearance="light"]) .receipt.receipt[data-paper-tone="light"] .receipt-addon--share {
+    color: #ffffff;
+  }
+}
+
+:root[data-appearance="dark"] .receipt.receipt[data-paper-tone="light"] {
+  --receipt-ink-dark: var(--ink);
+  color: var(--ink);
+  color-scheme: light;
+}
+
+:root[data-appearance="dark"] .receipt.receipt[data-paper-tone="light"] > * {
+  --line: rgba(60, 60, 67, 0.28);
+  --muted: rgba(60, 60, 67, 0.62);
+}
+
+:root[data-appearance="dark"] .receipt.receipt[data-paper-tone="light"] .receipt__divider {
+  border-color: rgba(60, 60, 67, 0.18);
+}
+
+:root[data-appearance="dark"] .receipt.receipt[data-paper-tone="light"] .receipt-addon--share {
+  color: #ffffff;
+}
+
+/* Night paper: printed dark in every mode, ink lightened like the dark receipt. */
+:root .receipt.receipt[data-paper-tone="dark"] {
+  --receipt-ink-dark: color-mix(in srgb, var(--ink) 45%, #ffffff);
+  --receipt-ink-dark: oklch(from var(--ink) 0.78 calc(c * 1.4) h);
+  box-shadow: none;
+  color: var(--receipt-ink-dark);
+  color-scheme: dark;
+}
+
+:root .receipt.receipt[data-paper-tone="dark"]:not([data-theme]),
+:root .receipt.receipt[data-paper-tone="dark"][data-theme=""],
+:root .receipt.receipt[data-paper-tone="dark"][data-ink="neutral"] {
+  --receipt-ink-dark: #ffffff;
+}
+
+:root .receipt.receipt[data-paper-tone="dark"] > * {
+  --ink: var(--receipt-ink-dark);
+  --line: rgba(235, 235, 245, 0.28);
+  --muted: rgba(235, 235, 245, 0.6);
+}
+
+:root .receipt.receipt[data-paper-tone="dark"] .receipt__divider {
+  border-color: rgba(235, 235, 245, 0.18);
+}
+
+:root .receipt--market.receipt[data-paper-tone="dark"] .receipt__header p {
+  border-bottom-color: var(--receipt-ink-dark);
+}
+
+:root .receipt.receipt[data-paper-tone="dark"] .receipt-addon--share {
+  color: #1c1c1e;
+}
+
+/* Paper swatches in the sheet; "Auto" shows half light, half dark. */
+.look-choice__sample--paper {
+  box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.35);
+}
+
+.look-choice__sample--paper.is-auto {
+  background: linear-gradient(135deg, #ffffff 0 50%, #1c1c1e 50% 100%);
+}
+
+/* The sticker size must win over the small-text rule for spans in the receipt header. */
+.receipt .receipt__header .receipt-sticker {
+  font-size: 4.4rem;
+  letter-spacing: 0;
+}
+
+.share-capture .receipt .receipt__header .receipt-sticker {
+  font-size: 5rem;
+}
+
+/* ===================================================================== */
+/* UI guidelines applied (docs/UI-RICHTLINIEN.md): controls 12px, plus   */
+/* and minus square, fields 52px with labels above, chips 10px.          */
+/* ===================================================================== */
+.stepper__button {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-button);
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+:is(.tab-page, .sheet, .wizard) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), select, textarea) {
+  border-radius: var(--radius-button);
+}
+
+:is(.tab-page, .sheet, .wizard) :is(input[type="text"], input[type="number"], input[type="date"], input[type="time"], select) {
+  min-height: 52px;
+}
+
+.money-field {
+  border-radius: var(--radius-button);
+}
+
+.goal-ideas .chip,
+.goal-idea {
+  border-radius: 10px;
+}
+
+/* Number in a stepper: same weight and color as typed text, centered between − and +. */
+.stepper input,
+.stepper--money .money-field input {
+  color: var(--ios-label);
+}
+
+/* Noto Emoji stickers as images: on the receipt, in the sheet and next to the row value. */
+.receipt .receipt__header .receipt-sticker img {
+  display: block;
+  width: 1em;
+  height: 1em;
+}
+
+.look-choice__sample--sticker img {
+  width: 30px;
+  height: 30px;
+}
+
+.look-row__sticker {
+  width: 18px;
+  height: 18px;
+}
+
+/* ===================================================================== */
+/* Share sheet: choose (outlined card with a check), then "Share".       */
+/* ===================================================================== */
+.share-preview-wrap {
+  display: grid;
+  place-items: center;
+  min-height: 150px;
+  margin: 10px 0 12px;
+}
+
+.share-preview[hidden] {
+  display: none;
+}
+
+.share-preview.is-tall {
+  width: auto;
+  max-width: 62%;
+  max-height: 34vh;
+  aspect-ratio: auto;
+  object-fit: contain;
+}
+
+.share-app-preview {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  width: min(100%, 340px);
+  border-radius: var(--radius-card);
+  padding: 12px;
+  background: var(--ios-fill);
+}
+
+.share-app-preview[hidden] {
+  display: none;
+}
+
+.share-app-preview img {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+}
+
+.share-app-preview__text {
+  display: grid;
+  gap: 2px;
+  font-size: 0.85rem;
+}
+
+.share-app-preview__text small {
+  color: var(--ios-secondary);
+}
+
+.share-app-preview__link {
+  font-weight: 600;
+}
+
+.choice-cards {
+  display: grid;
+  gap: 8px;
+}
+
+.choice-card {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 24px;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  min-height: 64px;
+  border: 0;
+  border-radius: var(--radius-card);
+  padding: 10px 14px;
+  background: var(--ios-fill);
+  color: var(--ios-label);
+  font: inherit;
+  text-align: left;
+  touch-action: manipulation;
+}
+
+.choice-card[aria-checked="true"] {
+  background: var(--action-soft);
+  box-shadow: inset 0 0 0 2px var(--action);
+}
+
+.choice-card__icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ios-card);
+  color: var(--action);
+}
+
+.choice-card__icon .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.choice-card__text {
+  display: grid;
+  gap: 2px;
+}
+
+.choice-card__text strong {
+  font-weight: 600;
+}
+
+.choice-card__text small {
+  color: var(--ios-secondary);
+  font-size: 0.85rem;
+  line-height: 1.3;
+}
+
+.choice-card__mark {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px var(--ios-tertiary);
+}
+
+.choice-card[aria-checked="true"] .choice-card__mark {
+  background: var(--action);
+  box-shadow: inset 0 0 0 6px var(--action), inset 0 0 0 11px var(--ios-card);
+}
+
+#shareGo {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+#shareGo .icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* ===================================================================== */
+/* Reset sheet: a normal card list, no shouting capitals or dashes.      */
+/* ===================================================================== */
+.reset-items {
+  margin: 10px 0 12px;
+  padding: 0 14px;
+  list-style: none;
+}
+
+.reset-items li {
+  border-bottom: 1px solid var(--ios-separator);
+  padding: 12px 0;
+  font-size: 1rem;
+  text-transform: none;
+}
+
+.reset-items li::before {
+  content: none;
+}
+
+.reset-items li:last-child {
+  border-bottom: 0;
+}
+
+.danger-button {
+  background: var(--ios-red);
+  color: #ffffff;
+}
+
+/* ===================================================================== */
+/* Dracula theme (draculatheme.com/spec): dark = Dracula Classic,        */
+/* light = Alucard. Purple accent, pink pop button, palette green/red.   */
+/* ===================================================================== */
+:root[data-ui-theme="dracula"] {
+  --ios-bg: #ece9df;
+  --ios-card: #fffbeb;
+  --ios-card-2: #efeddc;
+  --ios-fill: rgba(108, 102, 75, 0.12);
+  --ios-fill-2: rgba(108, 102, 75, 0.2);
+  --ios-label: #1f1f1f;
+  --ios-secondary: rgba(31, 31, 31, 0.62);
+  --ios-tertiary: rgba(31, 31, 31, 0.32);
+  --ios-separator: #cfcfde;
+  --ios-blue: #644ac9;
+  --ios-green: #14710a;
+  --ios-red: #cb3a2a;
+  --ios-glass: rgba(255, 251, 235, 0.82);
+  --ios-glass-border: rgba(31, 31, 31, 0.08);
+  --action-pressed: #5039a8;
+  --action-soft: rgba(100, 74, 201, 0.13);
+  --action-ink: #ffffff;
+  --pop: #a3144d;
+  --pop-ink: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-ui-theme="dracula"]:not([data-appearance="light"]) {
+    --ios-bg: #21222c;
+    --ios-card: #282a36;
+    --ios-card-2: #343746;
+    --ios-fill: rgba(98, 114, 164, 0.22);
+    --ios-fill-2: rgba(98, 114, 164, 0.34);
+    --ios-label: #f8f8f2;
+    --ios-secondary: rgba(248, 248, 242, 0.62);
+    --ios-tertiary: rgba(248, 248, 242, 0.32);
+    --ios-separator: #44475a;
+    --ios-blue: #bd93f9;
+    --ios-green: #50fa7b;
+    --ios-red: #ff5555;
+    --ios-glass: rgba(40, 42, 54, 0.82);
+    --ios-glass-border: rgba(248, 248, 242, 0.08);
+    --action-pressed: #a77cf0;
+    --action-soft: rgba(189, 147, 249, 0.2);
+    --action-ink: #282a36;
+    --pop: #ff79c6;
+    --pop-ink: #282a36;
+  }
+}
+
+:root[data-ui-theme="dracula"][data-appearance="dark"] {
+  --ios-bg: #21222c;
+  --ios-card: #282a36;
+  --ios-card-2: #343746;
+  --ios-fill: rgba(98, 114, 164, 0.22);
+  --ios-fill-2: rgba(98, 114, 164, 0.34);
+  --ios-label: #f8f8f2;
+  --ios-secondary: rgba(248, 248, 242, 0.62);
+  --ios-tertiary: rgba(248, 248, 242, 0.32);
+  --ios-separator: #44475a;
+  --ios-blue: #bd93f9;
+  --ios-green: #50fa7b;
+  --ios-red: #ff5555;
+  --ios-glass: rgba(40, 42, 54, 0.82);
+  --ios-glass-border: rgba(248, 248, 242, 0.08);
+  --action-pressed: #a77cf0;
+  --action-soft: rgba(189, 147, 249, 0.2);
+  --action-ink: #282a36;
+  --pop: #ff79c6;
+  --pop-ink: #282a36;
+}
+
+.theme-option[data-ui-theme-option="dracula"] { --preview-bg: #282a36; --preview-key: #44475a; --preview-accent: #bd93f9; --preview-pop: #ff79c6; }
+
+/* Four designs: a 2 × 2 grid. */
+.theme-options {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Lists inside sheets sit on a light fill, so they stand out from the white sheet. */
+.sheet .reset-items {
+  background: var(--ios-fill);
+}
+
+/* ===================================================================== */
+/* Tab bar: the four tabs use the full width, the + floats above it on   */
+/* the right (where the thumb is) instead of squeezing the tabs.         */
+/* ===================================================================== */
+.tab-bar {
+  display: block;
+}
+
+.tab-bar__pill {
+  width: 100%;
+}
+
+.tab-bar .tab-button--action {
+  position: absolute;
+  right: 6px;
+  bottom: calc(100% + 12px);
+  width: 58px;
+  height: 58px;
+}
+
+.tab-bar .tab-button--action .icon {
+  width: 26px;
+  height: 26px;
+}
+
+/* Room at the end of every page for the bar and the floating +. */
+.app-shell.is-receipt-view {
+  padding-bottom: calc(160px + env(safe-area-inset-bottom, 0px));
+}
+
+/* The update notice sits above the floating + and leaves it free. */
+.update-banner {
+  bottom: calc(160px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ===================================================================== */
+/* "Customize receipt" looks like the settings list (UI guidelines):     */
+/* a card on the sheet, normal row text, white tiles for the choices.    */
+/* ===================================================================== */
+.sheet .receipt-settings {
+  border-radius: var(--radius-card);
+  background: var(--ios-card-2);
+}
+
+.sheet .receipt-settings .menu-row,
+.sheet label.menu-row {
+  color: var(--ios-label);
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+/* An old style painted the switched-on row black; on/off is shown by the value only. */
+.receipt-settings #benefitsLabel:has(input:checked) {
+  background: transparent;
+  color: var(--ios-label);
+}
+
+#benefitsLabel:has(input:checked) .menu-row__value {
+  color: var(--action);
+  font-weight: 600;
+}
+
+.sheet .receipt-settings .menu-row:active {
+  background: var(--ios-fill);
+}
+
+.sheet .receipt-settings .look-panel {
+  border-bottom-color: var(--ios-separator);
+}
+
+/* Choice tiles: white "keys" on the card, the chosen one outlined in the accent. */
+.look-choice__sample {
+  background: var(--ios-card);
+  box-shadow: inset 0 0 0 1px var(--ios-separator);
+}
+
+.look-choice[aria-checked="true"] .look-choice__sample {
+  box-shadow: 0 0 0 2px var(--action);
+}
+
+.look-choice[aria-checked="true"] .look-choice__name {
+  color: var(--action);
+  font-weight: 600;
+}
+
+/* "No sticker": an empty dashed slot instead of a symbol. */
+.look-choice__sample.is-empty::before {
+  width: 26px;
+  height: 26px;
+  border: 2px dashed var(--ios-tertiary);
+  border-radius: 8px;
+  content: "";
+}
+
+/* Craving tile: calmer. A normal card with a red icon and red title, still the first thing to find. */
+.ios-tile.ios-tile--sos {
+  background: var(--ios-card);
+  color: var(--ios-label);
+}
+
+.ios-tile--sos .ios-tile__icon {
+  background: color-mix(in srgb, var(--sos) 14%, transparent);
+  color: var(--sos);
+}
+
+.ios-tile--sos strong {
+  color: var(--sos);
+}
+
+.ios-tile--sos small {
+  color: var(--ios-secondary);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-appearance="light"]) .ios-tile--sos :is(strong, .ios-tile__icon) { color: #ff6b6b; }
+}
+
+:root[data-appearance="dark"] .ios-tile--sos :is(strong, .ios-tile__icon) {
+  color: #ff6b6b;
+}
+
+/* Light/dark switch in the Design sheet: full width, like the color cards below it. */
+.appearance-switch {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.appearance-switch button {
+  min-height: 36px;
+}

@@ -32,10 +32,8 @@ export const haptics = {
     if (h) return safe(() => h.impact({ style: "MEDIUM" }));
     navigator.vibrate?.(14);
   },
-  select() {
-    const h = plugin("Haptics");
-    if (h) return safe(() => h.selectionChanged());
-  },
+  // Switching tabs, opening sheets and similar taps stay silent: less buzzing, only moments that matter vibrate.
+  select() {},
   success() {
     const h = plugin("Haptics");
     if (h) return safe(() => h.notification({ type: "SUCCESS" }));
@@ -61,7 +59,8 @@ export const haptics = {
 // mirror of every key in native Preferences (UserDefaults) and restores it on launch.
 export const MIRRORED_KEYS = [
   "smoke-free-progress", "smkfree-theme", "smkfree-custom-color",
-  "smkfree-goal", "smkfree-reminders", "smkfree-cravings",
+  "smkfree-goal", "smkfree-reminders", "smkfree-cravings", "smkfree-plan",
+  "smkfree-hint-receipt", "smkfree-diary", "smkfree-dev-type", "smkfree-board", "smkfree-checkins", "smkfree-week-seen", "smkfree-appearance", "smkfree-ui-theme", "smkfree-receipt-font", "smkfree-receipt-sticker", "smkfree-receipt-seen", "smkfree-receipt-paper",
 ];
 
 export async function restoreMirroredStorage() {
@@ -117,6 +116,23 @@ export async function shareImageNative(blob, { title, text, filename }) {
   return true;
 }
 
+/** Shares a link with one line of text through the native sheet. Returns false on the web. */
+export async function shareLinkNative({ title, text, url }) {
+  const share = plugin("Share");
+  if (!share) return false;
+  try {
+    await share.share({ title, text, url, dialogTitle: title });
+  } catch (error) {
+    if (/cancel/i.test(String(error?.message || error))) {
+      const abort = new Error("Share canceled");
+      abort.name = "AbortError";
+      throw abort;
+    }
+    throw error;
+  }
+  return true;
+}
+
 // ---------------------------------------------------------------- notifications
 export const notificationsSupported = isNativeApp;
 
@@ -157,7 +173,24 @@ export async function replaceScheduledNotifications(plan) {
   return plan.length;
 }
 
+/** Schedules one extra notification and leaves the others alone (developer test). */
+export async function scheduleTestNotification(item) {
+  const ln = plugin("LocalNotifications");
+  if (!ln) return false;
+  if ((await requestNotificationPermission()) !== "granted") return false;
+  const result = await safe(() => ln.schedule({
+    notifications: [{ id: item.id, title: item.title, body: item.body, schedule: { at: item.at, allowWhileIdle: true } }],
+  }), false);
+  return result !== false;
+}
+
 // ---------------------------------------------------------------- app lifecycle
+export async function appInfo() {
+  const app = plugin("App");
+  const info = app ? await safe(() => app.getInfo(), null) : null;
+  return info ? { version: info.version, build: info.build } : { version: "Web", build: "" };
+}
+
 export function onAppResume(callback) {
   const app = plugin("App");
   if (app) safe(() => app.addListener("resume", callback));
@@ -166,6 +199,13 @@ export function onAppResume(callback) {
 export function onNotificationTap(callback) {
   const ln = plugin("LocalNotifications");
   if (ln) safe(() => ln.addListener("localNotificationActionPerformed", callback));
+}
+
+/** Status bar text: light on dark screens, dark on light screens (Capacitor: DARK = light text). */
+export async function setStatusBarDark(isDark) {
+  if (!isNativeApp) return;
+  const statusBar = plugin("StatusBar");
+  if (statusBar) await safe(() => statusBar.setStyle({ style: isDark ? "DARK" : "LIGHT" }));
 }
 
 export async function configureChrome() {

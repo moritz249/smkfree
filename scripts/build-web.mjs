@@ -8,7 +8,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const out = join(root, "www");
 const files = [
   "index.html", "legal.html", "install.html", "app.js", "app-core.js", "native.js", "i18n.js",
-  "styles.css", "manifest.webmanifest", "sw.js", "assets",
+  "styles.css", "ios.css", "manifest.webmanifest", "sw.js", "assets",
 ];
 
 rmSync(out, { recursive: true, force: true });

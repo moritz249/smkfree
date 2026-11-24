@@ -4,9 +4,16 @@ SMKFREE is a privacy-first smoke-free tracker that turns your progress into a sh
 
 [Open the live app](https://moritz249.github.io/smkfree/) · [Privacy and legal notes](legal.html)
 
-![Current SMKFREE receipt preview](assets/screenshot.png)
+![SMKFREE: start screen, breathing SOS, receipt and daily check-in](docs/screenshots/share-collage.png)
 
-*Example receipt generated with sample data.*
+<p>
+  <img src="docs/screenshots/start-light.png" alt="Start screen in light mode" width="200">
+  <img src="docs/screenshots/actions-dark.png" alt="The + menu: craving now, got through a craving, I smoked" width="200">
+  <img src="docs/screenshots/life-dark.png" alt="Life back explained" width="200">
+  <img src="docs/screenshots/health-dark.png" alt="Health milestones" width="200">
+</p>
+
+*Screenshots with sample data (103 days smoke-free). Regenerate with `npm run serve`, then `npm run screenshots`.*
 
 ## What it does
 
