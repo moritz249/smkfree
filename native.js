@@ -60,7 +60,7 @@ export const haptics = {
 export const MIRRORED_KEYS = [
   "smoke-free-progress", "smkfree-theme", "smkfree-custom-color",
   "smkfree-goal", "smkfree-reminders", "smkfree-cravings", "smkfree-plan",
-  "smkfree-hint-receipt", "smkfree-diary", "smkfree-dev-type", "smkfree-board", "smkfree-checkins", "smkfree-week-seen", "smkfree-appearance",
+  "smkfree-hint-receipt", "smkfree-diary", "smkfree-dev-type", "smkfree-board", "smkfree-checkins", "smkfree-week-seen", "smkfree-appearance", "smkfree-ui-theme", "smkfree-receipt-font", "smkfree-receipt-sticker", "smkfree-receipt-seen", "smkfree-receipt-paper",
 ];
 
 export async function restoreMirroredStorage() {

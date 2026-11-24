@@ -47,6 +47,15 @@ test("boardGoals never ends: after ten years the next goal is the next year", ()
   const goals = boardGoals(longAgo, calculateProgress(longAgo, now));
   assert.equal(goals.time.done, false);
   assert.ok(goals.time.target > goals.time.from);
-  assert.equal(goals.time.target - goals.time.from, 365.25);
+  assert.ok([365, 366].includes(goals.time.target - goals.time.from));
   assert.ok(Math.abs(goals.time.target / 365.25 - Math.round(goals.time.target / 365.25)) < 0.01);
+});
+
+test("an exact anniversary counts as full years, the next goal is the next one", () => {
+  const anniversary = { ...cigarettes, quitDate: "1972-11-23" };
+  const progress = calculateProgress(anniversary, now);
+  assert.equal(progress.compYears, 54);
+  assert.equal(progress.compMonths, 0);
+  const goals = boardGoals(anniversary, progress);
+  assert.equal(Math.round(goals.time.target / 365.25), 55);
 });

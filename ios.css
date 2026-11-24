@@ -2376,3 +2376,1079 @@ button.stat-card:active,
 .share-capture .receipt--compact .hero-days strong {
   font-size: 7rem;
 }
+
+/* ===================================================================== */
+/* Back is always at the top left: same look on every page you go into.  */
+/* ===================================================================== */
+.nav-back {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  align-self: start;
+  min-height: 44px;
+  margin: 0 0 4px -2px;
+  border: 0;
+  padding: 0 6px 0 2px;
+  background: none;
+  color: var(--action);
+  cursor: pointer;
+  font-family: var(--ios-font);
+  font-size: 1.0625rem;
+  font-weight: 500;
+  text-decoration: none;
+  touch-action: manipulation;
+}
+
+.wizard:not(.is-editing) .edit-back {
+  display: none;
+}
+
+.sos-page .nav-back {
+  margin-bottom: -8px;
+}
+
+/* Legal and install pages: back on top, the text in the app's language. */
+.legal-shell .nav-back {
+  display: flex;
+  width: min(100%, 720px);
+  margin: 0 auto 6px;
+}
+
+html[lang="de"] .legal-shell [lang="en"],
+html:not([lang="de"]) .legal-shell [lang="de"] {
+  display: none;
+}
+
+/* Pages in normal flow (plan, health, more): back on its own line. */
+.tab-page > .nav-back {
+  display: flex;
+  width: max-content;
+}
+
+/* ===================================================================== */
+/* Themes: color combinations for the whole app (not the receipt).       */
+/* Mint: grey-blue body (#96b1bd), white keys, lavender, lime pop button. */
+/* Lavendel: periwinkle body, white keys, deep blue-violet accent.       */
+/* Each has a light and a dark variant; "Standard" is the iOS look.      */
+/* ===================================================================== */
+:root[data-ui-theme="mint"] {
+  --ios-bg: #cfdde3;
+  --ios-card: #ffffff;
+  --ios-card-2: #eef3f5;
+  --ios-fill: rgba(74, 112, 128, 0.12);
+  --ios-fill-2: rgba(74, 112, 128, 0.2);
+  --ios-label: #13212a;
+  --ios-secondary: rgba(30, 55, 68, 0.62);
+  --ios-tertiary: rgba(30, 55, 68, 0.32);
+  --ios-separator: rgba(30, 55, 68, 0.14);
+  --ios-blue: #7357d6;
+  --ios-glass: rgba(226, 236, 240, 0.82);
+  --ios-glass-border: rgba(30, 55, 68, 0.08);
+  --action-pressed: #5c43b8;
+  --action-soft: rgba(115, 87, 214, 0.14);
+  --pop: #d6e45a;
+  --pop-ink: #2c3300;
+}
+
+:root[data-ui-theme="lavender"] {
+  --ios-bg: #e4e5fb;
+  --ios-card: #ffffff;
+  --ios-card-2: #f0f0fd;
+  --ios-fill: rgba(80, 86, 200, 0.11);
+  --ios-fill-2: rgba(80, 86, 200, 0.19);
+  --ios-label: #15163a;
+  --ios-secondary: rgba(36, 38, 92, 0.62);
+  --ios-tertiary: rgba(36, 38, 92, 0.32);
+  --ios-separator: rgba(36, 38, 92, 0.14);
+  --ios-blue: #4b50c8;
+  --ios-glass: rgba(238, 238, 254, 0.8);
+  --ios-glass-border: rgba(36, 38, 92, 0.08);
+  --action-pressed: #3a3fa8;
+  --action-soft: rgba(75, 80, 200, 0.13);
+  --pop: #4b50c8;
+  --pop-ink: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-ui-theme="mint"]:not([data-appearance="light"]) {
+    --ios-bg: #0e161a;
+    --ios-card: #18252c;
+    --ios-card-2: #213139;
+    --ios-fill: rgba(150, 177, 189, 0.14);
+    --ios-fill-2: rgba(150, 177, 189, 0.24);
+    --ios-label: #f2f6f8;
+    --ios-secondary: rgba(224, 234, 239, 0.62);
+    --ios-tertiary: rgba(224, 234, 239, 0.32);
+    --ios-separator: rgba(150, 177, 189, 0.22);
+    --ios-blue: #b7a2ff;
+    --ios-glass: rgba(24, 37, 44, 0.8);
+    --ios-glass-border: rgba(150, 177, 189, 0.12);
+    --action-pressed: #9c83f5;
+    --action-soft: rgba(183, 162, 255, 0.2);
+    --pop: #d6e45a;
+    --pop-ink: #2c3300;
+  }
+  :root[data-ui-theme="lavender"]:not([data-appearance="light"]) {
+    --ios-bg: #0f1026;
+    --ios-card: #1b1d40;
+    --ios-card-2: #25285a;
+    --ios-fill: rgba(160, 165, 255, 0.15);
+    --ios-fill-2: rgba(160, 165, 255, 0.25);
+    --ios-label: #f3f3ff;
+    --ios-secondary: rgba(228, 229, 255, 0.62);
+    --ios-tertiary: rgba(228, 229, 255, 0.32);
+    --ios-separator: rgba(160, 165, 255, 0.24);
+    --ios-blue: #a4a8ff;
+    --ios-glass: rgba(27, 29, 64, 0.8);
+    --ios-glass-border: rgba(160, 165, 255, 0.12);
+    --action-pressed: #8c91f5;
+    --action-soft: rgba(164, 168, 255, 0.2);
+    --pop: #a4a8ff;
+    --pop-ink: #12132e;
+  }
+}
+
+:root[data-ui-theme="mint"][data-appearance="dark"] {
+  --ios-bg: #0e161a;
+  --ios-card: #18252c;
+  --ios-card-2: #213139;
+  --ios-fill: rgba(150, 177, 189, 0.14);
+  --ios-fill-2: rgba(150, 177, 189, 0.24);
+  --ios-label: #f2f6f8;
+  --ios-secondary: rgba(224, 234, 239, 0.62);
+  --ios-tertiary: rgba(224, 234, 239, 0.32);
+  --ios-separator: rgba(150, 177, 189, 0.22);
+  --ios-blue: #b7a2ff;
+  --ios-glass: rgba(24, 37, 44, 0.8);
+  --ios-glass-border: rgba(150, 177, 189, 0.12);
+  --action-pressed: #9c83f5;
+  --action-soft: rgba(183, 162, 255, 0.2);
+  --pop: #d6e45a;
+  --pop-ink: #2c3300;
+}
+
+:root[data-ui-theme="lavender"][data-appearance="dark"] {
+  --ios-bg: #0f1026;
+  --ios-card: #1b1d40;
+  --ios-card-2: #25285a;
+  --ios-fill: rgba(160, 165, 255, 0.15);
+  --ios-fill-2: rgba(160, 165, 255, 0.25);
+  --ios-label: #f3f3ff;
+  --ios-secondary: rgba(228, 229, 255, 0.62);
+  --ios-tertiary: rgba(228, 229, 255, 0.32);
+  --ios-separator: rgba(160, 165, 255, 0.24);
+  --ios-blue: #a4a8ff;
+  --ios-glass: rgba(27, 29, 64, 0.8);
+  --ios-glass-border: rgba(160, 165, 255, 0.12);
+  --action-pressed: #8c91f5;
+  --action-soft: rgba(164, 168, 255, 0.2);
+  --pop: #a4a8ff;
+  --pop-ink: #12132e;
+}
+
+/* The round + button is the theme's pop key (lime on Mint). */
+:root[data-ui-theme] .tab-button--action {
+  background: var(--pop, var(--action));
+  color: var(--pop-ink, #ffffff);
+}
+
+/* Theme picker: three cards with a little preview of each combination. */
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0 6px;
+}
+
+.theme-option {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  border: 0;
+  border-radius: 14px;
+  padding: 12px 6px 10px;
+  background: var(--ios-fill);
+  color: var(--ios-label);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  touch-action: manipulation;
+}
+
+.theme-option[aria-checked="true"] {
+  box-shadow: 0 0 0 2px var(--action);
+}
+
+.theme-option__preview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  width: 100%;
+  max-width: 84px;
+  border-radius: 10px;
+  padding: 8px;
+  background: var(--preview-bg);
+}
+
+.theme-option__preview i {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--preview-key);
+}
+
+.theme-option__preview i:nth-child(2) { background: var(--preview-accent); }
+.theme-option__preview i:nth-child(3) { background: var(--preview-pop); }
+
+.theme-option[data-ui-theme-option="standard"] { --preview-bg: #f2f2f7; --preview-key: #ffffff; --preview-accent: #007aff; --preview-pop: #007aff; }
+.theme-option[data-ui-theme-option="mint"] { --preview-bg: #96b1bd; --preview-key: #ffffff; --preview-accent: #a78bfa; --preview-pop: #d6e45a; }
+.theme-option[data-ui-theme-option="lavender"] { --preview-bg: #b9bcf2; --preview-key: #ffffff; --preview-accent: #4b50c8; --preview-pop: #8e93e6; }
+
+/* SOS tile: a deeper red, calmer than the bright system red, still clearly the emergency key. */
+:root { --sos: #c4262e; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-appearance="light"]) { --sos: #a8202a; }
+}
+
+:root[data-appearance="dark"] { --sos: #a8202a; }
+
+.ios-tile--sos {
+  background: var(--sos);
+}
+
+/* "A new version is ready": above the tab bar, one button. */
+.update-banner {
+  position: fixed;
+  right: 16px;
+  bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  left: 16px;
+  z-index: 190;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 440px;
+  margin: 0 auto;
+  border-radius: 14px;
+  padding: 10px 10px 10px 16px;
+  background: var(--ios-glass);
+  box-shadow: var(--ios-shadow);
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+  font-weight: 600;
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+}
+
+.update-banner .primary-button {
+  flex: none;
+  min-height: 40px;
+  padding: 0 16px;
+  font-size: 0.95rem;
+}
+
+/* ===================================================================== */
+/* Readable text on accent buttons and in dropdown lists                 */
+/* ===================================================================== */
+/* Text on accent-filled buttons: white by default; dark where a theme's dark accent is light. */
+:root { --action-ink: #ffffff; }
+
+@media (prefers-color-scheme: dark) {
+  :root[data-ui-theme="mint"]:not([data-appearance="light"]) { --action-ink: #1a1236; }
+  :root[data-ui-theme="lavender"]:not([data-appearance="light"]) { --action-ink: #12132e; }
+}
+
+:root[data-ui-theme="mint"][data-appearance="dark"] { --action-ink: #1a1236; }
+:root[data-ui-theme="lavender"][data-appearance="dark"] { --action-ink: #12132e; }
+
+.primary-button:not(.danger-button),
+.action-card--sos {
+  color: var(--action-ink);
+}
+
+.action-card--sos .action-card__icon {
+  color: var(--action-ink);
+}
+
+.action-card--sos .action-card__text small {
+  color: color-mix(in srgb, var(--action-ink) 80%, transparent);
+}
+
+/* Dropdown lists: the open list uses the app's colors, so white text never sits on a white list. */
+:is(.tab-page, .sheet) select option {
+  background: var(--ios-card);
+  color: var(--ios-label);
+}
+
+/* "Customize receipt" sheet: small section labels between color and settings. */
+.sheet-section {
+  margin: 14px 0 8px;
+  color: var(--ios-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.receipt-settings {
+  margin-top: 0;
+}
+
+.receipt-settings .menu-row__value {
+  max-width: 12em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===================================================================== */
+/* "Customize receipt": compact rows; color, font and sticker open below */
+/* their row like a dropdown. The receipt itself shows font and sticker. */
+/* ===================================================================== */
+.look-row__value {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.look-row__value::after {
+  margin-left: 2px;
+  color: var(--ios-tertiary);
+  content: "›";
+  transition: transform 160ms ease;
+}
+
+.look-row[aria-expanded="true"] .look-row__value::after {
+  transform: rotate(90deg);
+}
+
+.look-row__dot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.35);
+}
+
+.look-panel {
+  padding: 4px 14px 12px;
+  border-bottom: 1px solid var(--ios-separator);
+}
+
+.look-panel[hidden] {
+  display: none;
+}
+
+.look-panel .step-hint {
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+}
+
+/* Swatches and choices: one scrollable row of small items instead of a big grid. */
+.look-panel .color-swatches,
+.look-choices {
+  display: flex;
+  gap: 10px;
+  margin: 0;
+  overflow-x: auto;
+  padding: 6px 2px 4px;
+  scrollbar-width: none;
+}
+
+.look-panel .color-swatches::-webkit-scrollbar,
+.look-choices::-webkit-scrollbar {
+  display: none;
+}
+
+.look-panel .color-swatch {
+  flex: none;
+  width: 58px;
+  font-size: 0.72rem;
+}
+
+.look-panel .color-swatch__dot {
+  width: 34px;
+  height: 34px;
+}
+
+.look-choice {
+  display: grid;
+  flex: none;
+  gap: 4px;
+  justify-items: center;
+  width: 66px;
+  border: 0;
+  padding: 2px 0;
+  background: none;
+  color: var(--ios-label);
+  font: inherit;
+  font-size: 0.72rem;
+  touch-action: manipulation;
+}
+
+.look-choice__sample {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--ios-fill);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.look-choice__sample--sticker {
+  font-size: 1.6rem;
+}
+
+.look-choice[aria-checked="true"] .look-choice__sample {
+  box-shadow: 0 0 0 2px var(--action);
+}
+
+.look-choice.is-locked .look-choice__sample {
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+
+.look-choice.is-locked .look-choice__name {
+  color: var(--ios-secondary);
+}
+
+/* The chosen font on the receipt (the logo keeps its own lettering). */
+.receipt[data-font],
+.receipt[data-font] *:not(.receipt__header p):not(.receipt-goal__bar):not(svg):not(use) {
+  font-family: var(--receipt-font) !important;
+}
+
+/* The sticker: a stamp in the top left corner of the receipt, slightly turned. */
+.receipt__header {
+  position: relative;
+}
+
+.receipt-sticker {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  z-index: 2;
+  font-size: 2.6rem;
+  line-height: 1;
+  transform: rotate(-12deg);
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.18));
+  pointer-events: none;
+}
+
+.receipt-sticker.is-hidden {
+  display: none;
+}
+
+/* A dot on "Customize" when a new color, font or sticker is unlocked. */
+#receiptCustomize {
+  position: relative;
+}
+
+#receiptCustomize.has-new::after {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--ios-red);
+  content: "";
+}
+
+/* The scrolling choice rows must not widen the list: they scroll inside the sheet width. */
+.receipt-settings {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.receipt-settings > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.look-panel {
+  overflow: hidden;
+}
+
+/* Settings page title without the old "More" kicker. */
+.settings-title {
+  margin: 8px 0 16px;
+}
+
+/* Lists of choices (currency, language): label, a quiet detail, check mark. */
+.choice-row {
+  grid-template-columns: minmax(0, 1fr) auto 24px;
+  width: 100%;
+  text-align: left;
+}
+
+.choice-row__label {
+  font-weight: 500;
+}
+
+.choice-row__check {
+  color: var(--action);
+  font-weight: 700;
+  text-align: right;
+}
+
+.choice-list {
+  margin-top: 12px;
+}
+
+/* "Einstellungen" is the longest tab label: slightly tighter so it stays on one line. */
+.tab-button[data-tab="more"] span {
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+/* Bigger sticker: a real stamp in the corner, half on the edge, so it does not cover the logo. */
+.receipt-sticker {
+  top: 4px;
+  left: 6px;
+  font-size: 4.4rem;
+  transform: rotate(-14deg);
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.22));
+}
+
+.share-capture .receipt-sticker {
+  top: 6px;
+  left: 10px;
+  font-size: 5rem;
+}
+
+/* ===================================================================== */
+/* Receipt background (paper): its own choice, independent of the app.  */
+/* Light papers print like light mode, "Night" like dark mode, always.   */
+/* ===================================================================== */
+:root .receipt.receipt[data-paper-tone] {
+  background: var(--receipt-paper);
+}
+
+/* Light paper while the app is dark: undo the dark receipt, keep the dark ink. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-appearance="light"]) .receipt.receipt[data-paper-tone="light"] {
+    --receipt-ink-dark: var(--ink);
+    color: var(--ink);
+    color-scheme: light;
+  }
+  :root:not([data-appearance="light"]) .receipt.receipt[data-paper-tone="light"] > * {
+    --line: rgba(60, 60, 67, 0.28);
+    --muted: rgba(60, 60, 67, 0.62);
+  }
+  :root:not([data-appearance="light"]) .receipt.receipt[data-paper-tone="light"] .receipt__divider {
+    border-color: rgba(60, 60, 67, 0.18);
+  }
+  :root:not([data-appearance="light"]) .receipt.receipt[data-paper-tone="light"] .receipt-addon--share {
+    color: #ffffff;
+  }
+}
+
+:root[data-appearance="dark"] .receipt.receipt[data-paper-tone="light"] {
+  --receipt-ink-dark: var(--ink);
+  color: var(--ink);
+  color-scheme: light;
+}
+
+:root[data-appearance="dark"] .receipt.receipt[data-paper-tone="light"] > * {
+  --line: rgba(60, 60, 67, 0.28);
+  --muted: rgba(60, 60, 67, 0.62);
+}
+
+:root[data-appearance="dark"] .receipt.receipt[data-paper-tone="light"] .receipt__divider {
+  border-color: rgba(60, 60, 67, 0.18);
+}
+
+:root[data-appearance="dark"] .receipt.receipt[data-paper-tone="light"] .receipt-addon--share {
+  color: #ffffff;
+}
+
+/* Night paper: printed dark in every mode, ink lightened like the dark receipt. */
+:root .receipt.receipt[data-paper-tone="dark"] {
+  --receipt-ink-dark: color-mix(in srgb, var(--ink) 45%, #ffffff);
+  --receipt-ink-dark: oklch(from var(--ink) 0.78 calc(c * 1.4) h);
+  box-shadow: none;
+  color: var(--receipt-ink-dark);
+  color-scheme: dark;
+}
+
+:root .receipt.receipt[data-paper-tone="dark"]:not([data-theme]),
+:root .receipt.receipt[data-paper-tone="dark"][data-theme=""],
+:root .receipt.receipt[data-paper-tone="dark"][data-ink="neutral"] {
+  --receipt-ink-dark: #ffffff;
+}
+
+:root .receipt.receipt[data-paper-tone="dark"] > * {
+  --ink: var(--receipt-ink-dark);
+  --line: rgba(235, 235, 245, 0.28);
+  --muted: rgba(235, 235, 245, 0.6);
+}
+
+:root .receipt.receipt[data-paper-tone="dark"] .receipt__divider {
+  border-color: rgba(235, 235, 245, 0.18);
+}
+
+:root .receipt--market.receipt[data-paper-tone="dark"] .receipt__header p {
+  border-bottom-color: var(--receipt-ink-dark);
+}
+
+:root .receipt.receipt[data-paper-tone="dark"] .receipt-addon--share {
+  color: #1c1c1e;
+}
+
+/* Paper swatches in the sheet; "Auto" shows half light, half dark. */
+.look-choice__sample--paper {
+  box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.35);
+}
+
+.look-choice__sample--paper.is-auto {
+  background: linear-gradient(135deg, #ffffff 0 50%, #1c1c1e 50% 100%);
+}
+
+/* The sticker size must win over the small-text rule for spans in the receipt header. */
+.receipt .receipt__header .receipt-sticker {
+  font-size: 4.4rem;
+  letter-spacing: 0;
+}
+
+.share-capture .receipt .receipt__header .receipt-sticker {
+  font-size: 5rem;
+}
+
+/* ===================================================================== */
+/* UI guidelines applied (docs/UI-RICHTLINIEN.md): controls 12px, plus   */
+/* and minus square, fields 52px with labels above, chips 10px.          */
+/* ===================================================================== */
+.stepper__button {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-button);
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+:is(.tab-page, .sheet, .wizard) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), select, textarea) {
+  border-radius: var(--radius-button);
+}
+
+:is(.tab-page, .sheet, .wizard) :is(input[type="text"], input[type="number"], input[type="date"], input[type="time"], select) {
+  min-height: 52px;
+}
+
+.money-field {
+  border-radius: var(--radius-button);
+}
+
+.goal-ideas .chip,
+.goal-idea {
+  border-radius: 10px;
+}
+
+/* Number in a stepper: same weight and color as typed text, centered between − and +. */
+.stepper input,
+.stepper--money .money-field input {
+  color: var(--ios-label);
+}
+
+/* Noto Emoji stickers as images: on the receipt, in the sheet and next to the row value. */
+.receipt .receipt__header .receipt-sticker img {
+  display: block;
+  width: 1em;
+  height: 1em;
+}
+
+.look-choice__sample--sticker img {
+  width: 30px;
+  height: 30px;
+}
+
+.look-row__sticker {
+  width: 18px;
+  height: 18px;
+}
+
+/* ===================================================================== */
+/* Share sheet: choose (outlined card with a check), then "Share".       */
+/* ===================================================================== */
+.share-preview-wrap {
+  display: grid;
+  place-items: center;
+  min-height: 150px;
+  margin: 10px 0 12px;
+}
+
+.share-preview[hidden] {
+  display: none;
+}
+
+.share-preview.is-tall {
+  width: auto;
+  max-width: 62%;
+  max-height: 34vh;
+  aspect-ratio: auto;
+  object-fit: contain;
+}
+
+.share-app-preview {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  width: min(100%, 340px);
+  border-radius: var(--radius-card);
+  padding: 12px;
+  background: var(--ios-fill);
+}
+
+.share-app-preview[hidden] {
+  display: none;
+}
+
+.share-app-preview img {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+}
+
+.share-app-preview__text {
+  display: grid;
+  gap: 2px;
+  font-size: 0.85rem;
+}
+
+.share-app-preview__text small {
+  color: var(--ios-secondary);
+}
+
+.share-app-preview__link {
+  font-weight: 600;
+}
+
+.choice-cards {
+  display: grid;
+  gap: 8px;
+}
+
+.choice-card {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 24px;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  min-height: 64px;
+  border: 0;
+  border-radius: var(--radius-card);
+  padding: 10px 14px;
+  background: var(--ios-fill);
+  color: var(--ios-label);
+  font: inherit;
+  text-align: left;
+  touch-action: manipulation;
+}
+
+.choice-card[aria-checked="true"] {
+  background: var(--action-soft);
+  box-shadow: inset 0 0 0 2px var(--action);
+}
+
+.choice-card__icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ios-card);
+  color: var(--action);
+}
+
+.choice-card__icon .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.choice-card__text {
+  display: grid;
+  gap: 2px;
+}
+
+.choice-card__text strong {
+  font-weight: 600;
+}
+
+.choice-card__text small {
+  color: var(--ios-secondary);
+  font-size: 0.85rem;
+  line-height: 1.3;
+}
+
+.choice-card__mark {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px var(--ios-tertiary);
+}
+
+.choice-card[aria-checked="true"] .choice-card__mark {
+  background: var(--action);
+  box-shadow: inset 0 0 0 6px var(--action), inset 0 0 0 11px var(--ios-card);
+}
+
+#shareGo {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+#shareGo .icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* ===================================================================== */
+/* Reset sheet: a normal card list, no shouting capitals or dashes.      */
+/* ===================================================================== */
+.reset-items {
+  margin: 10px 0 12px;
+  padding: 0 14px;
+  list-style: none;
+}
+
+.reset-items li {
+  border-bottom: 1px solid var(--ios-separator);
+  padding: 12px 0;
+  font-size: 1rem;
+  text-transform: none;
+}
+
+.reset-items li::before {
+  content: none;
+}
+
+.reset-items li:last-child {
+  border-bottom: 0;
+}
+
+.danger-button {
+  background: var(--ios-red);
+  color: #ffffff;
+}
+
+/* ===================================================================== */
+/* Dracula theme (draculatheme.com/spec): dark = Dracula Classic,        */
+/* light = Alucard. Purple accent, pink pop button, palette green/red.   */
+/* ===================================================================== */
+:root[data-ui-theme="dracula"] {
+  --ios-bg: #ece9df;
+  --ios-card: #fffbeb;
+  --ios-card-2: #efeddc;
+  --ios-fill: rgba(108, 102, 75, 0.12);
+  --ios-fill-2: rgba(108, 102, 75, 0.2);
+  --ios-label: #1f1f1f;
+  --ios-secondary: rgba(31, 31, 31, 0.62);
+  --ios-tertiary: rgba(31, 31, 31, 0.32);
+  --ios-separator: #cfcfde;
+  --ios-blue: #644ac9;
+  --ios-green: #14710a;
+  --ios-red: #cb3a2a;
+  --ios-glass: rgba(255, 251, 235, 0.82);
+  --ios-glass-border: rgba(31, 31, 31, 0.08);
+  --action-pressed: #5039a8;
+  --action-soft: rgba(100, 74, 201, 0.13);
+  --action-ink: #ffffff;
+  --pop: #a3144d;
+  --pop-ink: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-ui-theme="dracula"]:not([data-appearance="light"]) {
+    --ios-bg: #21222c;
+    --ios-card: #282a36;
+    --ios-card-2: #343746;
+    --ios-fill: rgba(98, 114, 164, 0.22);
+    --ios-fill-2: rgba(98, 114, 164, 0.34);
+    --ios-label: #f8f8f2;
+    --ios-secondary: rgba(248, 248, 242, 0.62);
+    --ios-tertiary: rgba(248, 248, 242, 0.32);
+    --ios-separator: #44475a;
+    --ios-blue: #bd93f9;
+    --ios-green: #50fa7b;
+    --ios-red: #ff5555;
+    --ios-glass: rgba(40, 42, 54, 0.82);
+    --ios-glass-border: rgba(248, 248, 242, 0.08);
+    --action-pressed: #a77cf0;
+    --action-soft: rgba(189, 147, 249, 0.2);
+    --action-ink: #282a36;
+    --pop: #ff79c6;
+    --pop-ink: #282a36;
+  }
+}
+
+:root[data-ui-theme="dracula"][data-appearance="dark"] {
+  --ios-bg: #21222c;
+  --ios-card: #282a36;
+  --ios-card-2: #343746;
+  --ios-fill: rgba(98, 114, 164, 0.22);
+  --ios-fill-2: rgba(98, 114, 164, 0.34);
+  --ios-label: #f8f8f2;
+  --ios-secondary: rgba(248, 248, 242, 0.62);
+  --ios-tertiary: rgba(248, 248, 242, 0.32);
+  --ios-separator: #44475a;
+  --ios-blue: #bd93f9;
+  --ios-green: #50fa7b;
+  --ios-red: #ff5555;
+  --ios-glass: rgba(40, 42, 54, 0.82);
+  --ios-glass-border: rgba(248, 248, 242, 0.08);
+  --action-pressed: #a77cf0;
+  --action-soft: rgba(189, 147, 249, 0.2);
+  --action-ink: #282a36;
+  --pop: #ff79c6;
+  --pop-ink: #282a36;
+}
+
+.theme-option[data-ui-theme-option="dracula"] { --preview-bg: #282a36; --preview-key: #44475a; --preview-accent: #bd93f9; --preview-pop: #ff79c6; }
+
+/* Four designs: a 2 × 2 grid. */
+.theme-options {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Lists inside sheets sit on a light fill, so they stand out from the white sheet. */
+.sheet .reset-items {
+  background: var(--ios-fill);
+}
+
+/* ===================================================================== */
+/* Tab bar: the four tabs use the full width, the + floats above it on   */
+/* the right (where the thumb is) instead of squeezing the tabs.         */
+/* ===================================================================== */
+.tab-bar {
+  display: block;
+}
+
+.tab-bar__pill {
+  width: 100%;
+}
+
+.tab-bar .tab-button--action {
+  position: absolute;
+  right: 6px;
+  bottom: calc(100% + 12px);
+  width: 58px;
+  height: 58px;
+}
+
+.tab-bar .tab-button--action .icon {
+  width: 26px;
+  height: 26px;
+}
+
+/* Room at the end of every page for the bar and the floating +. */
+.app-shell.is-receipt-view {
+  padding-bottom: calc(160px + env(safe-area-inset-bottom, 0px));
+}
+
+/* The update notice sits above the floating + and leaves it free. */
+.update-banner {
+  bottom: calc(160px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ===================================================================== */
+/* "Customize receipt" looks like the settings list (UI guidelines):     */
+/* a card on the sheet, normal row text, white tiles for the choices.    */
+/* ===================================================================== */
+.sheet .receipt-settings {
+  border-radius: var(--radius-card);
+  background: var(--ios-card-2);
+}
+
+.sheet .receipt-settings .menu-row,
+.sheet label.menu-row {
+  color: var(--ios-label);
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+/* An old style painted the switched-on row black; on/off is shown by the value only. */
+.receipt-settings #benefitsLabel:has(input:checked) {
+  background: transparent;
+  color: var(--ios-label);
+}
+
+#benefitsLabel:has(input:checked) .menu-row__value {
+  color: var(--action);
+  font-weight: 600;
+}
+
+.sheet .receipt-settings .menu-row:active {
+  background: var(--ios-fill);
+}
+
+.sheet .receipt-settings .look-panel {
+  border-bottom-color: var(--ios-separator);
+}
+
+/* Choice tiles: white "keys" on the card, the chosen one outlined in the accent. */
+.look-choice__sample {
+  background: var(--ios-card);
+  box-shadow: inset 0 0 0 1px var(--ios-separator);
+}
+
+.look-choice[aria-checked="true"] .look-choice__sample {
+  box-shadow: 0 0 0 2px var(--action);
+}
+
+.look-choice[aria-checked="true"] .look-choice__name {
+  color: var(--action);
+  font-weight: 600;
+}
+
+/* "No sticker": an empty dashed slot instead of a symbol. */
+.look-choice__sample.is-empty::before {
+  width: 26px;
+  height: 26px;
+  border: 2px dashed var(--ios-tertiary);
+  border-radius: 8px;
+  content: "";
+}
+
+/* Craving tile: calmer. A normal card with a red icon and red title, still the first thing to find. */
+.ios-tile.ios-tile--sos {
+  background: var(--ios-card);
+  color: var(--ios-label);
+}
+
+.ios-tile--sos .ios-tile__icon {
+  background: color-mix(in srgb, var(--sos) 14%, transparent);
+  color: var(--sos);
+}
+
+.ios-tile--sos strong {
+  color: var(--sos);
+}
+
+.ios-tile--sos small {
+  color: var(--ios-secondary);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-appearance="light"]) .ios-tile--sos :is(strong, .ios-tile__icon) { color: #ff6b6b; }
+}
+
+:root[data-appearance="dark"] .ios-tile--sos :is(strong, .ios-tile__icon) {
+  color: #ff6b6b;
+}
+
+/* Light/dark switch in the Design sheet: full width, like the color cards below it. */
+.appearance-switch {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.appearance-switch button {
+  min-height: 36px;
+}

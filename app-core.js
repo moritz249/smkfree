@@ -159,10 +159,8 @@ export function calculateProgress(state, now = new Date()) {
   const elapsedMs = Math.max(0, now.getTime() - quitStart.getTime());
   const elapsedDays = elapsedMs / 86_400_000;
   const wholeDays = Math.floor(elapsedDays);
-  const compYears = Math.floor(wholeDays / 365.25);
-  const daysAfterYears = wholeDays - compYears * 365.25;
-  const compMonths = Math.floor(daysAfterYears / 30.4375);
-  const compDays = Math.floor(daysAfterYears - compMonths * 30.4375);
+  // Years, months and days by the calendar, like a birthday: 24 Nov 1972 to 24 Nov 2026 is exactly 54 years.
+  const { years: compYears, months: compMonths, days: compDays } = calendarDiff(quitStart, new Date(quitStart.getFullYear(), quitStart.getMonth(), quitStart.getDate() + wholeDays));
   const compHours = Math.floor((elapsedMs % 86_400_000) / 3_600_000);
   const compMinutes = Math.floor((elapsedMs % 3_600_000) / 60_000);
   const base = {
@@ -240,6 +238,28 @@ export function dailySaving(state) {
   const perPack = Number(state.cigarettesPerPack) || 0;
   if (perPack <= 0) return 0;
   return ((Number(state.cigarettesPerDay) || 0) / perPack) * (Number(state.pricePerPack) || 0);
+}
+
+/** Whole years, months and days from one date to a later one, counted on the calendar. */
+export function calendarDiff(start, end) {
+  let years = end.getFullYear() - start.getFullYear();
+  let months = end.getMonth() - start.getMonth();
+  let days = end.getDate() - start.getDate();
+  if (days < 0) {
+    months -= 1;
+    days += new Date(end.getFullYear(), end.getMonth(), 0).getDate();
+  }
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+  return { years: Math.max(0, years), months: Math.max(0, months), days: Math.max(0, days) };
+}
+
+/** Days from the quit day to its n-th anniversary (calendar years, leap days included). */
+export function daysToAnniversary(start, years) {
+  const date = new Date(start.getFullYear() + years, start.getMonth(), start.getDate());
+  return Math.round((date.getTime() - start.getTime()) / 86_400_000);
 }
 
 export function quitStartDate(state) {
@@ -714,7 +734,15 @@ export function stepProgress(value, steps, repeat = 0) {
 export function boardGoals(state, progress, goal = null) {
   const started = !state.notStoppedYet && Boolean(state.quitDate);
   const days = started ? progress.elapsedHours / 24 : 0;
-  const time = stepProgress(days, dayThresholds, 365.25);
+  let time = stepProgress(days, dayThresholds, 365.25);
+  // Past ten years the next goal is the next real anniversary of the quit day.
+  const start = quitStartDate(state);
+  if (started && start && days >= dayThresholds[dayThresholds.length - 1]) {
+    const yearsDone = progress.compYears;
+    const from = daysToAnniversary(start, yearsDone);
+    const target = daysToAnniversary(start, yearsDone + 1);
+    time = { from, target, ratio: (days - from) / (target - from), left: target - days, done: false };
+  }
   const money = started ? progress.moneySaved : 0;
   const price = Number(goal?.price) || 0;
   const moneyGoal = goal?.name && price > 0 && money < price
@@ -758,3 +786,57 @@ export function receiptColorStatus(days) {
   const colors = RECEIPT_COLORS.map((color) => ({ ...color, unlocked: color.day <= reached }));
   return { colors, unlocked: colors.filter((color) => color.unlocked).length, total: colors.length };
 }
+
+// ----------------------------------------------------------------- receipt fonts and stickers
+// Personal touches for the receipt, separate from the app theme. Some are there from the start,
+// the rest unlock on smoke-free days. Only system fonts: nothing is downloaded, it works offline.
+export const RECEIPT_FONTS = [
+  { id: "system", label: "Clean", day: 0, stack: "-apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif" },
+  { id: "mono", label: "Receipt", day: 0, stack: "ui-monospace, \"SF Mono\", Menlo, Consolas, \"Cascadia Mono\", monospace" },
+  { id: "rounded", label: "Round", day: 3, stack: "ui-rounded, \"SF Pro Rounded\", \"Nunito\", \"Varela Round\", system-ui, sans-serif" },
+  { id: "serif", label: "Classic", day: 7, stack: "ui-serif, \"New York\", Georgia, \"Times New Roman\", serif" },
+  { id: "typewriter", label: "Typewriter", day: 14, stack: "\"American Typewriter\", \"Courier New\", Courier, monospace" },
+];
+
+// One sticker sits on the receipt like a stamp. Nothing that looks like smoke or fire.
+// Graphics: Google Noto Emoji (2D SVG), bundled so they look the same everywhere and work offline.
+export const RECEIPT_STICKERS = [
+  { id: "none", emoji: "", label: "No sticker", day: 0 },
+  { id: "sprout", emoji: "🌱", label: "Sprout", day: 0, file: "assets/stickers/emoji_u1f331.svg" },
+  { id: "muscle", emoji: "💪", label: "Strong", day: 1, file: "assets/stickers/emoji_u1f4aa.svg" },
+  { id: "star", emoji: "⭐", label: "Star", day: 3, file: "assets/stickers/emoji_u2b50.svg" },
+  { id: "lungs", emoji: "🫁", label: "Lungs", day: 7, file: "assets/stickers/emoji_u1fac1.svg" },
+  { id: "medal", emoji: "🏅", label: "Medal", day: 14, file: "assets/stickers/emoji_u1f3c5.svg" },
+  { id: "trophy", emoji: "🏆", label: "Trophy", day: 30, file: "assets/stickers/emoji_u1f3c6.svg" },
+  { id: "rocket", emoji: "🚀", label: "Rocket", day: 60, file: "assets/stickers/emoji_u1f680.svg" },
+  { id: "diamond", emoji: "💎", label: "Diamond", day: 90, file: "assets/stickers/emoji_u1f48e.svg" },
+  { id: "rainbow", emoji: "🌈", label: "Rainbow", day: 180, file: "assets/stickers/emoji_u1f308.svg" },
+  { id: "crown", emoji: "👑", label: "Crown", day: 365, file: "assets/stickers/emoji_u1f451.svg" },
+];
+
+/** Each item with whether it is unlocked after a number of smoke-free days, and the next one to earn. */
+export function unlockStatus(items, days) {
+  const reached = Math.max(0, Math.floor(Number(days) || 0));
+  const list = items.map((item) => ({ ...item, unlocked: item.day <= reached }));
+  return {
+    items: list,
+    unlocked: list.filter((item) => item.unlocked).length,
+    total: list.length,
+    next: list.find((item) => !item.unlocked) || null,
+  };
+}
+
+/** A saved choice only counts while it is unlocked; otherwise the first item (the default). */
+export function pickUnlocked(items, id, days) {
+  const status = unlockStatus(items, days);
+  return status.items.find((item) => item.id === id && item.unlocked) || status.items[0];
+}
+
+// Receipt paper. "auto" follows light and dark mode; the others keep their tone in both modes.
+export const RECEIPT_PAPERS = [
+  { id: "auto", label: "Auto", day: 0, color: "", tone: "auto" },
+  { id: "paper", label: "Paper", day: 0, color: "#fbf7ee", tone: "light" },
+  { id: "night", label: "Night", day: 0, color: "#1c1c1e", tone: "dark" },
+  { id: "sky", label: "Sky", day: 3, color: "#eaf2ff", tone: "light" },
+  { id: "rose", label: "Rose", day: 7, color: "#fff0f2", tone: "light" },
+];

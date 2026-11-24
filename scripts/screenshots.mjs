@@ -57,6 +57,7 @@ const seed = {
     { id: "b", at: now - day - 5 * 3600000, kind: "craving", trigger: "stress", note: "" },
     { id: "c", at: now - 3 * day, kind: "craving", trigger: "alcohol", note: "Freunde gefragt, ob wir reingehen" },
   ] }),
+  "smkfree-receipt-sticker": "trophy",
   "smkfree-theme": "custom",
   "smkfree-custom-color": "#2563eb",
 };

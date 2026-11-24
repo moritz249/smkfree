@@ -73,3 +73,27 @@ test("receipt colors: three to start with, the rest unlock with smoke-free days"
   assert.equal(receiptColorStatus(400).unlocked, 8);
   assert.ok(receiptColorStatus(0).colors.every((c) => /^#[0-9a-f]{6}$/.test(c.hex)));
 });
+
+import { RECEIPT_FONTS, RECEIPT_STICKERS, pickUnlocked, unlockStatus } from "../app-core.js";
+
+test("receipt fonts and stickers: some from the start, more with smoke-free days", () => {
+  assert.equal(unlockStatus(RECEIPT_FONTS, 0).unlocked, 2);
+  assert.equal(unlockStatus(RECEIPT_FONTS, 14).unlocked, RECEIPT_FONTS.length);
+  assert.equal(unlockStatus(RECEIPT_STICKERS, 0).next.id, "muscle");
+  assert.equal(unlockStatus(RECEIPT_STICKERS, 365).next, null);
+  assert.ok(RECEIPT_STICKERS.every((sticker) => !/🚬|🔥|💨/.test(sticker.emoji)));
+});
+
+test("a locked or unknown choice falls back to the default", () => {
+  assert.equal(pickUnlocked(RECEIPT_FONTS, "serif", 2).id, "system");
+  assert.equal(pickUnlocked(RECEIPT_FONTS, "serif", 7).id, "serif");
+  assert.equal(pickUnlocked(RECEIPT_STICKERS, "nope", 100).id, "none");
+});
+
+import { RECEIPT_PAPERS } from "../app-core.js";
+
+test("receipt papers: auto, paper and night from the start, each with a tone", () => {
+  assert.equal(unlockStatus(RECEIPT_PAPERS, 0).unlocked, 3);
+  assert.ok(RECEIPT_PAPERS.every((paper) => ["auto", "light", "dark"].includes(paper.tone)));
+  assert.equal(pickUnlocked(RECEIPT_PAPERS, "rose", 1).id, "auto");
+});

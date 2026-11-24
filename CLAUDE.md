@@ -38,7 +38,7 @@ There is no linter configured. `.claude/launch.json` in the parent folder define
 
 ## Release/caching gotchas
 
-- `sw.js` serves cache-first. After changing any shipped file, bump `CACHE` (`smkfree-vNN`) and, if adding files, update its `ASSETS` list.
+- `sw.js` serves HTML/JS/CSS network-first (cache only when offline) and images cache-first. After changing any shipped file, bump `CACHE` (`smkfree-vNN`): a changed `sw.js` is how installed PWAs notice a new version (the app checks on start and on every return to the foreground, reloads when idle, otherwise shows an "Update" banner). If adding files, update its `ASSETS` list.
 - `index.html` loads `styles.css?v=…` and `app.js?v=…`; bump these query strings on changes.
 - New top-level web files must also be added to the `files` list in `scripts/build-web.mjs`, otherwise they won't reach the native apps.
 - `www/`, `android/app/src/main/assets/public/`, and `ios/App/App/public/` are generated copies (gitignored) — edit the root files, never these.
@@ -49,4 +49,4 @@ Debug APKs for testers: `npm run sync:android`, then `gradlew.bat assembleDebug`
 
 ## Docs
 
-`docs/IOS.md`, `docs/ANDROID.md` (store/build walkthroughs) and `docs/BACKLOG.md` (prioritized open work) are written in German. Health milestones and life-expectancy figures are sourced estimates; disclaimers and sources live in `legal.html` and must stay (App Store guideline 1.4.1).
+`docs/IOS.md`, `docs/ANDROID.md` (store/build walkthroughs), `docs/BACKLOG.md` (prioritized open work) and `docs/UI-RICHTLINIEN.md` (UI guidelines: spacing, radii, colors, components — follow them for every new screen) are written in German. Health milestones and life-expectancy figures are sourced estimates; disclaimers and sources live in `legal.html` and must stay (App Store guideline 1.4.1).

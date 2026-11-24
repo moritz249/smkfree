@@ -12,17 +12,61 @@
     <link rel="icon" href="assets/favicon-32x32.png" sizes="32x32" type="image/png">
     <link rel="manifest" href="manifest.webmanifest">
     <script>
+      // Same appearance and language as the app, before the page paints.
       try {
         var appearance = localStorage.getItem("smkfree-appearance");
         if (appearance === "light" || appearance === "dark") document.documentElement.dataset.appearance = appearance;
+        var uiTheme = localStorage.getItem("smkfree-ui-theme");
+        if (uiTheme === "mint" || uiTheme === "lavender" || uiTheme === "dracula") document.documentElement.dataset.uiTheme = uiTheme;
       } catch (e) { /* follow the system */ }
+      try {
+        var lang = localStorage.getItem("smkfree-language") || (navigator.language || "en").slice(0, 2).toLowerCase();
+        document.documentElement.lang = lang === "de" ? "de" : "en";
+      } catch (e) { /* English */ }
     </script>
     <link rel="stylesheet" href="styles.css?v=20261123-36">
-    <link rel="stylesheet" href="ios.css?v=20261123-40">
+    <link rel="stylesheet" href="ios.css?v=20261124-31">
   </head>
   <body>
     <main class="legal-shell scan-frame">
-      <article class="legal-card">
+      <a class="nav-back" href="index.html" onclick="if (history.length > 1) { history.back(); return false; }"><span lang="de">‹ Zurück</span><span lang="en">‹ Back</span></a>
+
+      <article class="legal-card" lang="de">
+        <p class="intro-logo">smkfree</p>
+        <p class="kicker">Installieren</p>
+        <h1>Auf den Home-Bildschirm</h1>
+
+        <section>
+          <h2>iPhone / iPad</h2>
+          <ol>
+            <li>Öffne SMKFREE in <strong>Safari</strong></li>
+            <li>Tippe unten auf <strong>Teilen</strong> ⬆</li>
+            <li>Tippe auf <strong>Zum Home-Bildschirm</strong></li>
+            <li>Tippe auf <strong>Hinzufügen</strong></li>
+          </ol>
+        </section>
+
+        <section>
+          <h2>Android</h2>
+          <ol>
+            <li>Öffne SMKFREE in <strong>Chrome</strong></li>
+            <li>Tippe oben rechts auf <strong>⋮</strong></li>
+            <li>Tippe auf <strong>Zum Startbildschirm hinzufügen</strong></li>
+            <li>Tippe auf <strong>Hinzufügen</strong></li>
+          </ol>
+        </section>
+
+        <section>
+          <h2>Computer (Chrome / Edge)</h2>
+          <ol>
+            <li>Öffne SMKFREE in <strong>Chrome</strong> oder <strong>Edge</strong></li>
+            <li>Klicke in der Adressleiste auf das <strong>Installieren-Symbol</strong> ⊕</li>
+            <li>Klicke auf <strong>Installieren</strong></li>
+          </ol>
+        </section>
+      </article>
+
+      <article class="legal-card" lang="en">
         <p class="intro-logo">smkfree</p>
         <p class="kicker">Install</p>
         <h1>Add to your home screen</h1>
@@ -55,8 +99,6 @@
             <li>Click <strong>Install</strong></li>
           </ol>
         </section>
-
-        <a class="legal-back" href="index.html">Back to SMKFREE</a>
       </article>
     </main>
   </body>

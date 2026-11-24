@@ -19,9 +19,15 @@ import {
   dateKey,
   normalizeCheckins,
   boardThemeStatus,
+  quitStartDate,
   boardGoals,
   receiptColorStatus,
   OLD_RECEIPT_COLORS,
+  RECEIPT_FONTS,
+  RECEIPT_STICKERS,
+  RECEIPT_PAPERS,
+  unlockStatus,
+  pickUnlocked,
   DIARY_NOTE_MAX,
   PLAN_MAX_ITEMS,
 } from "./app-core.js";
@@ -1079,6 +1085,50 @@ function applyAppearance(value = readAppearance()) {
   if (appReady) applyCustomThemeVars(customColorInput.value);
 }
 
+// ----------------------------------------------------------------- app theme (Standard, Mint, Lavender)
+const UI_THEME_KEY = "smkfree-ui-theme";
+const UI_THEMES = [
+  { id: "standard", label: "Standard" },
+  { id: "mint", label: "Mint" },
+  { id: "lavender", label: "Lavender" },
+  { id: "dracula", label: "Dracula" },
+];
+
+function readUiTheme() {
+  const value = localStorage.getItem(UI_THEME_KEY);
+  return UI_THEMES.some((theme) => theme.id === value) ? value : "standard";
+}
+
+function applyUiTheme(value = readUiTheme()) {
+  const root = document.documentElement;
+  if (value === "standard") delete root.dataset.uiTheme;
+  else root.dataset.uiTheme = value;
+  document.querySelectorAll("[data-ui-theme-option]").forEach((button) => {
+    button.setAttribute("aria-checked", String(button.dataset.uiThemeOption === value));
+  });
+  const label = t(UI_THEMES.find((theme) => theme.id === value).label);
+  document.querySelector("#themeValue").textContent = label;
+  const tileSub = document.querySelector("#tileColorSub");
+  if (tileSub) tileSub.textContent = label;
+}
+
+function initUiTheme() {
+  const sheet = document.querySelector("#themeSheet");
+  document.querySelector("#themeButton").addEventListener("click", () => openSheet(sheet));
+  document.querySelectorAll("[data-ui-theme-option]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const value = button.dataset.uiThemeOption;
+      if (value === "standard") localStorage.removeItem(UI_THEME_KEY);
+      else localStorage.setItem(UI_THEME_KEY, value);
+      mirrorStorage(UI_THEME_KEY);
+      applyUiTheme(value);
+    });
+  });
+  document.querySelector("#themeClose").addEventListener("click", () => closeSheet());
+  enableSwipeToClose(sheet);
+  applyUiTheme();
+}
+
 function initAppearance() {
   document.querySelectorAll("#appearanceRow [data-appearance]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -1138,10 +1188,12 @@ function renderMetric(el, { label, value, sub }) {
 
 function startValues(data) {
   const firstDay = data.started && data.days === 0;
+  // Years with months written out; a zero month count is left away ("54 years", not "54 yr 0 mo").
+  const yearsText = data.years === 1 ? t("1 year") : t("{n} years", { n: data.years });
   const time = firstDay
     ? t("{n} h", { n: data.hours })
     : data.years > 0
-    ? t("{y} yr {m} mo", { y: data.years, m: data.months })
+    ? data.months > 0 ? t("{years} {m} mo.", { years: yearsText, m: data.months }) : yearsText
     : data.days === 1 ? t("1 day") : t("{n} days", { n: data.days });
   const third = data.third;
   // Short on the card (it is half a phone wide), the exact value is in the info sheet.
@@ -1187,8 +1239,16 @@ function renderStart(state, progress) {
   const pct = Math.round(Math.min(1, Math.max(0, time.ratio)) * 100);
   document.querySelector("#gaugeFill").setAttribute("stroke-dasharray", `${pct > 0 ? Math.max(pct, 1.5) : 0} 100`);
   setValueWithUnits(document.querySelector("#gaugeValue"), values.time);
-  document.querySelector("#gaugeSub").textContent = !goals.started ? notYet : time.done ? "" : t("{time} until {goal}", {
-    time: formatTimeLeft(time.hoursLeft), goal: goalLabel(time.target),
+  // Under the number: the next goal and the day it is reached ("55 years on 3 Dec 2027").
+  const quitStart = quitStartDate(state);
+  let goalDate = "";
+  if (quitStart && !time.done) {
+    const when = new Date(quitStart.getTime() + time.target * 86_400_000);
+    const sameYear = when.getFullYear() === new Date().getFullYear();
+    goalDate = new Intl.DateTimeFormat(intlLocale(), sameYear ? { day: "numeric", month: "short" } : { day: "numeric", month: "short", year: "numeric" }).format(when);
+  }
+  document.querySelector("#gaugeSub").textContent = !goals.started ? notYet : time.done || !goalDate ? "" : t("{goal} on {date}", {
+    goal: goalLabel(time.target), date: goalDate,
   });
   document.querySelector("#gaugeFrom").textContent = time.from === 0 ? t("Quit day") : goalLabel(time.from);
   document.querySelector("#gaugeTo").textContent = goalLabel(time.target);
@@ -1248,16 +1308,12 @@ function renderStart(state, progress) {
     bodyList.append(row);
   });
 
-  // Colors: accent palettes unlock on smoke-free days.
-  const prefs = readBoardPrefs();
-  const colors = boardThemeStatus(data.days);
-  page.dataset.palette = colors.unlocked.includes(prefs.theme) ? prefs.theme : "receipt";
-  const colorTile = document.querySelector("#boardLight");
-  const hasNew = colors.unlocked.length > prefs.seen;
-  colorTile.classList.toggle("is-new", hasNew);
-  colorTile.dataset.badge = t("NEW");
-  // The badge already says NEW, the subtitle always shows the count.
-  document.querySelector("#tileColorSub").textContent = t("{n} of {total}", { n: colors.unlocked.length, total: colors.total });
+  // Design tile: the app theme decides the colors now (the gauge follows its accent).
+  page.dataset.palette = "receipt";
+  document.querySelector("#boardLight").classList.remove("is-new");
+  document.querySelector("#tileColorSub").textContent = t(UI_THEMES.find((theme) => theme.id === readUiTheme()).label);
+  applyReceiptLook(data.days);
+  syncCurrencyValue(); // also changes when the details are edited
 }
 
 // ----------------------------------------------------------------- life back info
@@ -1343,18 +1399,9 @@ function initBoard() {
     }
     const prefs = readBoardPrefs();
     if (target.id === "boardLight") {
-      const colors = boardThemeStatus(boardDays());
-      if (colors.unlocked.length > prefs.seen) {
-        // Reward first: jump straight to the newest color.
-        prefs.theme = colors.unlocked[colors.unlocked.length - 1];
-        prefs.seen = colors.unlocked.length;
-        haptics.success();
-        showToast(t("New display color unlocked"));
-      } else {
-        const index = (colors.unlocked.indexOf(prefs.theme) + 1) % colors.unlocked.length;
-        prefs.theme = colors.unlocked[index];
-        if (index === 0 && colors.next) showToast(t("Next color on day {day}", { day: colors.next.day }));
-      }
+      // The Design tile opens the theme picker (Standard, Mint, Lavender).
+      openSheet(document.querySelector("#themeSheet"));
+      return;
     } else if (target.id === "boardMoney") {
       // The money line opens the savings goal: set one, or change it.
       document.querySelector("#goalButton").click();
@@ -1413,7 +1460,7 @@ function darkReceiptInk() {
 }
 
 async function createReceiptImageBlob() {
-  const dark = isDarkMode();
+  const dark = receiptIsDark();
   elements.receipt.classList.add("is-capturing");
   // The image library cannot read modern color functions, so the dark ink is passed as plain hex.
   if (dark) {
@@ -1422,7 +1469,7 @@ async function createReceiptImageBlob() {
   }
   try {
     const canvas = await html2canvas(elements.receipt, {
-      backgroundColor: dark ? "#1c1c1e" : "#ffffff",
+      backgroundColor: receiptPaperColor(),
       scale: 2,
       useCORS: true,
       logging: false,
@@ -1448,7 +1495,7 @@ const SHARE_RECEIPT_CSS_WIDTH = 600;
  * and laid out wider than on the phone, then placed on a 5:4 picture.
  */
 async function createCompactReceiptBlob() {
-  const dark = isDarkMode();
+  const dark = receiptIsDark();
   const host = document.createElement("div");
   host.className = "share-capture";
   host.style.width = `${SHARE_RECEIPT_CSS_WIDTH}px`;
@@ -1473,8 +1520,10 @@ async function createCompactReceiptBlob() {
   clone.append(link);
   host.append(clone);
   document.body.append(host);
+  // The copy's images (sticker, QR) must be loaded before it is drawn, or they are missing from the picture.
+  await Promise.all([...clone.querySelectorAll("img")].map((img) => (img.decode ? img.decode().catch(() => {}) : Promise.resolve())));
   try {
-    const background = dark ? "#1c1c1e" : "#ffffff";
+    const background = receiptPaperColor();
     const shot = await html2canvas(clone, {
       backgroundColor: background,
       scale: 3,
@@ -1487,7 +1536,8 @@ async function createCompactReceiptBlob() {
     canvas.width = SHARE_WIDTH;
     canvas.height = SHARE_HEIGHT;
     const ctx = canvas.getContext("2d");
-    ctx.fillStyle = dark ? "#000000" : "#f2f2f7";
+    // The frame follows the app mode, the receipt keeps its own paper.
+    ctx.fillStyle = isDarkMode() ? "#000000" : "#f2f2f7";
     ctx.fillRect(0, 0, SHARE_WIDTH, SHARE_HEIGHT);
     const margin = 48;
     const fit = Math.min((SHARE_WIDTH - margin * 2) / shot.width, (SHARE_HEIGHT - margin * 2) / shot.height);
@@ -1552,18 +1602,64 @@ async function shareAppOnly() {
 }
 
 let shareCardBlob = null;
+let shareFullBlob = null;
+let shareCardUrl = "";
+let shareFullUrl = "";
+let selectedShare = "card";
 
-function openShareSheet() {
+/** Shows what the selected option will send: the short picture, the whole receipt, or the link card. */
+function showSharePreview(kind) {
   const preview = document.querySelector("#sharePreview");
+  const appPreview = document.querySelector("#shareAppPreview");
+  appPreview.hidden = kind !== "app";
+  preview.hidden = kind === "app";
+  preview.classList.toggle("is-tall", kind === "full");
+  if (kind === "app") return;
+  const url = kind === "full" ? shareFullUrl : shareCardUrl;
+  if (url) {
+    preview.src = url;
+    preview.classList.remove("is-loading");
+    return;
+  }
   preview.removeAttribute("src");
   preview.classList.add("is-loading");
+  if (kind === "full" && !shareFullBlob) {
+    // The whole receipt is drawn only when it is chosen; it is ready long before the user taps Share.
+    shareFullBlob = createReceiptImageBlob();
+    shareFullBlob.then((blob) => {
+      shareFullUrl = URL.createObjectURL(blob);
+      if (selectedShare === "full") showSharePreview("full");
+    }).catch(() => preview.classList.remove("is-loading"));
+  }
+}
+
+function selectShare(kind) {
+  selectedShare = kind;
+  document.querySelectorAll("#shareSheet [data-share]").forEach((button) => {
+    button.setAttribute("aria-checked", String(button.dataset.share === kind));
+  });
+  showSharePreview(kind);
+}
+
+async function openShareSheet() {
+  // The receipt has to be on screen to be drawn, so sharing always starts from the receipt page.
+  if (activeTab !== "receipt") {
+    showTab("receipt");
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  }
+  if (shareFullUrl) URL.revokeObjectURL(shareFullUrl);
+  shareCardUrl = "";
+  shareFullUrl = "";
+  shareFullBlob = null;
+  document.querySelector("#shareAppText").textContent = t("SMKFREE helps me stay smoke-free. No account, everything stays on your phone.");
   // Ready before the tap, so sharing starts right away (browsers only allow it straight after a tap).
   const canvasReady = createCompactReceiptBlob();
   shareCardBlob = canvasReady.then(canvasToBlob);
   canvasReady.then((canvas) => {
-    preview.src = canvas.toDataURL("image/png");
-    preview.classList.remove("is-loading");
-  }).catch(() => preview.classList.remove("is-loading"));
+    shareCardUrl = canvas.toDataURL("image/png");
+    if (selectedShare === "card") showSharePreview("card");
+  }).catch(() => {});
+  selectShare("card");
   openSheet(document.querySelector("#shareSheet"));
 }
 
@@ -1573,14 +1669,7 @@ async function runShare(kind) {
     let result;
     if (kind === "card") result = await shareImage(await shareCardBlob, "smkfree.png");
     else if (kind === "app") result = await shareAppOnly();
-    else {
-      // The whole receipt is captured from the page, so it has to be on screen.
-      if (activeTab !== "receipt") {
-        showTab("receipt");
-        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      }
-      result = await shareReceiptImage();
-    }
+    else result = await shareImage(await (shareFullBlob || createReceiptImageBlob()), "smkfree-receipt.png");
     if (result === "shared") haptics.success();
     if (result === "downloaded") showToast(t("Image saved"));
     if (result === "copied") showToast(t("Link copied"));
@@ -1592,8 +1681,9 @@ async function runShare(kind) {
 function initShareSheet() {
   const sheet = document.querySelector("#shareSheet");
   sheet.querySelectorAll("[data-share]").forEach((button) => {
-    button.addEventListener("click", () => runShare(button.dataset.share));
+    button.addEventListener("click", () => selectShare(button.dataset.share));
   });
+  document.querySelector("#shareGo").addEventListener("click", () => runShare(selectedShare));
   document.querySelector("#shareClose").addEventListener("click", () => closeSheet());
   enableSwipeToClose(sheet);
 }
@@ -1772,7 +1862,7 @@ function focusNextFieldInStep(target) {
 function resetApp() {
   haptics.warning();
   closeSheet(false);
-  [STORAGE_KEY, THEME_KEY, CUSTOM_COLOR_KEY, GOAL_KEY, REMINDERS_KEY, CRAVINGS_KEY, PLAN_KEY, HINT_KEY, DIARY_KEY, SHARE_PROMPT_KEY, DEV_TYPE_KEY, BOARD_KEY, CHECKIN_KEY, WEEK_SEEN_KEY]
+  [STORAGE_KEY, THEME_KEY, CUSTOM_COLOR_KEY, GOAL_KEY, REMINDERS_KEY, CRAVINGS_KEY, PLAN_KEY, HINT_KEY, DIARY_KEY, SHARE_PROMPT_KEY, DEV_TYPE_KEY, BOARD_KEY, CHECKIN_KEY, WEEK_SEEN_KEY, RECEIPT_FONT_KEY, RECEIPT_STICKER_KEY, RECEIPT_SEEN_KEY, RECEIPT_PAPER_KEY]
     .forEach((key) => localStorage.removeItem(key));
   mirrorAllStorage();
   applyDevType(readDevType());
@@ -1872,7 +1962,12 @@ elements.resetButton.addEventListener("click", () => {
 document.querySelector("#resetCancel").addEventListener("click", () => closeSheet());
 document.querySelector("#resetConfirm").addEventListener("click", resetApp);
 elements.form.addEventListener("input", () => updateReceipt());
+// What was saved before editing, so "‹ Back" can undo the changes typed since.
+let editSnapshot = null;
 elements.editButton.addEventListener("click", () => {
+  editSnapshot = localStorage.getItem(STORAGE_KEY);
+  // A history entry, so swiping back in Safari cancels the edit instead of leaving the app.
+  history.pushState({ smkfreePage: "edit" }, "");
   elements.stage.classList.remove("is-receipt-only");
   elements.appShell.classList.remove("is-receipt-view");
   setButtonLabel(elements.editButton, t("Edit details"));
@@ -1885,6 +1980,15 @@ elements.editButton.addEventListener("click", () => {
 
 function isEditing() {
   return elements.form.classList.contains("is-editing");
+}
+
+/** "‹ Back" while editing: drop the changes and return to More, the way it was before. */
+function cancelEditing() {
+  if (editSnapshot !== null) localStorage.setItem(STORAGE_KEY, editSnapshot);
+  editSnapshot = null;
+  setFormState(readState());
+  leaveEditing();
+  showReceipt(null, { animate: false, tab: "more" });
 }
 
 /** In edit mode every visible step is checked, not only the current one. */
@@ -1904,6 +2008,7 @@ function validateAllSteps() {
 
 function leaveEditing() {
   elements.form.classList.remove("is-editing");
+  if (history.state?.smkfreePage === "edit") history.back();
   setButtonLabel(elements.receiptButton, t("Print my receipt"));
 }
 elements.downloadButton.addEventListener("click", openShareSheet);
@@ -1924,7 +2029,6 @@ function applyTheme(theme) {
 // Custom color theme
 const CUSTOM_COLOR_KEY = "smkfree-custom-color";
 const customColorInput = document.querySelector("#customColor");
-const customColorLabel = document.querySelector("#customColorLabel");
 
 function hexToHsl(hex) {
   const r = parseInt(hex.slice(1, 3), 16) / 255;
@@ -2042,17 +2146,231 @@ function renderColorSheet() {
       onColorChange();
       haptics.select();
       renderColorSheet();
+      syncLookRows(smokeFreeDays());
     });
     wrap.append(button);
   });
 }
 
+// ----------------------------------------------------------------- receipt look: font and sticker
+// The receipt is personal and separate from the app theme: color, font and a sticker,
+// with more of them unlocking on smoke-free days.
+const RECEIPT_FONT_KEY = "smkfree-receipt-font";
+const RECEIPT_STICKER_KEY = "smkfree-receipt-sticker";
+const RECEIPT_SEEN_KEY = "smkfree-receipt-seen";
+const RECEIPT_PAPER_KEY = "smkfree-receipt-paper";
+
+/** Whether the receipt is printed dark: "Night" paper always, "Auto" in dark mode. */
+function receiptIsDark(days = smokeFreeDays()) {
+  const paper = pickUnlocked(RECEIPT_PAPERS, localStorage.getItem(RECEIPT_PAPER_KEY), days);
+  return paper.tone === "dark" || (paper.tone === "auto" && isDarkMode());
+}
+
+/** The receipt's paper color for pictures (share image background). */
+function receiptPaperColor(days = smokeFreeDays()) {
+  const paper = pickUnlocked(RECEIPT_PAPERS, localStorage.getItem(RECEIPT_PAPER_KEY), days);
+  return paper.color || (receiptIsDark(days) ? "#1c1c1e" : "#ffffff");
+}
+
+function smokeFreeDays() {
+  const state = getFormState();
+  return boardData(state, calculateProgress(state)).days;
+}
+
+/** Everything that can be unlocked for the receipt, counted together (for the "new" dot). */
+function receiptUnlockCount(days) {
+  return receiptColorStatus(days).unlocked + unlockStatus(RECEIPT_FONTS, days).unlocked
+    + unlockStatus(RECEIPT_STICKERS, days).unlocked + unlockStatus(RECEIPT_PAPERS, days).unlocked;
+}
+
+/** Puts the chosen font and sticker on the receipt and shows a dot on "Customize" when something new is unlocked. */
+function applyReceiptLook(days = smokeFreeDays()) {
+  const font = pickUnlocked(RECEIPT_FONTS, localStorage.getItem(RECEIPT_FONT_KEY), days);
+  const sticker = pickUnlocked(RECEIPT_STICKERS, localStorage.getItem(RECEIPT_STICKER_KEY), days);
+  if (font.id === "system") {
+    delete elements.receipt.dataset.font;
+    elements.receipt.style.removeProperty("--receipt-font");
+  } else {
+    elements.receipt.dataset.font = font.id;
+    elements.receipt.style.setProperty("--receipt-font", font.stack);
+  }
+  const paper = pickUnlocked(RECEIPT_PAPERS, localStorage.getItem(RECEIPT_PAPER_KEY), days);
+  if (paper.tone === "auto") {
+    delete elements.receipt.dataset.paperTone;
+    elements.receipt.style.removeProperty("--receipt-paper");
+  } else {
+    elements.receipt.dataset.paperTone = paper.tone;
+    elements.receipt.style.setProperty("--receipt-paper", paper.color);
+  }
+  const stamp = document.querySelector("#receiptSticker");
+  if (stamp.dataset.sticker !== sticker.id) {
+    stamp.dataset.sticker = sticker.id;
+    stamp.innerHTML = "";
+    if (sticker.file) {
+      const img = document.createElement("img");
+      img.src = sticker.file;
+      img.alt = "";
+      stamp.append(img);
+      // Swap in a PNG copy: the picture library used for sharing cannot draw these SVGs.
+      stickerPng(sticker.file).then((url) => { if (stamp.dataset.sticker === sticker.id) img.src = url; }).catch(() => {});
+    }
+  }
+  stamp.classList.toggle("is-hidden", !sticker.file);
+  const seen = Number(localStorage.getItem(RECEIPT_SEEN_KEY) || 0);
+  document.querySelector("#receiptCustomize").classList.toggle("has-new", seen > 0 && receiptUnlockCount(days) > seen);
+}
+
+const stickerPngCache = new Map();
+
+/** The sticker SVG drawn once into a 256 px PNG (sharp at the stamp size, and html2canvas can draw it). */
+function stickerPng(src) {
+  if (!stickerPngCache.has(src)) {
+    stickerPngCache.set(src, (async () => {
+      const img = new Image();
+      img.src = src;
+      await img.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = 256;
+      canvas.height = 256;
+      canvas.getContext("2d").drawImage(img, 0, 0, 256, 256);
+      return canvas.toDataURL("image/png");
+    })());
+  }
+  return stickerPngCache.get(src);
+}
+
+function markReceiptLookSeen(days) {
+  localStorage.setItem(RECEIPT_SEEN_KEY, String(receiptUnlockCount(days)));
+  mirrorStorage(RECEIPT_SEEN_KEY);
+}
+
+/** A row of choices in the "Customize receipt" sheet; locked ones show the day they unlock. */
+function renderLookChoices(wrapId, items, storageKey, days, renderInner) {
+  const wrap = document.querySelector(wrapId);
+  wrap.innerHTML = "";
+  const current = pickUnlocked(items, localStorage.getItem(storageKey), days).id;
+  unlockStatus(items, days).items.forEach((item) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `look-choice${item.unlocked ? "" : " is-locked"}`;
+    button.setAttribute("role", "radio");
+    button.setAttribute("aria-checked", String(item.id === current));
+    const name = t(item.label);
+    button.setAttribute("aria-label", item.unlocked ? name : `${name}: ${t("From day {day}", { day: item.day })}`);
+    renderInner(button, item);
+    const caption = document.createElement("span");
+    caption.className = "look-choice__name";
+    caption.textContent = item.unlocked ? name : t("From day {day}", { day: item.day });
+    button.append(caption);
+    button.addEventListener("click", () => {
+      if (!item.unlocked) {
+        haptics.warning();
+        showToast(t("Unlocks on day {day}", { day: item.day }));
+        return;
+      }
+      if (item.id === items[0].id) localStorage.removeItem(storageKey);
+      else localStorage.setItem(storageKey, item.id);
+      mirrorStorage(storageKey);
+      applyReceiptLook(days);
+      renderReceiptLookSheet(days);
+    });
+    wrap.append(button);
+  });
+}
+
+/** The current choice next to each row: a color dot and name, the font name in its font, the sticker. */
+function syncLookRows(days) {
+  const current = localStorage.getItem(THEME_KEY) === "custom" ? (localStorage.getItem(CUSTOM_COLOR_KEY) || "").toLowerCase() : "";
+  const color = receiptColorStatus(days).colors.find((item) => item.hex.toLowerCase() === current);
+  const colorValue = document.querySelector("#colorRowValue");
+  colorValue.innerHTML = "<i class=\"look-row__dot\"></i><span></span>";
+  const neutralInDark = isDarkMode() && color?.id === "black";
+  colorValue.querySelector("i").style.background = color ? (neutralInDark ? "#f2f2f7" : color.hex) : "var(--ios-label)";
+  colorValue.querySelector("span").textContent = color
+    ? (neutralInDark ? t("White") : t(receiptColorNames.find((item) => item.id === color.id)?.label || "Color"))
+    : t("Standard");
+  const font = pickUnlocked(RECEIPT_FONTS, localStorage.getItem(RECEIPT_FONT_KEY), days);
+  const fontValue = document.querySelector("#fontRowValue");
+  fontValue.textContent = t(font.label);
+  fontValue.style.fontFamily = font.stack;
+  const paper = pickUnlocked(RECEIPT_PAPERS, localStorage.getItem(RECEIPT_PAPER_KEY), days);
+  document.querySelector("#paperRowValue").textContent = t(paper.label);
+  const sticker = pickUnlocked(RECEIPT_STICKERS, localStorage.getItem(RECEIPT_STICKER_KEY), days);
+  const stickerValue = document.querySelector("#stickerRowValue");
+  stickerValue.innerHTML = "";
+  if (sticker.file) {
+    const img = document.createElement("img");
+    img.className = "look-row__sticker";
+    img.src = sticker.file;
+    img.alt = "";
+    stickerValue.append(img);
+  }
+  stickerValue.append(t(sticker.label));
+}
+
+/** Color, font and sticker open under their row like a dropdown; only one is open at a time. */
+function initLookRows() {
+  document.querySelectorAll("[data-look-panel]").forEach((row) => {
+    row.addEventListener("click", () => {
+      const open = row.getAttribute("aria-expanded") !== "true";
+      document.querySelectorAll("[data-look-panel]").forEach((other) => {
+        const isThis = other === row && open;
+        other.setAttribute("aria-expanded", String(isThis));
+        document.getElementById(other.dataset.lookPanel).hidden = !isThis;
+      });
+    });
+  });
+}
+
+function renderReceiptLookSheet(days = smokeFreeDays()) {
+  syncLookRows(days);
+  renderLookChoices("#paperChoices", RECEIPT_PAPERS, RECEIPT_PAPER_KEY, days, (button, paper) => {
+    const sample = document.createElement("span");
+    sample.className = "look-choice__sample look-choice__sample--paper";
+    if (paper.color) sample.style.background = paper.color;
+    else sample.classList.add("is-auto");
+    button.append(sample);
+  });
+  renderLookChoices("#fontChoices", RECEIPT_FONTS, RECEIPT_FONT_KEY, days, (button, font) => {
+    const sample = document.createElement("span");
+    sample.className = "look-choice__sample";
+    sample.style.fontFamily = font.stack;
+    sample.textContent = "Aa";
+    button.append(sample);
+  });
+  renderLookChoices("#stickerChoices", RECEIPT_STICKERS, RECEIPT_STICKER_KEY, days, (button, sticker) => {
+    const sample = document.createElement("span");
+    sample.className = "look-choice__sample look-choice__sample--sticker";
+    if (sticker.file) {
+      const img = document.createElement("img");
+      img.src = sticker.file;
+      img.alt = "";
+      sample.append(img);
+    } else {
+      sample.classList.add("is-empty");
+    }
+    button.append(sample);
+  });
+}
+
+// "Customize receipt": color, health benefits and savings goal, all in one sheet next to the receipt.
 function openColorSheet() {
   renderColorSheet();
+  const days = smokeFreeDays();
+  renderReceiptLookSheet(days);
+  markReceiptLookSeen(days);
+  applyReceiptLook(days);
+  // The sheet always opens compact: every dropdown row closed.
+  document.querySelectorAll("[data-look-panel]").forEach((row) => {
+    row.setAttribute("aria-expanded", "false");
+    document.getElementById(row.dataset.lookPanel).hidden = true;
+  });
+  const goal = readGoal();
+  document.querySelector("#goalRowValue").textContent = goal?.name ? goal.name : t("Not set");
   openSheet(document.querySelector("#colorSheet"));
 }
 
-document.querySelector("#customColorLabel").addEventListener("click", openColorSheet);
+document.querySelector("#receiptCustomize").addEventListener("click", openColorSheet);
 document.querySelector("#receiptColorButton").addEventListener("click", openColorSheet);
 document.querySelector("#colorClose").addEventListener("click", () => closeSheet());
 
@@ -2074,8 +2392,45 @@ applyCustomThemeVars(savedCustomColor);
 applyTheme(localStorage.getItem(THEME_KEY) || "default");
 
 // PWA (the iOS app ships its files in the bundle, so it needs no service worker)
+// Updates: look for a new version on start and every time the app comes back to the front.
+// When a new version takes over, reload at once if nothing is in progress, otherwise offer a button.
 if ("serviceWorker" in navigator && !isNativeApp) {
-  navigator.serviceWorker.register("./sw.js");
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  let resumedAt = Date.now();
+  let reloading = false;
+  navigator.serviceWorker.register("./sw.js").then((registration) => {
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState !== "visible") return;
+      resumedAt = Date.now();
+      registration.update().catch(() => {});
+    });
+  }).catch(() => {});
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    // The very first install also fires this; there is nothing old to replace then.
+    if (!hadController || reloading) return;
+    const busy = Boolean(openSheetEl) || activeTab === "sos" || isEditing();
+    const justOpened = Date.now() - resumedAt < 4000;
+    if (!busy && (justOpened || document.visibilityState !== "visible")) {
+      reloading = true;
+      window.location.reload();
+    } else {
+      showUpdateBanner();
+    }
+  });
+}
+
+function showUpdateBanner() {
+  if (document.querySelector("#updateBanner")) return;
+  const banner = document.createElement("div");
+  banner.id = "updateBanner";
+  banner.className = "update-banner";
+  banner.setAttribute("role", "status");
+  banner.innerHTML = "<span></span><button type=\"button\" class=\"primary-button\"></button>";
+  banner.querySelector("span").textContent = t("A new version is ready.");
+  const button = banner.querySelector("button");
+  button.textContent = t("Update");
+  button.addEventListener("click", () => window.location.reload());
+  document.body.append(banner);
 }
 
 let deferredInstallPrompt = null;
@@ -2113,13 +2468,19 @@ function syncLanguageButton() {
 }
 
 function switchLanguage() {
-  setLanguage(nextLanguage());
+  applyLanguage(nextLanguage());
+}
+
+/** Switches the whole app to a language and refreshes every text and number format. */
+function applyLanguage(code) {
+  setLanguage(code);
   refreshFormatters();
   syncLanguageButton();
   updateCurrencySymbols(currentCurrency);
   updateReceipt(false);
   showStep(currentStep);
   syncBenefitsVisibility();
+  applyUiTheme(); // the theme name in More
   scheduleReminderSync(); // scheduled texts are stored in the language they were planned in
   haptics.select();
 }
@@ -2128,14 +2489,22 @@ languageButton.addEventListener("click", switchLanguage);
 applyTranslations();
 syncLanguageButton();
 
+// Leaving for legal.html or install.html from More: remember to come back to More.
+const RETURN_TAB_KEY = "smkfree-return-tab";
+document.querySelectorAll("#morePage a[href$='.html']").forEach((link) => {
+  link.addEventListener("click", () => { try { sessionStorage.setItem(RETURN_TAB_KEY, "more"); } catch { /* storage blocked */ } });
+});
+
 const initialState = readState();
 setFormState(initialState);
 updateReceipt(false);
 
 if (hasCompleteSavedState(initialState) && initialState.wizardDone !== false) {
   showStep(getActiveSteps().length - 1);
-  // Returning users land on the on-board computer: days, money and life back at a glance.
-  showReceipt(null, { animate: false, tab: "start" });
+  // Returning users land on the start page; coming back from the legal or install page lands on More again.
+  let returnTab = null;
+  try { returnTab = sessionStorage.getItem(RETURN_TAB_KEY); sessionStorage.removeItem(RETURN_TAB_KEY); } catch { /* storage blocked */ }
+  showReceipt(null, { animate: false, tab: returnTab === "more" ? "more" : "start" });
 } else if (initialState.wizardDone === false && Number(initialState.wizardStep) > 0) {
   // Came back half-way: continue exactly where they left off.
   showStep(Number(initialState.wizardStep));
@@ -2575,7 +2944,7 @@ function readPlan() {
 
 function syncPlanValue() {
   const count = readPlan().items.length;
-  elements.planValue.textContent = count ? `${count}/${PLAN_MAX_ITEMS}` : "--";
+  elements.planValue.textContent = count ? `${count}/${PLAN_MAX_ITEMS}` : t("Not set");
 }
 
 function enterPlan() {
@@ -2688,7 +3057,9 @@ function syncDevMode() {
 
 async function showVersion() {
   const info = await appInfo();
-  elements.versionValue.textContent = info.build ? `${info.version} (${info.build})` : info.version;
+  // On the web, the version is the date stamp this app.js was loaded with (app.js?v=…), so you can see which one runs.
+  const webBuild = new URL(import.meta.url).searchParams.get("v");
+  elements.versionValue.textContent = info.build ? `${info.version} (${info.build})` : webBuild ? `${info.version} ${webBuild}` : info.version;
 }
 
 function tapVersion() {
@@ -3017,7 +3388,7 @@ function addSteppers() {
     plus.type = "button";
     minus.className = "stepper__button";
     plus.className = "stepper__button";
-    minus.textContent = "-";
+    minus.textContent = "−";
     plus.textContent = "+";
     minus.setAttribute("aria-label", t("Decrease"));
     plus.setAttribute("aria-label", t("Increase"));
@@ -3241,7 +3612,7 @@ function addMoneySteppers() {
     wrap.className = "stepper stepper--money";
     const minus = document.createElement("button");
     const plus = document.createElement("button");
-    for (const [button, text, label] of [[minus, "-", "Decrease"], [plus, "+", "Increase"]]) {
+    for (const [button, text, label] of [[minus, "−", "Decrease"], [plus, "+", "Increase"]]) {
       button.type = "button";
       button.className = "stepper__button";
       button.textContent = text;
@@ -3323,13 +3694,17 @@ function showTab(name, { fromHistory = false } = {}) {
 
 // ----------------------------------------------------------------- back (swipe from the left edge)
 function canGoBack() {
-  return Boolean(openSheetEl) || SUB_PAGES.has(activeTab);
+  return Boolean(openSheetEl) || SUB_PAGES.has(activeTab) || isEditing();
 }
 
 /** One step back: close the open sheet, or leave the sub page. */
 function goBack({ fromHistory = false } = {}) {
   if (openSheetEl) {
     closeSheet();
+    return true;
+  }
+  if (isEditing()) {
+    cancelEditing();
     return true;
   }
   if (SUB_PAGES.has(activeTab)) {
@@ -3342,6 +3717,9 @@ function goBack({ fromHistory = false } = {}) {
 }
 
 function initBackNavigation() {
+  // Every "‹ Back" at the top left of a page does the same as swiping back.
+  document.querySelectorAll("[data-back]").forEach((button) => button.addEventListener("click", () => goBack()));
+  document.querySelector("#editBack").addEventListener("click", () => cancelEditing());
   // Safari in the browser: its edge swipe goes back in history.
   window.addEventListener("popstate", () => {
     if (canGoBack()) goBack({ fromHistory: true });
@@ -3415,9 +3793,71 @@ function initHints() {
   syncReceiptHint();
 }
 
+// ----------------------------------------------------------------- currency and language lists
+const CURRENCIES = ["EUR", "USD", "GBP", "CHF"];
+
+/** A list of choices with a check mark at the current one; tapping one applies it right away. */
+function renderChoiceList(wrap, items, currentId, onPick) {
+  wrap.innerHTML = "";
+  items.forEach(({ id, label, detail }) => {
+    const row = document.createElement("button");
+    row.type = "button";
+    row.className = "menu-row choice-row";
+    row.setAttribute("role", "radio");
+    row.setAttribute("aria-checked", String(id === currentId));
+    row.innerHTML = "<span class=\"choice-row__label\"></span><span class=\"menu-row__value\"></span><span class=\"choice-row__check\" aria-hidden=\"true\"></span>";
+    row.querySelector(".choice-row__label").textContent = label;
+    row.querySelector(".menu-row__value").textContent = detail || "";
+    row.querySelector(".choice-row__check").textContent = id === currentId ? "✓" : "";
+    row.addEventListener("click", () => {
+      onPick(id);
+      haptics.select();
+    });
+    wrap.append(row);
+  });
+}
+
+function syncCurrencyValue() {
+  document.querySelector("#currencyValue").textContent = getFormState().currencyCode || "EUR";
+}
+
+function renderCurrencySheet() {
+  const current = getFormState().currencyCode || "EUR";
+  const items = CURRENCIES.map((code) => ({ id: code, label: code, detail: getCurrencySymbol(code) }));
+  renderChoiceList(document.querySelector("#currencyChoices"), items, current, (code) => {
+    updateCurrencySymbols(code);
+    updateReceipt();
+    syncCurrencyValue();
+    renderCurrencySheet();
+  });
+}
+
+function openCurrencySheet() {
+  renderCurrencySheet();
+  openSheet(document.querySelector("#currencySheet"));
+}
+
+function renderLanguageSheet() {
+  // Every language in i18n.js shows up here, in its own name.
+  const items = Object.entries(languages).map(([code, info]) => ({ id: code, label: info.name, detail: info.label }));
+  renderChoiceList(document.querySelector("#languageChoices"), items, getLanguage(), (code) => {
+    applyLanguage(code);
+    renderLanguageSheet();
+  });
+}
+
+function openLanguageSheet() {
+  renderLanguageSheet();
+  openSheet(document.querySelector("#languageSheet"));
+}
+
 // ----------------------------------------------------------------- More page
 function initMoreMenu() {
-  document.querySelector("#languageMenuButton").addEventListener("click", switchLanguage);
+  document.querySelector("#languageMenuButton").addEventListener("click", openLanguageSheet);
+  document.querySelector("#currencyButton").addEventListener("click", openCurrencySheet);
+  document.querySelectorAll("[data-close-sheet]").forEach((button) => button.addEventListener("click", () => closeSheet()));
+  ["#languageSheet", "#currencySheet"].forEach((id) => enableSwipeToClose(document.querySelector(id)));
+  syncCurrencyValue();
   // Leaving the receipt (edit) should not leave the menu open behind the wizard.
   elements.editButton.addEventListener("click", () => {
     closeSheet(false);
@@ -3614,6 +4054,8 @@ initToday();
 initActions();
 initNotificationTaps();
 initShareSheet();
+initUiTheme();
+initLookRows();
 initBackNavigation();
 initAppearance();
 appReady = true;
