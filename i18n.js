@@ -468,7 +468,7 @@ const dictionaries = {
     "Free help": "Kostenlose Hilfe",
     "Medication or nicotine replacement plus support roughly doubles your chances. Ask your doctor or pharmacy.":
       "Medikamente oder Nikotinersatz plus Begleitung verdoppeln etwa deine Chancen. Frag in der Arztpraxis oder Apotheke.",
-    "Call quit line (DE, free)": "Rauchfrei-Telefon anrufen (kostenlos)",
+    "Call quit line (DE, free)": "Rauchfrei-Telefon anrufen",
     "BIÖG phone counseling: 0800 8 31 31 31. Mon–Thu 10–22, Fri–Sun 10–18.":
       "Telefonberatung des BIÖG: 0800 8 31 31 31. Mo–Do 10–22 Uhr, Fr–So 10–18 Uhr.",
     "rauchfrei-info.de online program": "Ausstiegsprogramm auf rauchfrei-info.de",
@@ -516,7 +516,6 @@ const dictionaries = {
     "Log": "Eintrag",
     "New entry or SOS": "Neuer Eintrag oder SOS",
     "Craving help": "Hilfe bei Verlangen",
-    "Craving right now?": "Gerade Verlangen?",
     "It passes in a few minutes. Ride it out with us.": "Es geht in ein paar Minuten vorbei. Halte mit uns durch.",
     "How strong was the urge today?": "Wie stark war das Verlangen heute?",
     "Checked in for today": "Für heute eingecheckt",
@@ -543,6 +542,25 @@ const dictionaries = {
     "SOS: help with a craving now": "SOS: jetzt Hilfe bei Verlangen",
     "Body": "Körper",
     "Appearance": "Darstellung",
+
+    // Start detail sheets (gauge, money card) and the SOS tile
+    "SOS: strong craving right now": "SOS: Gerade starkes Verlangen",
+    "Seconds": "Sekunden",
+    "Weeks": "Wochen",
+    "{n} mo.": "{n} Mon.",
+    "Smoke-free since {date}.": "Rauchfrei seit {date}.",
+    "Months smoke-free": "Monate rauchfrei",
+    "Years smoke-free": "Jahre rauchfrei",
+    "Each square is a month without smoking.": "Jedes Kästchen ist ein Monat ohne Rauchen.",
+    "Each square is a year without smoking.": "Jedes Kästchen ist ein Jahr ohne Rauchen.",
+    "Reached on": "Erreicht am",
+    "Still to go": "Noch offen",
+    "Goal: {goal}": "Ziel: {goal}",
+    "Change goal": "Ziel ändern",
+    "Set a goal": "Ziel festlegen",
+    "You save about {day} a day, {month} a month and {year} a year.":
+      "Du sparst etwa {day} am Tag, {month} im Monat und {year} im Jahr.",
+    "Forecast if you keep saving the same amount every day.": "Prognose, wenn du jeden Tag gleich viel sparst.",
     "More colors unlock on smoke-free days.": "Weitere Farben schaltest du mit rauchfreien Tagen frei.",
     "From day {day}": "Ab Tag {day}",
     "Unlocks on day {day}": "Wird an Tag {day} freigeschaltet",
@@ -556,7 +574,6 @@ const dictionaries = {
     "Mint": "Mint",
     "Lavender": "Lavendel",
     "Dracula": "Dracula",
-    "Craving right now?": "Gerade Verlangen?",
     "Breathe along for 3 minutes.": "3 Minuten mitatmen.",
     "Light or dark": "Hell oder dunkel",
     "How should SMKFREE look?": "Wie soll SMKFREE aussehen?",
@@ -688,7 +705,6 @@ const dictionaries = {
     "No entries yet.": "Noch keine Einträge.",
     "Not sure": "Weiß nicht",
     "A slip erases nothing. Your receipt keeps counting.": "Ein Ausrutscher löscht nichts. Dein Bon zählt weiter.",
-    "Last 7 days: {c} resisted · {s} slips": "Letzte 7 Tage: {c}× überstanden · {s}× geraucht",
     "Most common trigger: {trigger}": "Häufigster Auslöser: {trigger}",
 
     // Developer: font and size

@@ -30,6 +30,9 @@ import {
   pickUnlocked,
   DIARY_NOTE_MAX,
   PLAN_MAX_ITEMS,
+  moneyForecast,
+  timeGrid,
+  timeTotals,
 } from "./app-core.js";
 import {
   appInfo,
@@ -1387,6 +1390,189 @@ function openLifeSheet() {
   openSheet(document.querySelector("#lifeSheet"));
 }
 
+// ----------------------------------------------------------------- start detail sheets
+// Gauge → how long already (live totals and a month grid); Saved → savings curve, percentage and goal date.
+let timeSheetTimer = null;
+
+function formatLongDate(date) {
+  return new Intl.DateTimeFormat(intlLocale(), { day: "numeric", month: "long", year: "numeric" }).format(date);
+}
+
+function fillInfoRows(list, rows) {
+  list.innerHTML = "";
+  rows.forEach(([label, text]) => {
+    const row = document.createElement("div");
+    const dt = document.createElement("dt");
+    dt.textContent = label;
+    const dd = document.createElement("dd");
+    dd.textContent = text;
+    row.append(dt, dd);
+    list.append(row);
+  });
+}
+
+/** "1 year 5 mo. 24 days": calendar years, months and days, zero parts left away. */
+function calendarText(data) {
+  const parts = [];
+  if (data.years > 0) parts.push(data.years === 1 ? t("1 year") : t("{n} years", { n: data.years }));
+  if (data.months > 0) parts.push(t("{n} mo.", { n: data.months }));
+  if (data.restDays > 0 || parts.length === 0) parts.push(data.restDays === 1 ? t("1 day") : t("{n} days", { n: data.restDays }));
+  return parts.join(" ");
+}
+
+/** Only the totals tick every second; everything else is drawn once when the sheet opens. */
+function renderTimeTotals() {
+  const state = getFormState();
+  const progress = calculateProgress(state);
+  const totals = timeTotals(boardData(state, progress).started ? progress.elapsedMs : 0);
+  const box = document.querySelector("#timeSheetTotals");
+  const cells = [
+    [totals.days, t("Days")],
+    [totals.hours, t("Hours")],
+    [totals.minutes, t("Minutes")],
+    [totals.seconds, t("Seconds")],
+  ];
+  if (box.children.length !== cells.length) {
+    box.innerHTML = "";
+    cells.forEach(() => {
+      const cell = document.createElement("div");
+      cell.className = "total-grid__cell";
+      cell.innerHTML = "<strong></strong><span></span>";
+      box.append(cell);
+    });
+  }
+  cells.forEach(([value, label], i) => {
+    box.children[i].querySelector("strong").textContent = numberFormatter.format(value);
+    box.children[i].querySelector("span").textContent = label;
+  });
+}
+
+function openTimeSheet() {
+  const state = getFormState();
+  const progress = calculateProgress(state);
+  const data = boardData(state, progress);
+  const goals = boardGoals(state, progress, readGoal());
+  const start = quitStartDate(state);
+
+  document.querySelector("#timeSheetValue").textContent = data.started ? calendarText(data) : "--";
+  document.querySelector("#timeSheetLead").textContent = data.started && start
+    ? t("Smoke-free since {date}.", { date: formatLongDate(start) })
+    : t("Starts on your quit day");
+  renderTimeTotals();
+
+  // The grid: one square per month (or per year later on), the running one filled part way.
+  const grid = timeGrid(data.started ? start : null, new Date());
+  const box = document.querySelector("#timeGrid");
+  box.innerHTML = "";
+  box.dataset.unit = grid.unit;
+  box.style.setProperty("--cols", grid.total > 12 ? 12 : grid.total <= 5 ? 5 : 12);
+  for (let i = 0; i < grid.total; i += 1) {
+    const cell = document.createElement("i");
+    if (i < grid.done) cell.className = "is-done";
+    else if (i === grid.done) {
+      cell.className = "is-now";
+      cell.style.setProperty("--fill", `${Math.round(grid.partial * 100)}%`);
+    }
+    box.append(cell);
+  }
+  const months = grid.unit === "month";
+  document.querySelector("#timeGridTitle").textContent = months ? t("Months smoke-free") : t("Years smoke-free");
+  document.querySelector("#timeGridCount").textContent = t("{n} of {total}", { n: grid.done, total: grid.total });
+  document.querySelector("#timeGridHint").textContent = months
+    ? t("Each square is a month without smoking.")
+    : t("Each square is a year without smoking.");
+
+  const rows = [[t("Weeks"), numberFormatter.format(timeTotals(data.started ? progress.elapsedMs : 0).weeks)]];
+  if (goals.started && !goals.time.done && start) {
+    const when = new Date(start.getTime() + goals.time.target * 86_400_000);
+    rows.push([t("Next goal"), goalLabel(goals.time.target)]);
+    rows.push([t("Reached on"), formatLongDate(when)]);
+  }
+  fillInfoRows(document.querySelector("#timeSheetRows"), rows);
+
+  const sheet = document.querySelector("#timeSheet");
+  openSheet(sheet);
+  window.clearInterval(timeSheetTimer);
+  timeSheetTimer = window.setInterval(() => {
+    if (openSheetEl !== sheet || document.hidden) {
+      if (openSheetEl !== sheet) window.clearInterval(timeSheetTimer);
+      return;
+    }
+    renderTimeTotals();
+  }, 1000);
+}
+
+/** Savings so far (solid) and the forecast to the goal (dashed), with the goal as a line on top. */
+function drawMoneyChart(box, ratio) {
+  const w = 320;
+  const h = 150;
+  const pad = 8;
+  const top = 18;
+  const x = (pad + (w - 2 * pad) * Math.min(1, Math.max(0, ratio))).toFixed(1);
+  const y = (h - pad - (h - pad - top) * Math.min(1, Math.max(0, ratio))).toFixed(1);
+  const base = h - pad;
+  box.innerHTML = `<svg viewBox="0 0 ${w} ${h}" role="img">`
+    + `<line class="money-chart__goal" x1="${pad}" y1="${top}" x2="${w - pad}" y2="${top}"/>`
+    + `<line class="money-chart__base" x1="${pad}" y1="${base}" x2="${w - pad}" y2="${base}"/>`
+    + `<path class="money-chart__area" d="M${pad} ${base} L${x} ${y} L${x} ${base} Z"/>`
+    + `<line class="money-chart__future" x1="${x}" y1="${y}" x2="${w - pad}" y2="${top}"/>`
+    + `<line class="money-chart__past" x1="${pad}" y1="${base}" x2="${x}" y2="${y}"/>`
+    + `<circle class="money-chart__dot" cx="${x}" cy="${y}" r="5"/>`
+    + `</svg>`;
+}
+
+function openMoneySheet() {
+  const state = getFormState();
+  const progress = calculateProgress(state);
+  const data = boardData(state, progress);
+  const goal = readGoal();
+  const goals = boardGoals(state, progress, goal);
+  const currency = state.currencyCode || "EUR";
+  const perDay = dailySaving(state);
+  const money = goals.money;
+  const forecast = moneyForecast({ saved: data.money, target: money.target, perDay });
+  const pct = Math.floor(forecast.ratio * 100);
+
+  setValueWithUnits(document.querySelector("#moneySheetValue"), data.started ? formatCurrency(data.money, currency) : "--");
+  document.querySelector("#moneySheetLead").textContent = !data.started ? t("Starts on your quit day")
+    : t("You save about {day} a day, {month} a month and {year} a year.", {
+      day: formatCurrency(perDay, currency),
+      month: formatCurrency(perDay * 30.4375, currency),
+      year: formatCurrency(perDay * 365.25, currency),
+    });
+
+  const goalName = money.name || formatCurrency(money.target, currency);
+  document.querySelector("#moneyChartGoal").textContent = t("Goal: {goal}", { goal: goalName });
+  document.querySelector("#moneyChartPct").textContent = `${pct} %`;
+  drawMoneyChart(document.querySelector("#moneyChart"), data.started ? forecast.ratio : 0);
+  const start = quitStartDate(state);
+  document.querySelector("#moneyChartFrom").textContent = start && data.started ? formatLongDate(start) : "";
+  document.querySelector("#moneyChartTo").textContent = forecast.date ? formatLongDate(forecast.date) : "";
+
+  const rows = [[t("Goal"), money.name ? `${money.name} · ${formatCurrency(money.target, currency)}` : formatCurrency(money.target, currency)]];
+  rows.push([t("Still to go"), formatCurrency(forecast.left, currency)]);
+  if (data.started && forecast.date) rows.push([t("Reached on"), formatLongDate(forecast.date)]);
+  fillInfoRows(document.querySelector("#moneySheetRows"), rows);
+
+  document.querySelector("#moneySheetGoal").textContent = goal?.name ? t("Change goal") : t("Set a goal");
+  openSheet(document.querySelector("#moneySheet"));
+}
+
+function initStartDetails() {
+  document.querySelector("#timeSheetClose").addEventListener("click", () => closeSheet());
+  document.querySelector("#moneySheetClose").addEventListener("click", () => closeSheet());
+  document.querySelector("#moneySheetGoal").addEventListener("click", () => document.querySelector("#goalButton").click());
+  enableSwipeToClose(document.querySelector("#timeSheet"));
+  enableSwipeToClose(document.querySelector("#moneySheet"));
+  // The gauge is a button too: Enter and Space open it from the keyboard.
+  document.querySelector("#gauge").addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    haptics.select();
+    openTimeSheet();
+  });
+}
+
 function initBoard() {
   // Share from the start page: the receipt is what gets shared, so it opens and shares right away.
   document.querySelector("#startShare").addEventListener("click", () => {
@@ -1395,9 +1581,10 @@ function initBoard() {
   });
   document.querySelector("#lifeSheetClose").addEventListener("click", () => closeSheet());
   enableSwipeToClose(document.querySelector("#lifeSheet"));
+  initStartDetails();
   const board = document.querySelector("#board") || document.querySelector("#startPage");
   board.addEventListener("click", (event) => {
-    const target = event.target.closest("#boardLight, #boardMoney, #boardLife, [data-go]");
+    const target = event.target.closest("#gauge, #boardLight, #boardMoney, #boardLife, [data-go]");
     if (!target) return;
     haptics.select();
     if (target.dataset.go) {
@@ -1418,9 +1605,12 @@ function initBoard() {
       // The Design tile opens the theme picker (Standard, Mint, Lavender).
       openSheet(document.querySelector("#themeSheet"));
       return;
+    } else if (target.id === "gauge") {
+      openTimeSheet();
+      return;
     } else if (target.id === "boardMoney") {
-      // The money line opens the savings goal: set one, or change it.
-      document.querySelector("#goalButton").click();
+      // The money card opens the savings details; the goal itself is changed from there.
+      openMoneySheet();
       return;
     } else if (target.id === "boardLife") {
       openLifeSheet();
@@ -3328,10 +3518,6 @@ function diaryDayLabel(date) {
 function renderDiary() {
   const entries = readDiary().entries;
   const stats = diaryStats(entries);
-  document.querySelector("#diarySummary").textContent = t("Last 7 days: {c} resisted · {s} slips", {
-    c: numberFormatter.format(stats.weekCravings),
-    s: numberFormatter.format(stats.weekSlips),
-  });
   // One line instead of a chart: the trigger that shows up most.
   const top = stats.topTriggers[0];
   const topLine = document.querySelector("#diaryTop");

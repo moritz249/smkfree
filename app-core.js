@@ -840,3 +840,63 @@ export const RECEIPT_PAPERS = [
   { id: "sky", label: "Sky", day: 3, color: "#eaf2ff", tone: "light" },
   { id: "rose", label: "Rose", day: 7, color: "#fff0f2", tone: "light" },
 ];
+
+// ----------------------------------------------------------------- start detail sheets
+// Behind the gauge and the money card: the same numbers in more detail. Pure, so they are tested.
+
+/** Smoke-free time as running totals ("6.392 hours", "383.520 minutes"). */
+export function timeTotals(elapsedMs) {
+  const ms = Math.max(0, Number(elapsedMs) || 0);
+  return {
+    weeks: Math.floor(ms / (7 * DAY_MS)),
+    days: Math.floor(ms / DAY_MS),
+    hours: Math.floor(ms / 3_600_000),
+    minutes: Math.floor(ms / 60_000),
+    seconds: Math.floor(ms / 1000),
+  };
+}
+
+function addMonths(date, n) {
+  const d = new Date(date.getTime());
+  const day = d.getDate();
+  d.setDate(1);
+  d.setMonth(d.getMonth() + n);
+  d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()));
+  return d;
+}
+
+/**
+ * Squares for the "how long already" grid: one per month on the way to the next full year,
+ * or one per year once it is three years or more (so the grid never gets longer than 24 squares or so).
+ * done: whole units, partial: share of the running unit (0..1), total: squares to draw.
+ */
+export function timeGrid(start, now = new Date()) {
+  if (!start || now < start) return { unit: "month", done: 0, partial: 0, total: 12 };
+  const diff = calendarDiff(start, now);
+  const months = diff.years * 12 + diff.months;
+  if (months < 36) {
+    const from = addMonths(start, months);
+    const to = addMonths(start, months + 1);
+    const partial = Math.min(1, Math.max(0, (now - from) / (to - from)));
+    return { unit: "month", done: months, partial, total: Math.max(12, Math.ceil((months + 1) / 12) * 12) };
+  }
+  const from = addMonths(start, diff.years * 12);
+  const to = addMonths(start, (diff.years + 1) * 12);
+  const partial = Math.min(1, Math.max(0, (now - from) / (to - from)));
+  return { unit: "year", done: diff.years, partial, total: Math.ceil((diff.years + 1) / 5) * 5 };
+}
+
+/**
+ * When a savings goal is reached if the daily saving stays the same.
+ * date is null when nothing is saved per day (no forecast possible).
+ */
+export function moneyForecast({ saved, target, perDay, now = new Date() }) {
+  const goal = Math.max(0, Number(target) || 0);
+  const have = Math.max(0, Number(saved) || 0);
+  const ratio = goal > 0 ? Math.min(1, have / goal) : 0;
+  const left = Math.max(0, goal - have);
+  if (goal > 0 && left === 0) return { ratio: 1, left: 0, days: 0, date: new Date(now.getTime()) };
+  if (!(Number(perDay) > 0) || goal <= 0) return { ratio, left, days: null, date: null };
+  const days = left / Number(perDay);
+  return { ratio, left, days, date: new Date(now.getTime() + days * DAY_MS) };
+}

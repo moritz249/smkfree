@@ -41,7 +41,7 @@
       } catch (e) { /* storage blocked: follow the system */ }
     </script>
     <link rel="stylesheet" href="styles.css?v=20261123-20">
-    <link rel="stylesheet" href="ios.css?v=20261124-34">
+    <link rel="stylesheet" href="ios.css?v=20261127-36">
     <script src="assets/html2canvas.min.js" defer></script>
   </head>
   <body>
@@ -398,11 +398,11 @@
 
           <div class="tab-page diary-page" id="diaryPage" data-tab="diary" hidden>
             <h2 data-i18n>Diary</h2>
-            <button type="button" class="primary-button primary-button--large" id="diaryAdd" data-i18n>+ New entry</button>
-            <p class="diary-summary" id="diarySummary"></p>
             <p class="diary-top is-hidden" id="diaryTop"></p>
             <ul class="diary-list" id="diaryList"></ul>
             <p class="step-hint" id="diaryEmpty" data-i18n>No entries yet.</p>
+            <!-- Down by the thumb, next to the floating +, instead of at the top of the page. -->
+            <button type="button" class="primary-button diary-add" id="diaryAdd" data-i18n>+ New entry</button>
           </div>
 
           <div class="tab-page start-page" id="startPage" data-tab="start" hidden>
@@ -414,7 +414,7 @@
               <button type="button" class="head-action" id="startShare" aria-label="Share receipt" data-i18n-aria><svg class="icon" aria-hidden="true"><use href="#i-share"></use></svg></button>
             </header>
             <!-- Gauge: smoke-free time towards the next milestone, one accent color. -->
-            <section class="gauge" id="gauge" aria-live="polite">
+            <section class="gauge" id="gauge" role="button" tabindex="0">
               <svg class="gauge__svg" viewBox="0 0 220 124" aria-hidden="true">
                 <path class="gauge__track" d="M20 114 A90 90 0 0 1 200 114" pathLength="100"></path>
                 <path class="gauge__fill" id="gaugeFill" d="M20 114 A90 90 0 0 1 200 114" pathLength="100" stroke-dasharray="0 100"></path>
@@ -461,7 +461,7 @@
             <div class="ios-tiles">
               <button type="button" class="ios-tile ios-tile--sos" data-go="sos">
                 <span class="ios-tile__icon"><svg class="icon" aria-hidden="true"><use href="#i-breath"></use></svg></span>
-                <strong data-i18n>Craving right now?</strong>
+                <strong data-i18n>SOS: strong craving right now</strong>
                 <small data-i18n>Breathe along for 3 minutes.</small>
               </button>
               <button type="button" class="ios-tile ios-tile--small" data-go="receipt">
@@ -678,6 +678,43 @@
       </div>
     </section>
 
+    <!-- Tap on the gauge: smoke-free time in detail (running totals, month grid, next milestone). -->
+    <section class="sheet info-sheet detail-sheet" id="timeSheet" role="dialog" aria-modal="true" aria-labelledby="timeSheetValue" hidden>
+      <div class="sheet__grip" aria-hidden="true"></div>
+      <p class="kicker" data-i18n>Smoke-free</p>
+      <h2 class="info-sheet__value" id="timeSheetValue">--</h2>
+      <p class="info-sheet__lead" id="timeSheetLead"></p>
+      <div class="total-grid" id="timeSheetTotals"></div>
+      <div class="detail-chart">
+        <div class="detail-chart__head"><span id="timeGridTitle"></span><strong id="timeGridCount"></strong></div>
+        <div class="time-grid" id="timeGrid" aria-hidden="true"></div>
+        <p class="detail-chart__foot" id="timeGridHint"></p>
+      </div>
+      <dl class="info-rows" id="timeSheetRows"></dl>
+      <div class="sheet__actions">
+        <button type="button" class="primary-button" id="timeSheetClose" data-i18n>Close</button>
+      </div>
+    </section>
+
+    <!-- Tap on "Saved": the savings curve towards the goal, percentage and the day it is reached. -->
+    <section class="sheet info-sheet detail-sheet" id="moneySheet" role="dialog" aria-modal="true" aria-labelledby="moneySheetValue" hidden>
+      <div class="sheet__grip" aria-hidden="true"></div>
+      <p class="kicker" data-i18n>Saved</p>
+      <h2 class="info-sheet__value" id="moneySheetValue">--</h2>
+      <p class="info-sheet__lead" id="moneySheetLead"></p>
+      <div class="detail-chart">
+        <div class="detail-chart__head"><span id="moneyChartGoal"></span><strong id="moneyChartPct"></strong></div>
+        <div class="money-chart" id="moneyChart"></div>
+        <div class="detail-chart__axis"><span id="moneyChartFrom"></span><span id="moneyChartTo"></span></div>
+      </div>
+      <dl class="info-rows" id="moneySheetRows"></dl>
+      <p class="step-hint" data-i18n>Forecast if you keep saving the same amount every day.</p>
+      <div class="sheet__actions">
+        <button type="button" class="secondary-button" id="moneySheetGoal" data-i18n>Change goal</button>
+        <button type="button" class="primary-button" id="moneySheetClose" data-i18n>Close</button>
+      </div>
+    </section>
+
     <!-- Share: pick what leaves the phone. The compact card is first and already shown as a preview. -->
     <section class="sheet share-sheet" id="shareSheet" role="dialog" aria-modal="true" aria-labelledby="shareSheetTitle" hidden>
       <div class="sheet__grip" aria-hidden="true"></div>
@@ -852,6 +889,6 @@
 
 
 
-<script type="module" src="app.js?v=20261124-35"></script>
+<script type="module" src="app.js?v=20261127-37"></script>
   </body>
 </html>

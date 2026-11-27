@@ -3465,3 +3465,249 @@ html:not([lang="de"]) .legal-shell [lang="de"] {
 .step--design .theme-options {
   margin-top: 0;
 }
+
+/* ------------------------------------------------------------------ Start detail sheets (2026-11-27)
+   Tap on the gauge → how long smoke-free (live totals, month grid). Tap on "Saved" → savings chart and goal date. */
+.gauge {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 160ms ease;
+}
+
+.gauge:active {
+  transform: scale(0.98);
+}
+
+.gauge:focus-visible {
+  outline: 2px solid var(--action);
+  outline-offset: 4px;
+  border-radius: var(--radius-card);
+}
+
+.detail-sheet .info-sheet__value {
+  font-size: 1.75rem;
+}
+
+/* Four running totals, two by two; the seconds tick while the sheet is open. */
+.total-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.total-grid__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-card);
+  background: var(--ios-fill);
+}
+
+.total-grid__cell strong {
+  overflow: hidden;
+  font-family: var(--ios-rounded);
+  font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.total-grid__cell span {
+  color: var(--ios-secondary);
+  font-size: 0.8125rem;
+}
+
+/* A chart card: title left, the key number right, the chart, one quiet line below. */
+.detail-chart {
+  margin: 0 0 12px;
+  padding: 14px;
+  border-radius: var(--radius-card);
+  background: var(--ios-fill);
+}
+
+.detail-chart__head {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.detail-chart__head span {
+  overflow: hidden;
+  color: var(--ios-secondary);
+  font-size: 0.9375rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail-chart__head strong {
+  flex: none;
+  font-family: var(--ios-rounded);
+  font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.detail-chart__foot,
+.detail-chart__axis {
+  margin: 10px 0 0;
+  color: var(--ios-secondary);
+  font-size: 0.8125rem;
+}
+
+.detail-chart__axis {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Month grid: done months in the accent, the running one filled part way. */
+.time-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 12), minmax(0, 1fr));
+  gap: 5px;
+}
+
+.time-grid i {
+  aspect-ratio: 1;
+  border-radius: 5px;
+  background: var(--ios-separator);
+}
+
+.time-grid[data-unit="year"] i {
+  border-radius: 8px;
+}
+
+.time-grid i.is-done {
+  background: var(--action);
+}
+
+.time-grid i.is-now {
+  background: linear-gradient(to top, var(--action) var(--fill, 0%), var(--ios-separator) var(--fill, 0%));
+}
+
+/* Savings chart: solid line and soft area so far, dashed forecast up to the goal line. */
+.money-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.money-chart__goal {
+  stroke: var(--ios-green);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.money-chart__base {
+  stroke: var(--ios-separator);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.money-chart__area {
+  fill: var(--action-soft, var(--action));
+  opacity: 0.35;
+}
+
+.money-chart__past {
+  stroke: var(--action);
+  stroke-width: 3;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.money-chart__future {
+  stroke: var(--ios-secondary);
+  stroke-width: 2;
+  stroke-dasharray: 5 6;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.money-chart__dot {
+  fill: var(--action);
+  stroke: var(--ios-card);
+  stroke-width: 2;
+}
+
+/* ------------------------------------------------------------------ Diary: "+ New entry" at the bottom (2026-11-27)
+   Fixed next to the floating + (same row, same centre line), so it is in reach of the thumb.
+   The numbers follow the tab bar: 10 px above the bottom, 64 px high, the + 12 px above it and 58 px tall. */
+.diary-page .diary-add {
+  position: fixed;
+  z-index: 100;
+  left: calc(50% - min(100% - 24px, 440px) / 2 + 6px);
+  bottom: calc(10px + 64px + 12px + 4px + env(safe-area-inset-bottom, 0px));
+  width: calc(min(100% - 24px, 440px) - 6px - 58px - 12px - 6px);
+  min-height: 50px;
+  margin: 0;
+  box-shadow: var(--ios-shadow);
+}
+
+.diary-page h2 {
+  margin-bottom: 20px;
+}
+
+/* ------------------------------------------------------------------ Free-help card: more air (2026-11-27)
+   It read too dense: own spacing for title, text, call button, hours and link. */
+.tab-page .help-card {
+  gap: 0;
+  margin: 20px 0 12px;
+  padding: 16px;
+}
+
+.tab-page .help-card > .sos-plan__title {
+  margin: 0 0 8px;
+}
+
+.tab-page .help-card > p {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+
+.tab-page .help-card .help-card__call {
+  min-height: 50px;
+  margin: 16px 0 10px;
+  padding: 0 16px;
+  line-height: 1.2;
+}
+
+.tab-page .help-card > p.step-hint {
+  color: var(--ios-secondary);
+  font-size: 0.8125rem;
+}
+
+.tab-page .help-card > .text-button {
+  justify-self: start;
+  margin: 12px 0 0;
+  padding: 0;
+  font-size: 0.9375rem;
+  text-align: left;
+}
+
+.health-source {
+  margin-top: 12px;
+}
+
+.diary-page .diary-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  font-size: 1.0625rem;
+  white-space: nowrap;
+}
+
+.tab-page .help-card .help-card__call {
+  font-size: 1rem;
+  font-weight: 600;
+  white-space: nowrap;
+}

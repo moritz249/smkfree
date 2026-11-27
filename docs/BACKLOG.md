@@ -1,6 +1,6 @@
 # Backlog
 
-Stand: 24.11.2026. Reihenfolge innerhalb der Abschnitte nach Priorität. Hier anfangen: **„Als Nächstes“**.
+Stand: 27.11.2026. Reihenfolge innerhalb der Abschnitte nach Priorität. Hier anfangen: **„Als Nächstes“**.
 
 Zielgruppe junge Erwachsene (18–35), auch ADHS: wenig Text, eine Aufgabe pro Bildschirm, klare große Flächen.
 UI-Regeln: [UI-RICHTLINIEN.md](UI-RICHTLINIEN.md). Evidenz: [EVIDENZ.md](EVIDENZ.md). Konkurrenz: [KONKURRENZ.md](KONKURRENZ.md).
@@ -11,7 +11,7 @@ UI-Regeln: [UI-RICHTLINIEN.md](UI-RICHTLINIEN.md). Evidenz: [EVIDENZ.md](EVIDENZ
       1. Verlangen-Verlauf aus dem Suchtprotokoll: Balken in Ampelfarben, umschaltbar Woche/Monat wie Apple Health.
       2. „Wann und warum“: Tageszeit des Verlangens und häufigste Auslöser aus dem Tagebuch (hilft beim Wenn-dann-Plan).
       3. Überstanden vs. geraucht pro Woche.
-      4. Gespartes Geld als Linie mit Sparziel-Markierung (sagt wenig Neues, eher zuletzt).
+      4. ~~Gespartes Geld als Linie mit Sparziel-Markierung~~ erledigt 27.11. im Blatt hinter „Gespart“.
 - [ ] **Englische Texte angleichen** an die neue deutsche Wortwahl (24.11.): „Money saved“ statt „not burned“,
       „Life gained“ statt „life back“, „Cravings got through“, Dank-Satz „Thanks for taking care of yourself“,
       Name des Suchtprotokolls auf Englisch klären. Englische Schlüssel in `app.js`/`index.html` und `i18n.js` ändern.
@@ -30,13 +30,24 @@ UI-Regeln: [UI-RICHTLINIEN.md](UI-RICHTLINIEN.md). Evidenz: [EVIDENZ.md](EVIDENZ
 - [ ] Bereits erfüllt: Quellen und Hinweis „Ärztin/Arzt fragen“ (1.4.1), Datenschutzseite DE/EN mit Löschen (5.1.1),
       keine Daten nach außen, Teilen über System-Sheet, Noto-Emoji-Lizenz unter „Bildquellen“.
 
+## Erledigt am 27.11.2026
+
+- Tacho antippen → Blatt „Rauchfrei“: Jahre/Monate/Tage, Tage/Stunden/Minuten/Sekunden live, Monatsraster, nächstes Ziel mit Datum.
+- „Gespart“ antippen → Blatt mit Sparkurve bis zum Ziel, Prozent, „Noch offen“, Datum der Erreichung (Prognose), „Ziel ändern“.
+- SOS-Kachel heißt wieder „SOS: Gerade starkes Verlangen“.
+- Tagebuch: „+ Neuer Eintrag“ unten neben dem +, Zeile „Letzte 7 Tage …“ entfernt.
+- Hilfe-Karte (Gesundheit): mehr Abstand, Anruf-Button einzeilig („Rauchfrei-Telefon anrufen“).
+
 ## Design und Bedienung
 
 - [ ] Name „Mint“ prüfen: das Design ist seit 24.11. graublau (#96b1bd). Vorschlag „Nebel“.
 - [ ] Begriff „Suchtprotokoll“ für den täglichen Check bestätigen (seit 24.11., vorher „Tages-Check“).
 - [ ] Optional: Noto-Emoji-3D-Sticker statt 2D; weitere Sticker, Schriften und Bon-Hintergründe als Belohnung.
 - [ ] Mehr Designs nach Wunsch (gleiches Muster wie Dracula: nur Variablen für hell und dunkel).
-- [ ] **Startseite modular:** Karten ein-/ausblenden und per Ziehen sortieren, Reihenfolge lokal speichern.
+- [ ] **Startseite modular (Wunsch Moritz 27.11., größerer Umbau, später):** mehr Kacheln mit sinnvollen Infos
+      (z. B. nicht gerauchte Zigaretten, Verlangen diese Woche, häufigster Auslöser, nächster Meilenstein),
+      Karten ein-/ausblenden und per Ziehen sortieren, Auswahl und Reihenfolge lokal speichern (neuer Schlüssel in
+      `MIRRORED_KEYS` und `resetApp()`).
 - [ ] **Mehrfachauswahl bei der Art** (Zigaretten + Vape): neues Datenmodell `modes: []`, Migration (`STORAGE_VERSION` 5).
 - [ ] **Rückfall-Modus:** bei echtem Rückfall neues Startdatum mit Verlauf statt alles zu löschen.
 - [ ] Optional: Rückgängig nach dem Zurücksetzen, Teil-Reset.
