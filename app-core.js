@@ -334,7 +334,7 @@ export function buildNotificationPlan(state, options = {}, now = new Date()) {
   if (options.money !== false && dailySaving(state) > 0) {
     moneyThresholds.forEach((amount, index) => {
       add(3000 + index, dateForSavings(state, amount),
-        tr("{amount} not burned", { amount: format(amount) }), tr("That money stayed in your pocket. Your receipt is ready."));
+        tr("{amount} saved", { amount: format(amount) }), tr("That money stayed in your pocket. Your receipt is ready."));
     });
   }
 
@@ -356,7 +356,7 @@ export function buildNotificationPlan(state, options = {}, now = new Date()) {
       const days = Math.floor((at - start) / DAY_MS);
       const saved = Math.max(0, (at - start) / DAY_MS) * dailySaving(state);
       add(5000 + offset, at, tr("Daily receipt"),
-        tr("Day {days}: {amount} not burned. Keep the streak printing.", { days, amount: format(saved) }));
+        tr("Day {days}: {amount} saved. Keep going.", { days, amount: format(saved) }));
     }
   }
 
@@ -367,7 +367,7 @@ export function buildNotificationPlan(state, options = {}, now = new Date()) {
     for (let offset = 0; offset < 14; offset += 1) {
       const at = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset, hour, 0);
       if (done.has(dateKey(at))) continue;
-      add(7000 + offset, at, tr("Quick check-in?"), tr("One tap: how strong was the urge today?"));
+      add(7000 + offset, at, tr("Craving log for today?"), tr("One tap: how strong was the urge today?"));
     }
   }
 
@@ -376,7 +376,7 @@ export function buildNotificationPlan(state, options = {}, now = new Date()) {
     const daysToSunday = (7 - now.getDay()) % 7;
     for (let week = 0; week < 2; week += 1) {
       const at = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysToSunday + week * 7, 19, 0);
-      add(7100 + week, at, tr("Your week receipt is ready"), tr("Check-ins, cravings and money not burned this week."));
+      add(7100 + week, at, tr("Your week receipt is ready"), tr("Craving log, cravings and money saved this week."));
     }
   }
 

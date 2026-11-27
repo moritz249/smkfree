@@ -535,7 +535,7 @@ function renderReceipt(progress, state) {
 
   const cravings = readCravings();
   if (cravings > 0) {
-    rows.push([t("Cravings resisted"), numberFormatter.format(cravings)]);
+    rows.push([t("Cravings got through"), numberFormatter.format(cravings)]);
   }
 
   renderGoal(state);
@@ -937,11 +937,11 @@ function boardTexts(data, state) {
     label: t("SAVED"),
     value: formatCurrency(data.money, currency),
     unit: "",
-    sub: t("Money not burned"),
+    sub: t("Money saved"),
   };
   const thirdText = third.kind === "life"
     ? {
-      label: t("LIFE BACK*"),
+      label: t("LIFE GAINED*"),
       value: third.days > 0
         ? t("{d}D {h}H", { d: third.days, h: pad2(third.hours) })
         : t("{h}H {m}M", { h: third.hours, m: pad2(third.minutes) }),
@@ -1286,7 +1286,7 @@ function renderStart(state, progress) {
     : money.name ? t("{amount} to {goal}", { amount: formatCurrency(money.left, currency), goal: money.name })
     : t("{amount} to {goal}", { amount: formatCurrency(money.left, currency), goal: formatCurrency(money.target, currency) });
   const third = goals.third;
-  document.querySelector("#statThirdLabel").textContent = data.third.kind === "life" ? t("Life back*") : data.third.kind === "rolls" ? t("Not rolled") : t("Not vaped");
+  document.querySelector("#statThirdLabel").textContent = data.third.kind === "life" ? t("Life gained*") : data.third.kind === "rolls" ? t("Not rolled") : t("Not vaped");
   setValueWithUnits(document.querySelector("#statThird"), values.thirdValue);
   document.querySelector("#statThird").classList.toggle("is-long", values.thirdValue.length > 9);
   document.querySelector("#statThirdBar").style.width = `${Math.round(Math.min(1, third.ratio) * 100)}%`;
@@ -1299,8 +1299,8 @@ function renderStart(state, progress) {
   const checkedIn = dateKey(new Date()) in checkins;
   document.querySelector("#boardTodayKey").classList.toggle("needs-checkin", !checkedIn);
   document.querySelector("#checkinRowTitle").textContent = checkedIn
-    ? t("Check-in done · {level}", { level: t(checkinLevelLabels[checkins[dateKey(new Date())]]) })
-    : t("Check in for today");
+    ? t("Craving log · today {level}", { level: t(checkinLevelLabels[checkins[dateKey(new Date())]]) })
+    : t("Fill in craving log");
   // The first render runs before the diary trigger lists further down are defined; initStartCharts draws then.
   if (appReady) renderStartCharts(checkins);
 
@@ -1345,7 +1345,7 @@ function openLifeSheet() {
   let lead;
   let note;
   if (third.kind === "life") {
-    kicker = t("Life back");
+    kicker = t("Life gained");
     value = third.days > 0 ? t("{d} d {h} h", { d: numberFormatter.format(third.days), h: third.hours }) : t("{h} h {m} min", { h: third.hours, m: third.minutes });
     lead = t("On average, every cigarette costs about 20 minutes of life. These are the minutes from the cigarettes you did not smoke.");
     rows.push([t("Cigarettes not smoked"), numberFormatter.format(Math.floor(progress.cigarettesAvoided || 0))]);
@@ -1402,7 +1402,7 @@ function renderCravingChart(checkins) {
   const sub = document.querySelector("#cravingSub");
   const loggable = history.days.filter((day) => !day.isFuture).length;
   if (history.average === null) {
-    value.textContent = t("No check-ins yet");
+    value.textContent = t("Nothing logged yet");
     sub.textContent = t("One tap a day shows how your craving changes.");
   } else {
     value.textContent = t("Average: {level}", { level: t(checkinLevelLabels[Math.round(history.average)]) });
@@ -3224,7 +3224,7 @@ function finishSos() {
   upsertDiaryEntry(entry);
   showTab("diary");
   openDiarySheet(entry, { isNew: false, fromSos: true });
-  showToast(t("Craving #{n} resisted", { n: readCravings() }));
+  showToast(t("Got through craving #{n}", { n: readCravings() }));
 }
 
 // ----------------------------------------------------------------- if-then plan
@@ -3662,7 +3662,7 @@ function renderDiary() {
     const main = document.createElement("button");
     main.type = "button";
     main.className = "diary-entry__main";
-    const parts = [entry.kind === "slip" ? t("Slipped") : t("Resisted")];
+    const parts = [entry.kind === "slip" ? t("Slipped") : t("Got through")];
     if (entry.trigger) parts.push(planLabel(diaryTriggers, entry.trigger));
     main.innerHTML = "<span class=\"diary-entry__time\"></span><span class=\"diary-entry__text\"></span>";
     main.querySelector(".diary-entry__time").textContent = time.format(date);
@@ -4240,7 +4240,7 @@ function shareText() {
       { amount: formatCurrency(dailySaving(state) * 365, cur) });
   }
   const progress = calculateProgress(state);
-  return t("{days} days smoke-free and {amount} not burned. What would you save? Find out in 30 seconds:",
+  return t("{days} days smoke-free and {amount} saved. What would you save? Find out in 30 seconds:",
     { days: numberFormatter.format(progress.wholeDays), amount: formatCurrency(progress.moneySaved, cur) });
 }
 

@@ -311,7 +311,7 @@
             </section>
 
             <div class="receipt__total" id="totalToggle" role="button" tabindex="0" aria-expanded="false" aria-controls="breakdown">
-              <span data-i18n>Sum money not burned</span>
+              <span data-i18n>Total money saved</span>
               <strong id="moneySaved">EUR 0.00</strong>
             </div>
             <div class="receipt-breakdown is-hidden" id="breakdown">
@@ -357,7 +357,7 @@
                 <img src="assets/qr-code.svg" alt="QR code for SMKFREE">
               </div>
               <a class="receipt-link" href="https://moritz249.github.io/smkfree/">moritz249.github.io/smkfree</a>
-              <p data-i18n>Thank you for not destroying yourself.</p>
+              <p data-i18n>Thanks for taking care of yourself.</p>
               <span>************************</span>
             </footer>
           </article>
@@ -595,7 +595,7 @@
         </label>
         <label class="toggle-field">
           <input id="alertCheckin" type="checkbox" checked>
-          <span><span data-i18n>Evening check-in</span><small data-i18n>At 8 pm, only if you have not checked in yet.</small></span>
+          <span><span data-i18n>Craving log in the evening</span><small data-i18n>At 8 pm, only if you have not filled it in yet.</small></span>
         </label>
         <label class="toggle-field">
           <input id="alertMilestones" type="checkbox" checked>
@@ -603,7 +603,7 @@
         </label>
         <label class="toggle-field">
           <input id="alertMoney" type="checkbox" checked>
-          <span><span data-i18n>Money milestones</span><small data-i18n>When you pass 50, 100, 500 … not burned.</small></span>
+          <span><span data-i18n>Money milestones</span><small data-i18n>When you have saved 50, 100, 500 …</small></span>
         </label>
         <label class="toggle-field">
           <input id="alertDaily" type="checkbox">
@@ -658,7 +658,7 @@
         <li data-i18n>Receipt look: color, font, sticker, background</li>
         <li data-i18n>Savings goal</li>
         <li data-i18n>If-then plan</li>
-        <li data-i18n>Diary and daily check-ins</li>
+        <li data-i18n>Diary and craving log</li>
         <li data-i18n>Reminders</li>
         <li data-i18n>Counter of cravings you got through</li>
       </ul>
@@ -673,8 +673,8 @@
     <section class="sheet today-sheet" id="todaySheet" role="dialog" aria-modal="true" aria-labelledby="todayQuestion" hidden>
       <div class="sheet__grip" aria-hidden="true"></div>
       <div class="today-head">
-        <p class="kicker" data-i18n>Daily check-in</p>
-        <button type="button" class="info-button today-info" id="todayInfo" aria-expanded="false" aria-controls="todayInfoText" aria-label="What is the check-in?" data-i18n-aria>i</button>
+        <p class="kicker" data-i18n>Craving log</p>
+        <button type="button" class="info-button today-info" id="todayInfo" aria-expanded="false" aria-controls="todayInfoText" aria-label="What is the craving log?" data-i18n-aria>i</button>
       </div>
       <h2 id="todayQuestion" data-i18n>How strong was the urge today?</h2>
       <p class="today-info-text is-hidden" id="todayInfoText" data-i18n>Once a day, one tap: how strong was the urge to smoke today? Over the weeks you see it get easier. There is no streak, a missed day costs nothing. With reminders on, you get a nudge at 8 pm.</p>
@@ -917,6 +917,6 @@
 
 
 
-<script type="module" src="app.js?v=20261127-39"></script>
+<script type="module" src="app.js?v=20261127-40"></script>
   </body>
 </html>

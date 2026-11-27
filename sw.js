@@ -1,5 +1,5 @@
 // Bump on every release: a changed sw.js is how phones learn that a new version exists.
-const CACHE = "smkfree-v119";
+const CACHE = "smkfree-v120";
 const ASSETS = [
   "./",
   "./index.html",
