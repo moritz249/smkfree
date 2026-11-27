@@ -900,3 +900,56 @@ export function moneyForecast({ saved, target, perDay, now = new Date() }) {
   const days = left / Number(perDay);
   return { ratio, left, days, date: new Date(now.getTime() + days * DAY_MS) };
 }
+
+// ----------------------------------------------------------------- start charts
+// Two small charts on Start: how strong the urge was (from the daily Suchtprotokoll)
+// and when and why it comes (from the diary). Pure, so they are tested.
+
+/**
+ * Check-in levels as bars: "week" is Monday to Sunday of this week, "month" the last 30 days up to today.
+ * Each day has its level (0..3) or null; average is over the days with a check-in (null if none).
+ */
+export function checkinHistory(checkins, range = "week", now = new Date()) {
+  const today = dateKey(now);
+  let first;
+  let length;
+  if (range === "month") {
+    length = 30;
+    first = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (length - 1));
+  } else {
+    length = 7;
+    first = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+  }
+  const days = Array.from({ length }, (_, index) => {
+    const date = new Date(first.getFullYear(), first.getMonth(), first.getDate() + index);
+    const key = dateKey(date);
+    const level = key in checkins && key <= today ? checkins[key] : null;
+    return { key, date, level, isToday: key === today, isFuture: key > today };
+  });
+  const levels = days.map((day) => day.level).filter((level) => level !== null);
+  const counts = [0, 1, 2, 3].map((level) => levels.filter((value) => value === level).length);
+  const average = levels.length ? levels.reduce((sum, value) => sum + value, 0) / levels.length : null;
+  return { range: range === "month" ? "month" : "week", days, counts, recorded: levels.length, average };
+}
+
+/**
+ * Diary entries of the last `days` days by part of the day and by trigger.
+ * parts: morning, afternoon, evening, night with counts (cravings and slips together),
+ * triggers: the three most common with counts, total: entries in the window.
+ */
+export function cravingPattern(entries, now = new Date(), days = 30) {
+  const since = now.getTime() - days * DAY_MS;
+  const recent = entries.filter((entry) => entry.at >= since && entry.at <= now.getTime());
+  const parts = { morning: 0, afternoon: 0, evening: 0, night: 0 };
+  const triggerCounts = new Map();
+  recent.forEach((entry) => {
+    parts[dayPart(new Date(entry.at))] += 1;
+    if (entry.trigger) triggerCounts.set(entry.trigger, (triggerCounts.get(entry.trigger) || 0) + 1);
+  });
+  const triggers = [...triggerCounts.entries()]
+    .map(([trigger, count]) => ({ trigger, count }))
+    .sort((a, b) => b.count - a.count || a.trigger.localeCompare(b.trigger))
+    .slice(0, 3);
+  const topPart = Object.entries(parts).sort((a, b) => b[1] - a[1])[0];
+  return { total: recent.length, parts, topPart: topPart[1] > 0 ? topPart[0] : null, triggers };
+}

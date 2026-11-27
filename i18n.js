@@ -561,6 +561,26 @@ const dictionaries = {
     "You save about {day} a day, {month} a month and {year} a year.":
       "Du sparst etwa {day} am Tag, {month} im Monat und {year} im Jahr.",
     "Forecast if you keep saving the same amount every day.": "Prognose, wenn du jeden Tag gleich viel sparst.",
+
+    // Start charts: craving levels (Suchtprotokoll) and when and why (diary)
+    "Craving": "Verlangen",
+    "Time range": "Zeitraum",
+    "Week": "Woche",
+    "Month": "Monat",
+    "No check-ins yet": "Noch keine Einträge",
+    "One tap a day shows how your craving changes.": "Ein Tipp am Tag zeigt, wie sich dein Verlangen verändert.",
+    "Average: {level}": "Im Schnitt: {level}",
+    "{n} of {total} days logged": "{n} von {total} Tagen eingetragen",
+    "When and why": "Wann und warum",
+    "Last 30 days": "Letzte 30 Tage",
+    "Log cravings in the diary to see when and why they come.":
+      "Trag Verlangen ins Tagebuch ein, dann siehst du hier, wann und warum es kommt.",
+    "1 entry": "1 Eintrag",
+    "{n} entries": "{n} Einträge",
+    "Mornings": "Morgens",
+    "Afternoons": "Nachmittags",
+    "Evenings": "Abends",
+    "Nights": "Nachts",
     "More colors unlock on smoke-free days.": "Weitere Farben schaltest du mit rauchfreien Tagen frei.",
     "From day {day}": "Ab Tag {day}",
     "Unlocks on day {day}": "Wird an Tag {day} freigeschaltet",

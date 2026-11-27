@@ -41,7 +41,7 @@
       } catch (e) { /* storage blocked: follow the system */ }
     </script>
     <link rel="stylesheet" href="styles.css?v=20261123-20">
-    <link rel="stylesheet" href="ios.css?v=20261127-36">
+    <link rel="stylesheet" href="ios.css?v=20261127-38">
     <script src="assets/html2canvas.min.js" defer></script>
   </head>
   <body>
@@ -453,9 +453,37 @@
             <button type="button" class="checkin-row" data-go="today" id="boardTodayKey">
               <span class="checkin-row__text">
                 <strong id="checkinRowTitle"></strong>
-                <span class="checkin-row__dots" id="checkinRowDots" aria-hidden="true"></span>
               </span>
               <span class="checkin-row__chevron" aria-hidden="true">›</span>
+            </button>
+
+            <!-- Chart 1: how strong the urge was, from the daily Suchtprotokoll. Traffic-light bars, week or month. -->
+            <section class="chart-card" id="cravingChart">
+              <div class="chart-card__head">
+                <strong data-i18n>Craving</strong>
+                <span class="segmented" id="cravingRange" role="radiogroup" aria-label="Time range" data-i18n-aria>
+                  <button type="button" role="radio" data-range="week" aria-checked="true" data-i18n>Week</button>
+                  <button type="button" role="radio" data-range="month" aria-checked="false" data-i18n>Month</button>
+                </span>
+              </div>
+              <p class="chart-card__value" id="cravingValue"></p>
+              <p class="chart-card__sub" id="cravingSub"></p>
+              <div class="level-bars" id="cravingBars" role="img"></div>
+              <div class="level-bars__axis" id="cravingAxis" aria-hidden="true"></div>
+              <div class="chart-legend" aria-hidden="true">
+                <span class="is-level-0" data-i18n>None</span><span class="is-level-1" data-i18n>Mild</span><span class="is-level-2" data-i18n>Medium</span><span class="is-level-3" data-i18n>Strong</span>
+              </div>
+            </section>
+
+            <!-- Chart 2: when and why, from the diary (last 30 days). Tap: the diary. -->
+            <button type="button" class="chart-card chart-card--button" data-go="diary" id="patternChart">
+              <span class="chart-card__head">
+                <strong data-i18n>When and why</strong>
+                <span class="chart-card__more" data-i18n>Last 30 days</span>
+              </span>
+              <span class="chart-card__sub" id="patternSub"></span>
+              <span class="part-bars" id="patternParts" aria-hidden="true"></span>
+              <span class="trigger-list" id="patternTriggers"></span>
             </button>
 
             <div class="ios-tiles">
@@ -889,6 +917,6 @@
 
 
 
-<script type="module" src="app.js?v=20261127-37"></script>
+<script type="module" src="app.js?v=20261127-39"></script>
   </body>
 </html>

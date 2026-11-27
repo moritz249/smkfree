@@ -7,9 +7,7 @@ UI-Regeln: [UI-RICHTLINIEN.md](UI-RICHTLINIEN.md). Evidenz: [EVIDENZ.md](EVIDENZ
 
 ## Als Nächstes
 
-- [ ] **Graphen auf Start.** Vorschlag (noch nicht entschieden, mit 1 und 2 anfangen):
-      1. Verlangen-Verlauf aus dem Suchtprotokoll: Balken in Ampelfarben, umschaltbar Woche/Monat wie Apple Health.
-      2. „Wann und warum“: Tageszeit des Verlangens und häufigste Auslöser aus dem Tagebuch (hilft beim Wenn-dann-Plan).
+- [ ] **Graphen auf Start.** 1 und 2 erledigt 27.11. (siehe unten), auf dem Gerät ansehen. Offen:
       3. Überstanden vs. geraucht pro Woche.
       4. ~~Gespartes Geld als Linie mit Sparziel-Markierung~~ erledigt 27.11. im Blatt hinter „Gespart“.
 - [ ] **Englische Texte angleichen** an die neue deutsche Wortwahl (24.11.): „Money saved“ statt „not burned“,
@@ -37,6 +35,11 @@ UI-Regeln: [UI-RICHTLINIEN.md](UI-RICHTLINIEN.md). Evidenz: [EVIDENZ.md](EVIDENZ
 - SOS-Kachel heißt wieder „SOS: Gerade starkes Verlangen“.
 - Tagebuch: „+ Neuer Eintrag“ unten neben dem +, Zeile „Letzte 7 Tage …“ entfernt.
 - Hilfe-Karte (Gesundheit): mehr Abstand, Anruf-Button einzeilig („Rauchfrei-Telefon anrufen“).
+- Start, Graph „Verlangen“: Suchtprotokoll als Balken in Ampelfarben, Woche (Mo–So) / Monat (letzte 30 Tage),
+  „Im Schnitt: …“ und „x von y Tagen eingetragen“. Die Mini-Balken in der Suchtprotokoll-Zeile sind dafür weg.
+  Woche/Monat wird nicht gespeichert (kein neuer Schlüssel), beim Start immer Woche.
+- Start, Graph „Wann und warum“: Tagebuch der letzten 30 Tage nach Tageszeit (häufigste in Akzentfarbe) und
+  die drei häufigsten Auslöser; Antippen öffnet das Tagebuch.
 
 ## Design und Bedienung
 

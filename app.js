@@ -33,6 +33,8 @@ import {
   moneyForecast,
   timeGrid,
   timeTotals,
+  checkinHistory,
+  cravingPattern,
 } from "./app-core.js";
 import {
   appInfo,
@@ -1292,21 +1294,15 @@ function renderStart(state, progress) {
     : data.third.kind === "life" ? t("{time} until {goal}", { time: formatTimeLeft(third.left * 24), goal: goalLabel(third.target) })
     : t("{time} until {goal}", { time: `${Math.ceil(third.left)}`, goal: `${third.target}` });
 
-  // Check-in row: status and this week as dots.
+  // Check-in row: only the status now; the week is shown as a chart right below it.
   const checkins = readCheckins();
   const checkedIn = dateKey(new Date()) in checkins;
   document.querySelector("#boardTodayKey").classList.toggle("needs-checkin", !checkedIn);
   document.querySelector("#checkinRowTitle").textContent = checkedIn
     ? t("Check-in done · {level}", { level: t(checkinLevelLabels[checkins[dateKey(new Date())]]) })
     : t("Check in for today");
-  const dots = document.querySelector("#checkinRowDots");
-  dots.innerHTML = "";
-  // This week as small bars like in Apple Health: height and traffic-light color show how strong the urge was.
-  checkinWeek(checkins).forEach((day) => {
-    const bar = document.createElement("i");
-    bar.className = [day.level !== null ? `is-on is-level-${day.level}` : "", day.isToday ? "is-today" : ""].filter(Boolean).join(" ");
-    dots.append(bar);
-  });
+  // The first render runs before the diary trigger lists further down are defined; initStartCharts draws then.
+  if (appReady) renderStartCharts(checkins);
 
   // Body card: the most recent reached milestone and the next ones, three at most.
   const milestones = state.mode === "vaping" ? vapingMilestones : tobaccoMilestones;
@@ -1388,6 +1384,126 @@ function openLifeSheet() {
   });
   document.querySelector("#lifeSheetNote").textContent = note;
   openSheet(document.querySelector("#lifeSheet"));
+}
+
+// ----------------------------------------------------------------- start charts
+// Craving (Suchtprotokoll levels as traffic-light bars, week or month) and "When and why" (diary, 30 days).
+// The range is kept for the session only, so there is no new stored key.
+let cravingRange = "week";
+
+const dayPartNames = { morning: "Mornings", afternoon: "Afternoons", evening: "Evenings", night: "Nights" };
+
+function renderCravingChart(checkins) {
+  const history = checkinHistory(checkins, cravingRange);
+  document.querySelectorAll("#cravingRange [data-range]").forEach((button) => {
+    button.setAttribute("aria-checked", String(button.dataset.range === history.range));
+  });
+  const value = document.querySelector("#cravingValue");
+  const sub = document.querySelector("#cravingSub");
+  const loggable = history.days.filter((day) => !day.isFuture).length;
+  if (history.average === null) {
+    value.textContent = t("No check-ins yet");
+    sub.textContent = t("One tap a day shows how your craving changes.");
+  } else {
+    value.textContent = t("Average: {level}", { level: t(checkinLevelLabels[Math.round(history.average)]) });
+    sub.textContent = t("{n} of {total} days logged", { n: history.recorded, total: loggable });
+  }
+
+  const bars = document.querySelector("#cravingBars");
+  bars.dataset.range = history.range;
+  bars.innerHTML = "";
+  history.days.forEach((day) => {
+    const bar = document.createElement("i");
+    bar.className = [
+      day.level !== null ? `is-level-${day.level}` : "is-empty",
+      day.isToday ? "is-today" : "",
+      day.isFuture ? "is-future" : "",
+    ].filter(Boolean).join(" ");
+    bars.append(bar);
+  });
+  bars.setAttribute("aria-label", `${t("Craving")}: ${value.textContent}. ${sub.textContent}`);
+
+  // Axis: weekday letters for the week, three dates for the month.
+  const axis = document.querySelector("#cravingAxis");
+  axis.dataset.range = history.range;
+  axis.innerHTML = "";
+  if (history.range === "week") {
+    const weekday = new Intl.DateTimeFormat(intlLocale(), { weekday: "short" });
+    history.days.forEach((day) => {
+      const label = document.createElement("span");
+      label.textContent = weekday.format(day.date).replace(".", "");
+      axis.append(label);
+    });
+  } else {
+    const short = new Intl.DateTimeFormat(intlLocale(), { day: "numeric", month: "short" });
+    [history.days[0], history.days[15]].forEach((day) => {
+      const label = document.createElement("span");
+      label.textContent = short.format(day.date);
+      axis.append(label);
+    });
+    const today = document.createElement("span");
+    today.textContent = t("Today");
+    axis.append(today);
+  }
+}
+
+function renderPatternChart() {
+  const pattern = cravingPattern(readDiary().entries);
+  const card = document.querySelector("#patternChart");
+  card.classList.toggle("is-empty", pattern.total === 0);
+  document.querySelector("#patternSub").textContent = pattern.total === 0
+    ? t("Log cravings in the diary to see when and why they come.")
+    : pattern.total === 1 ? t("1 entry") : t("{n} entries", { n: pattern.total });
+
+  // Parts of the day as four columns; the most common one in the accent color.
+  const parts = document.querySelector("#patternParts");
+  parts.innerHTML = "";
+  const max = Math.max(1, ...Object.values(pattern.parts));
+  Object.entries(pattern.parts).forEach(([part, count]) => {
+    const column = document.createElement("span");
+    column.className = `part-bars__col${part === pattern.topPart ? " is-top" : ""}`;
+    column.innerHTML = "<b></b><span class=\"part-bars__track\"><i></i></span><small></small>";
+    column.querySelector("b").textContent = numberFormatter.format(count);
+    column.querySelector("i").style.height = `${count ? Math.max(8, Math.round((count / max) * 100)) : 0}%`;
+    column.querySelector("small").textContent = t(dayPartNames[part]);
+    parts.append(column);
+  });
+
+  // Top triggers as short rows with a bar.
+  const list = document.querySelector("#patternTriggers");
+  list.innerHTML = "";
+  const topCount = pattern.triggers[0]?.count || 1;
+  pattern.triggers.forEach((item) => {
+    const row = document.createElement("span");
+    row.className = "trigger-list__row";
+    row.innerHTML = "<span class=\"trigger-list__name\"></span><span class=\"trigger-list__bar\"><i></i></span><span class=\"trigger-list__count\"></span>";
+    row.querySelector(".trigger-list__name").textContent = planLabel(diaryTriggers, item.trigger);
+    row.querySelector("i").style.width = `${Math.round((item.count / topCount) * 100)}%`;
+    row.querySelector(".trigger-list__count").textContent = `${numberFormatter.format(item.count)}×`;
+    list.append(row);
+  });
+  const label = pattern.total === 0 ? document.querySelector("#patternSub").textContent : [
+    pattern.topPart ? t(dayPartLabels[pattern.topPart]) : "",
+    pattern.triggers[0] ? t("Most common trigger: {trigger}", { trigger: planLabel(diaryTriggers, pattern.triggers[0].trigger) }) : "",
+  ].filter(Boolean).join(". ");
+  card.setAttribute("aria-label", `${t("When and why")}: ${label}`);
+}
+
+function renderStartCharts(checkins = readCheckins()) {
+  if (!document.querySelector("#cravingChart")) return;
+  renderCravingChart(checkins);
+  renderPatternChart();
+}
+
+function initStartCharts() {
+  document.querySelectorAll("#cravingRange [data-range]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (cravingRange === button.dataset.range) return;
+      cravingRange = button.dataset.range;
+      renderCravingChart(readCheckins());
+    });
+  });
+  renderStartCharts();
 }
 
 // ----------------------------------------------------------------- start detail sheets
@@ -1582,6 +1698,7 @@ function initBoard() {
   document.querySelector("#lifeSheetClose").addEventListener("click", () => closeSheet());
   enableSwipeToClose(document.querySelector("#lifeSheet"));
   initStartDetails();
+  initStartCharts();
   const board = document.querySelector("#board") || document.querySelector("#startPage");
   board.addEventListener("click", (event) => {
     const target = event.target.closest("#gauge, #boardLight, #boardMoney, #boardLife, [data-go]");
@@ -3518,6 +3635,8 @@ function diaryDayLabel(date) {
 function renderDiary() {
   const entries = readDiary().entries;
   const stats = diaryStats(entries);
+  // Keep the "When and why" chart on Start in step with new or deleted entries.
+  if (appReady) renderPatternChart();
   // One line instead of a chart: the trigger that shows up most.
   const top = stats.topTriggers[0];
   const topLine = document.querySelector("#diaryTop");
