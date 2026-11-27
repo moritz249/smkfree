@@ -10,9 +10,6 @@ UI-Regeln: [UI-RICHTLINIEN.md](UI-RICHTLINIEN.md). Evidenz: [EVIDENZ.md](EVIDENZ
 - [ ] **Graphen auf Start.** 1 und 2 erledigt 27.11. (siehe unten), auf dem Gerät ansehen. Offen:
       3. Überstanden vs. geraucht pro Woche.
       4. ~~Gespartes Geld als Linie mit Sparziel-Markierung~~ erledigt 27.11. im Blatt hinter „Gespart“.
-- [ ] **Englische Texte angleichen** an die neue deutsche Wortwahl (24.11.): „Money saved“ statt „not burned“,
-      „Life gained“ statt „life back“, „Cravings got through“, Dank-Satz „Thanks for taking care of yourself“,
-      Name des Suchtprotokolls auf Englisch klären. Englische Schlüssel in `app.js`/`index.html` und `i18n.js` ändern.
 - [ ] **Auf echten Geräten testen:** Teilen in WhatsApp und iMessage (kurzer Bon 5:4, ganzer Bon, nur Link),
       Wischen vom linken Rand in der App, Vibrationen, Sticker im Teilen-Bild. iOS-App wurde noch nie gebaut (braucht Mac).
 - [ ] **Link-Vorschau der Webseite** (`assets/share-card.png`, og:image) neu machen: zeigt noch alte englische
@@ -40,6 +37,11 @@ UI-Regeln: [UI-RICHTLINIEN.md](UI-RICHTLINIEN.md). Evidenz: [EVIDENZ.md](EVIDENZ
   Woche/Monat wird nicht gespeichert (kein neuer Schlüssel), beim Start immer Woche.
 - Start, Graph „Wann und warum“: Tagebuch der letzten 30 Tage nach Tageszeit (häufigste in Akzentfarbe) und
   die drei häufigsten Auslöser; Antippen öffnet das Tagebuch.
+- Englische Texte angeglichen: „Money saved“, „Life gained“, „Cravings got through“ / „Got through“,
+  „Thanks for taking care of yourself.“ Suchtprotokoll heißt auf Englisch **„Craving log“** (Entscheidung Moritz 27.11.):
+  „Fill in craving log“, „Craving log · today Mild“, Erinnerung „Craving log in the evening“. Dabei auch deutsch
+  angepasst: „Suchtprotokoll am Abend“, „Suchtprotokoll für heute?“, Bon-Zeile „GEWONNENE LEBENSZEIT*“.
+  Ungenutzte alte Schlüssel (Wochen-Bon) bleiben für das Aufräumen in `i18n.js`.
 
 ## Design und Bedienung
 
@@ -52,12 +54,40 @@ UI-Regeln: [UI-RICHTLINIEN.md](UI-RICHTLINIEN.md). Evidenz: [EVIDENZ.md](EVIDENZ
       Karten ein-/ausblenden und per Ziehen sortieren, Auswahl und Reihenfolge lokal speichern (neuer Schlüssel in
       `MIRRORED_KEYS` und `resetApp()`).
 - [ ] **Mehrfachauswahl bei der Art** (Zigaretten + Vape): neues Datenmodell `modes: []`, Migration (`STORAGE_VERSION` 5).
-- [ ] **Rückfall-Modus:** bei echtem Rückfall neues Startdatum mit Verlauf statt alles zu löschen.
+- [ ] **Rückfall-Modus:** bei echtem Rückfall neues Startdatum mit Verlauf statt alles zu löschen
+      (Ergänzungen siehe „Inhalte aus rauchfrei-info.de“).
 - [ ] Optional: Rückgängig nach dem Zurücksetzen, Teil-Reset.
 - [ ] Tagebuch: Auslöser im Coach nutzen („Kaffee ist dein häufigster Auslöser …“), Export.
 - [ ] Suchtprotokoll im Coach nutzen (nach zwei „Stark“-Tagen Plan anbieten).
 - [ ] SOS: Option „5 Min. bewegen“; „Mehr Hilfe“-Karte. Quellen für Coach-Aussagen in `legal.html`.
 - [ ] Usability-Test mit 3–5 Leuten (Ziel: Bon in unter 45 s ohne Hilfe).
+
+## Inhalte aus rauchfrei-info.de (BIÖG, gesichtet 27.11.2026)
+
+Vor dem Einbau Quellen in `legal.html` ergänzen; Seiten sind auf 2025 datiert.
+
+- [ ] **Notfallplan mit eigenen Gründen:** 3–5 Strategien nach Vorlage („Ich lenke mich ab mit …“, „Ich rufe … an“,
+      „Ich gehe sofort weg“, „Meine Gründe: …“). Mit dem Wenn-dann-Plan (EVIDENZ P1) zusammenlegen; die eigenen
+      Gründe im SOS nach dem Atmen zeigen. Quelle: /tipps/tipps-bei-verlangensattacken/.
+- [ ] **Die „vier A“** (Aufschieben, Ausweichen, Abhauen, Ablenken) als Grundlage für eine zweite SOS-Option und
+      für Coach-Texte.
+- [ ] **Spätes Verlangen:** Text für spätere Meilensteine: Verlangen kann nach Wochen/Monaten kommen (Orte,
+      Jahreszeit, Urlaub, Feiern), es ist nur ein Impuls, kein Rückfall.
+- [ ] **Infokarte Gewicht:** ca. 80 % nehmen zu, im Schnitt 4,5 kg; Stoffwechsel ca. 200 kcal/Tag weniger. Rat:
+      ein paar Kilo erlauben, Liste leichter Snacks. Frust übers Gewicht ist ein häufiger Rückfallgrund.
+      Quellen: DKFZ 2011, American Heart Association 2019. Quelle: /tipps/gesund-ernaehren/.
+- [ ] **Alkohol** in den ersten Wochen meiden: als Auslöser im Wenn-dann-Plan bzw. Coach.
+- [ ] **Rückfall-Modus ergänzen:** Ausrutscher (einmalig) vs. Rückfall (alte Muster) trennen; nach Rückfall Ursache
+      ansehen und **neuen Rauchstopp-Tag** wählen. Quelle: /tipps/nicht-ganz-geschafft/.
+- [ ] **Wunschzettel:** Belohnungen nach X Wochen vom Gesparten (passt zu EVIDENZ P3 Nr. 8 und zum Sparziel).
+- [ ] **„Mehr Hilfe“-Karte ergänzen:** rauchfrei-Chat dienstags 20–22 Uhr, Forum mit Lotsen, Telefonberatung ruft
+      bis zu 5× zurück (proaktive Beratung). Nummer und Zeiten (0800 8 31 31 31, Mo–Do 10–22, Fr–So 10–18) stimmen
+      mit der App überein.
+- [ ] **Gesundheits-Zeitleiste prüfen:** App sagt „5 Jahre: halbes Risiko Herzkrankheit und Schlaganfall“ und
+      „15 Jahre: halbes COPD-Risiko“; rauchfrei-info sagt 5–10 Jahre Schlaganfallrisiko sinkt, 15 Jahre
+      Herzkrankheit fast wie bei Nichtrauchenden (Quellen: ACS 2018, Tabakatlas 2025, Mons et al. 2018). Mit der
+      Quelle in `legal.html` abgleichen. Quelle: /der-rauchstopp/vorteile/gesundheit/.
+- Bewusst nicht: Fagerström-Test (zu viel Text für die Zielgruppe), Ersparnisrechner (App hat ihn schon).
 
 ## Aufräumen im Code
 
